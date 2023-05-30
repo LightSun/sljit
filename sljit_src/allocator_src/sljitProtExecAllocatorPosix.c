@@ -27,11 +27,14 @@
 #define SLJIT_HAS_CHUNK_HEADER
 #define SLJIT_HAS_EXECUTABLE_OFFSET
 
+#include "../sljitLir.h"
+
 struct sljit_chunk_header {
 	void *executable;
 };
 
 #include <sys/stat.h>
+#include <sys/mman.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>

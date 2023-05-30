@@ -29,8 +29,8 @@
 /* --------------------------------------------------------------------- */
 /*  Operators                                                            */
 /* --------------------------------------------------------------------- */
-
-static sljit_s32 emit_load_imm64(struct sljit_compiler *compiler, sljit_s32 reg, sljit_sw imm)
+static sljit_s32 emit_load_imm64(struct sljit_compiler *compiler,
+                                 sljit_s32 reg, sljit_sw imm)
 {
 	sljit_u8 *inst;
 

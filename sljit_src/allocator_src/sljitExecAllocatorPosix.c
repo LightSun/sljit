@@ -27,6 +27,8 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 
+#include "../sljitLir.h"
+
 static SLJIT_INLINE void* alloc_chunk(sljit_uw size)
 {
 	void *retval;

@@ -76,6 +76,8 @@
      SLJIT_UPDATE_WX_FLAGS - (optional) update WX flags
 */
 
+#include "../sljitLir.h"
+
 #ifdef SLJIT_HAS_CHUNK_HEADER
 #define CHUNK_HEADER_SIZE (sizeof(struct sljit_chunk_header))
 #else /* !SLJIT_HAS_CHUNK_HEADER */

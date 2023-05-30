@@ -53,6 +53,8 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 
+#include "../sljitLir.h"
+
 #define SLJIT_UPDATE_WX_FLAGS(from, to, enable_exec) \
 	sljit_update_wx_flags((from), (to), (enable_exec))
 

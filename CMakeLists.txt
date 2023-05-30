@@ -1,0 +1,39 @@
+cmake_minimum_required(VERSION 3.5)
+
+project(sljit LANGUAGES C CXX)
+
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fPIC -Wall -Wextra -Wconversion -Wsign-compare -Werror")
+set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -fPIC -Wall -Wextra -Wconversion -Wsign-compare -Werror")
+
+include_directories(sljit_src/)
+include_directories(test_src/)
+
+add_compile_definitions(SLJIT_HAVE_CONFIG_PRE=1)
+
+#file(GLOB_RECURSE SRC_CORE sljit_src/*.h sljit_src/*.c)
+SET(SRC_CORE
+    sljit_src/sljitConfig.h
+    sljit_src/sljitConfigInternal.h
+    sljit_src/sljitLir.h
+    sljit_src/sljitLir.c
+    test_src/sljitConfigPre.h
+    test_src/sljitConfigPost.h
+    )
+
+add_library(sljit_core ${SRC_CORE})
+target_link_libraries(sljit_core m pthread)
+
+## test
+SET(SRC_TEST
+    test_src/sljitTest.c
+    test_src/sljitMain.c
+    )
+add_executable(sljit_test ${SRC_TEST})
+target_link_libraries(sljit_test sljit_core)
+#target_compile_definitions(sljit_test PUBLIC
+#    SLJIT_HAVE_CONFIG_PRE=1
+    #SLJIT_HAVE_CONFIG_POST=1
+#    )
