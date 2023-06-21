@@ -29,6 +29,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+extern int test_base1();
+extern int test_branch();
+extern int test_loop();
+
+//---------------------
 int sljit_test(int argc, char* argv[]);
 
 union executable_code {
@@ -76,9 +81,14 @@ void devel(void)
 	printf("buf[3] = %ld\n", (long)buf[3]);
 	sljit_free_code(code.code, NULL);
 }
-
+//https://www.mirrorservice.org/pub/NetBSD/NetBSD-current/src/sys/external/bsd/sljit/dist/doc/tutorial/sljit_tutorial.html
 int main(int argc, char* argv[])
 {
 	/* devel(); */
-	return sljit_test(argc, argv);
+    //return sljit_test(argc, argv);
+    test_base1();
+    test_branch();
+    test_loop();
+
+    return 0;
 }

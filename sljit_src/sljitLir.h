@@ -1113,6 +1113,7 @@ SLJIT_API_FUNC_ATTRIBUTE sljit_s32 sljit_emit_op1(struct sljit_compiler *compile
 /* Starting index of opcodes for sljit_emit_op2. */
 #define SLJIT_OP2_BASE			64
 
+//CARRY： 进位位, OVERFLOW: 溢出位
 /* Flags: Z | OVERFLOW | CARRY */
 #define SLJIT_ADD			(SLJIT_OP2_BASE + 0)
 #define SLJIT_ADD32			(SLJIT_ADD | SLJIT_32)

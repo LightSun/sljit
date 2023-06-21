@@ -5,8 +5,10 @@ project(sljit LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fPIC -Wall -Wextra -Wconversion -Wsign-compare -Werror")
-set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -fPIC -Wall -Wextra -Wconversion -Wsign-compare -Werror")
+#-Wall -Wextra -Wconversion -Wsign-compare -Werror
+set(TEST_INTERNAL_FLAGS "-Wall -Wextra -Wconversion -Wsign-compare")
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fPIC ${TEST_INTERNAL_FLAGS}")
+set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -fPIC ${TEST_INTERNAL_FLAGS}")
 
 include_directories(sljit_src/)
 include_directories(test_src/)
@@ -30,10 +32,9 @@ target_link_libraries(sljit_core m pthread)
 SET(SRC_TEST
     test_src/sljitTest.c
     test_src/sljitMain.c
+    test_src/test_base1.c
+    test_src/test_branch.c
+    test_src/test_loop.c
     )
 add_executable(sljit_test ${SRC_TEST})
 target_link_libraries(sljit_test sljit_core)
-#target_compile_definitions(sljit_test PUBLIC
-#    SLJIT_HAVE_CONFIG_PRE=1
-    #SLJIT_HAVE_CONFIG_POST=1
-#    )
