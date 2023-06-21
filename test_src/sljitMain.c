@@ -32,6 +32,7 @@
 extern int test_base1();
 extern int test_branch();
 extern int test_loop();
+extern int test_struct();
 
 //---------------------
 int sljit_test(int argc, char* argv[]);
@@ -89,6 +90,7 @@ int main(int argc, char* argv[])
     test_base1();
     test_branch();
     test_loop();
+    test_struct();
 
     return 0;
 }
