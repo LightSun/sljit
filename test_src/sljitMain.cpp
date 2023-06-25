@@ -29,10 +29,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern int test_base1();
-extern int test_branch();
-extern int test_loop();
-extern int test_struct();
+extern "C"{
+ int test_base1();
+ int test_branch();
+ int test_loop();
+ int test_struct();
+}
 
 //---------------------
 int sljit_test(int argc, char* argv[]);

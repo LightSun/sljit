@@ -4,6 +4,7 @@ project(sljit LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 #-Wall -Wextra -Wconversion -Wsign-compare -Werror
 set(TEST_INTERNAL_FLAGS "-Wall -Wextra -Wconversion -Wsign-compare")
@@ -14,6 +15,7 @@ include_directories(sljit_src/)
 include_directories(test_src/)
 
 add_compile_definitions(SLJIT_HAVE_CONFIG_PRE=1)
+add_compile_definitions(USE_MALLOC_WRAPPERS)
 
 #file(GLOB_RECURSE SRC_CORE sljit_src/*.h sljit_src/*.c)
 SET(SRC_CORE
@@ -28,10 +30,19 @@ SET(SRC_CORE
 add_library(sljit_core ${SRC_CORE})
 target_link_libraries(sljit_core m pthread)
 
+## jit-middle
+file(GLOB_RECURSE SRC_VM jit-middle/*.h
+    jit-middle/*.c
+    jit-middle/*.cpp
+    )
+
+include_directories(jit-middle/)
+
 ## test
 SET(SRC_TEST
+    ${SRC_VM}
     test_src/sljitTest.c
-    test_src/sljitMain.c
+    test_src/sljitMain.cpp
     test_src/test_base1.c
     test_src/test_branch.c
     test_src/test_loop.c
@@ -39,3 +50,5 @@ SET(SRC_TEST
     )
 add_executable(sljit_test ${SRC_TEST})
 target_link_libraries(sljit_test sljit_core)
+
+
