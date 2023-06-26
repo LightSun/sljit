@@ -6,7 +6,6 @@
 #include "mem.h"
 
 #define DEFAULT_HASH_COUNT 8
-#define DEFAULT_HASH_SEED 11
 
 #define prepare_key_size(ptr, delta) \
     array_map_n_prepare_keySize(ptr, delta + ptr->alloc_key_size)

@@ -1,5 +1,5 @@
 #include "h7/utils/text_buffer.h"
-#include "h7/common/h7_alloc.h"
+#include "h7/common/halloc.h"
 
 #include <assert.h>
 #include <inttypes.h>
@@ -33,7 +33,7 @@ void raviX_buffer_resize(TextBuffer *mb, size_t new_size)
 {
     if (new_size <= mb->capacity)
         return;
-    char *newmem = (char *)REALLOC(mb->buf, new_size);
+    char *newmem = (char *)REALLOC(mb->buf, 0, new_size);
     if (newmem == NULL) {
         fprintf(stderr, "Out of memory\n");
         exit(1);

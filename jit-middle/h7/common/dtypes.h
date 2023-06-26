@@ -2,10 +2,12 @@
 #define DTYPES_H
 
 #include "h7/common/c_common.h"
+#include <memory.h>
 
 #define kState_FAILED 0
 #define kState_OK 1
 #define DEFAULT_HASH_SEED 0
+#define IOBJ_NAME_MAX_SIZE 20
 
 enum DT{
     kType_VOID, //only used for func-def
@@ -31,6 +33,7 @@ typedef struct hstring hstring;
 typedef void* IObjPtr;
 struct IObject{
     volatile int ref;
+    char name[IOBJ_NAME_MAX_SIZE];
     IObjPtr (*Func_copy)(IObjPtr src, IObjPtr dst);
     int (*Func_equals)(IObjPtr src, IObjPtr dst);
     uint32 (*Func_hash)(IObjPtr src, uint32 seed);
@@ -40,6 +43,12 @@ struct IObject{
 extern void* dtype_obj_cpy(void* ud, void* ele);
 extern uint32 dtype_obj_hash(void* ud, void* ele, uint32 seed);
 extern void dtype_obj_delete(void* ud, void* ele);
+
+static inline void IObject_set_name(void* arr, const char* name){
+    IObject* obj = (IObject*)arr;
+    memset(obj->name, 0, IOBJ_NAME_MAX_SIZE);
+    memcpy(obj->name, name, strlen(name));
+}
 
 #define DEF_IOBJ_CHILD_FUNCS(t)\
 inline t* t##_copy(t* src){\

@@ -48,6 +48,7 @@ SET(SRC_TEST
     test_src/test_branch.c
     test_src/test_loop.c
     test_src/test_struct.c
+    test_src/test1.c
     )
 add_executable(sljit_test ${SRC_TEST})
 target_link_libraries(sljit_test sljit_core)

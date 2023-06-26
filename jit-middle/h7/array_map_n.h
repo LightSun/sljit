@@ -1,8 +1,8 @@
 ﻿#ifndef H7_ARRAY_MAP_N_H
 #define H7_ARRAY_MAP_N_H
 
-
-#include "h7/common/h7_alloc.h"
+#include "h7/common/dtypes.h"
+#include "h7/common/halloc.h"
 
 CPP_START
 

@@ -34,6 +34,8 @@ extern "C"{
  int test_branch();
  int test_loop();
  int test_struct();
+
+ void g_test1();
 }
 
 //---------------------
@@ -89,6 +91,7 @@ int main(int argc, char* argv[])
 {
 	/* devel(); */
     //return sljit_test(argc, argv);
+    g_test1();
     test_base1();
     test_branch();
     test_loop();
