@@ -1,6 +1,7 @@
 #include <string.h>
 #include "h_list.h"
 #include "h7/common/halloc.h"
+#include "h7/common/dtypes.h"
 
 #define MIN_COUNT 8
 
@@ -11,7 +12,7 @@ static inline void __grow(array_list* list, int minCapacity){
        newCapacity = minCapacity;
    //
     list->max_count = newCapacity;
-    void* new_data = REALLOC(list->data, sizeof (void*) * newCapacity);
+    void* new_data = REALLOC(list->data, 0, sizeof (void*) * newCapacity);
     if(new_data == NULL){
         void** old = list->data;
         list->data = ALLOC(sizeof (void*) * newCapacity);
@@ -25,6 +26,10 @@ void array_list_ensure_capacity(array_list* list, int cap){
     if(list->max_count < cap){
         __grow(list, cap);
     }
+}
+void array_list_ensure_size(array_list* list, int size){
+    array_list_ensure_capacity(list, size / list->factor + 1);
+    list->element_count = size;
 }
 
 array_list* array_list_new(int init_count, float factor){
@@ -172,5 +177,14 @@ array_list* array_list_copy(array_list* list,
         ret->data[i] = ele;
     }
     return ret;
+}
+
+uint32 array_list_hash(array_list* list,
+            uint32 (*Func_hash)(void* ud, void* ele, uint32 seed),
+                       void* ud, uint32 seed){
+    for(int i = 0; i < list->element_count; i ++){
+        seed = Func_hash(ud, list->data[i], seed);
+    }
+    return seed;
 }
 

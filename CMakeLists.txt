@@ -9,13 +9,14 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 #-Wall -Wextra -Wconversion -Wsign-compare -Werror
 set(TEST_INTERNAL_FLAGS "-Wall -Wextra -Wconversion -Wsign-compare")
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fPIC ${TEST_INTERNAL_FLAGS}")
-set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -fPIC ${TEST_INTERNAL_FLAGS}")
+set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -fPIC -std=c11 ${TEST_INTERNAL_FLAGS}")
 
 include_directories(sljit_src/)
 include_directories(test_src/)
 
 add_compile_definitions(SLJIT_HAVE_CONFIG_PRE=1)
 add_compile_definitions(USE_MALLOC_WRAPPERS)
+add_compile_definitions(USE_C11_ATOMICS)
 
 #file(GLOB_RECURSE SRC_CORE sljit_src/*.h sljit_src/*.c)
 SET(SRC_CORE

@@ -10,12 +10,12 @@ typedef struct harray harray;
 
 struct harray{
     IObject baseObj;
-    void* data;
-    void* ele_list; //for pointer array.
     sint8 dt;
     sint8 free_data;//should free data or not
     int data_size;
     int ele_count;  //element count
+    void* data;
+    struct array_list* ele_list; //for pointer array.
 };
 
 union harray_ele{
@@ -31,8 +31,8 @@ union harray_ele{
     double _double;
     void* _extra;  //can be harray or struct.
 };
-
-void* get_ptr_at(harray* p, int index);
+//-----------------------
+DEF_IOBJ_CHILD_FUNCS(harray)
 
 harray* harray_new(sint8 dt, int c);
 harray* harray_new_nodata(sint8 dt, int count);
@@ -66,21 +66,16 @@ harray* harray_new_chars(const char* str);
 harray* harray_new_chars2(const char* str, int len);
 
 void harray_ensure_data(harray* str);
-harray* harray_copy(harray* src);
-void harray_delete(harray* arr);
 
-inline int harray_get_count(harray* arr){
+static inline int harray_get_count(harray* arr){
     return arr->ele_count;
 }
-void harray_ref(harray* arr, int c);
-
+void* get_ptr_at(harray* p, int index);
 int harray_geti(harray* arr, int index, union harray_ele* ptr);
 int harray_seti(harray* arr, int index, union harray_ele* ptr);
 int harray_seti2(harray* arr, int index, void* ptr);
-int harray_set_all(harray* arr, void* ptr);
 
-int harray_eq(harray* arr, harray* arr2);
 
-void harray_dump(harray* arr, struct hstring* hs);
+
 
 #endif // H_ARRAY_H

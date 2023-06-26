@@ -5,6 +5,7 @@
 
 #define kState_FAILED 0
 #define kState_OK 1
+#define DEFAULT_HASH_SEED 0
 
 enum DT{
     kType_VOID, //only used for func-def
@@ -32,10 +33,41 @@ struct IObject{
     volatile int ref;
     IObjPtr (*Func_copy)(IObjPtr src, IObjPtr dst);
     int (*Func_equals)(IObjPtr src, IObjPtr dst);
+    uint32 (*Func_hash)(IObjPtr src, uint32 seed);
     void (*Func_dump)(IObjPtr src, hstring*);
+    void (*Func_ref)(IObjPtr src, int c);
 };
 extern void* dtype_obj_cpy(void* ud, void* ele);
+extern uint32 dtype_obj_hash(void* ud, void* ele, uint32 seed);
+extern void dtype_obj_delete(void* ud, void* ele);
 
+#define DEF_IOBJ_CHILD_FUNCS(t)\
+inline t* t##_copy(t* src){\
+    IObject* obj = (IObject*)src;\
+    return obj->Func_copy(src, NULL);\
+}\
+inline void t##_delete(t* arr){\
+    IObject* obj = (IObject*)arr;\
+    obj->Func_ref(arr, -1);\
+}\
+inline int t##_equals(t* arr, t* arr2){\
+    IObject* obj = (IObject*)arr;\
+    return obj->Func_equals(arr, arr2);\
+}\
+inline void t##_dump(t* arr, struct hstring* hs){\
+    IObject* obj = (IObject*)arr;\
+    obj->Func_dump(arr, hs);\
+}\
+inline void t##_ref(t* arr){\
+    IObject* obj = (IObject*)arr;\
+    obj->Func_ref(arr, 1);\
+}\
+inline void t##_unref(t* arr){\
+    IObject* obj = (IObject*)arr;\
+    obj->Func_ref(arr, -1);\
+}
+
+//-----------------------------------
 static inline int dt_size(int dt){
     switch (dt) {
     case kType_S8:

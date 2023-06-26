@@ -4,9 +4,63 @@
 #include "hash.h"
 #include "binary_search.h"
 #include "mem.h"
-#include "atomic.h"
+#include "h7/h_atomic.h"
+#include "h7/common/halloc.h"
 
-#define HASH_SEED 11
+//#define key_unit_size(map) dsize
+
+IObjPtr (Func_copy0)(IObjPtr src1, IObjPtr dst1){
+    array_map_p ptr1 = (array_map_p)src1;
+    array_map_p dst;
+    if(dst1){
+        dst = (array_map_p)dst1;
+    }else{
+        //dst = array_map_new();
+    }
+    Func_Map_KV_cpy fk = ptr1->cpy_key;
+    Func_Map_KV_cpy fv = ptr1->cpy_value;
+    uint32 init_len = ptr1->capacity;
+    uint16 key_unit_size = ptr1->key_ele_size;
+    uint16 val_unit_size = ptr1->val_ele_size;
+    uint32 val_len = ptr1->len_entry;
+    //
+    array_map_p ptr = (array_map_p)ALLOC(sizeof (struct array_map));
+    ptr->keys = ALLOC(init_len * key_unit_size);
+    ptr->values = ALLOC(init_len * val_unit_size);
+    ptr->hashes = ALLOC(init_len * sizeof (uint32));
+    ptr->capacity = init_len;
+    ptr->len_entry = ptr1->len_entry;
+    ptr->key_ele_size = key_unit_size;
+    ptr->val_ele_size = val_unit_size;
+
+    if(fk){
+        for(uint32 i = 0 ; i < val_len; ++ i){
+            fk(((void**)ptr1->keys)[i], ((void**)ptr->keys)[i]);
+        }
+    }else{
+        memcpy(ptr->keys, ptr1->keys, val_len * key_unit_size);
+    }
+    if(fv){
+        for(uint32 i = 0 ; i < val_len; ++ i){
+            fv(((void**)ptr1->values)[i], ((void**)ptr->values)[i]);
+        }
+    }else{
+        memcpy(ptr->values, ptr1->values, val_len * val_unit_size);
+    }
+    memcpy(ptr->hashes, ptr1->hashes, init_len * sizeof (uint32));
+}
+int (Func_equals0)(IObjPtr src, IObjPtr dst){
+
+}
+uint32 (Func_hash0)(IObjPtr src, uint32 hash){
+
+}
+void (Func_dump0)(IObjPtr src, hstring* hs){
+
+}
+void (Func_ref0)(IObjPtr src, int c){
+
+}
 
 static inline void growUpIfNeed(array_map_p ptr, uint32 delta){
     if(ptr->len_entry >= ptr->capacity - delta){
@@ -16,18 +70,14 @@ static inline void growUpIfNeed(array_map_p ptr, uint32 delta){
     }
 }
 
-array_map_p array_map_new(struct core_allocator* ca, uint16 key_unit_size,
+array_map_p array_map_new(uint16 key_unit_size,
                           uint16 val_unit_size, uint32 init_len){
-    array_map_p ptr = (array_map_p)ca->Alloc(sizeof (struct array_map));
-    ptr->ca = ca;
-    ptr->ref = 1;
-    ptr->keys = ca->Alloc(init_len * key_unit_size);
-    ptr->values = ca->Alloc(init_len * val_unit_size);
-    ptr->hashes = ca->Alloc(init_len * sizeof (uint32));
+    array_map_p ptr = ALLOC(sizeof (struct array_map));
+    ptr->keys = ALLOC(init_len * key_unit_size);
+    ptr->values = ALLOC(init_len * val_unit_size);
+    ptr->hashes = ALLOC(init_len * sizeof (uint32));
     ptr->capacity = init_len;
     ptr->len_entry = 0;
-    ptr->key_ele_size = key_unit_size;
-    ptr->val_ele_size = val_unit_size;
     ptr->cpy_key = NULL;
     ptr->cpy_value = NULL;
     return ptr;
@@ -37,7 +87,7 @@ void array_map_put(array_map_p ptr, const void* key,
                    const void* value, void* oldVal){
 
     //handle hash.
-    uint32 hash = fasthash32(key, ptr->key_ele_size, HASH_SEED);
+    uint32 hash = fasthash32(key, ptr->key_ele_size, DEFAULT_HASH_SEED);
     if(ptr->len_entry == 0){
         growUpIfNeed(ptr, 1);
         arrays_insert(ptr->keys, 0, ptr->key_ele_size, key, 0);
@@ -67,11 +117,11 @@ void array_map_put(array_map_p ptr, const void* key,
 
 void array_map_prepare_size(array_map_p ptr, uint32 size){
     ASSERT(ptr->capacity < size);
-    ptr->keys = ptr->ca->Realloc(ptr->keys, ptr->capacity * ptr->key_ele_size,
+    ptr->keys = REALLOC(ptr->keys, ptr->capacity * ptr->key_ele_size,
                                  size * ptr->key_ele_size);
-    ptr->values = ptr->ca->Realloc(ptr->values, ptr->capacity * ptr->val_ele_size,
+    ptr->values = REALLOC(ptr->values, ptr->capacity * ptr->val_ele_size,
                                  size * ptr->val_ele_size);
-    ptr->hashes = ptr->ca->Realloc(ptr->hashes, ptr->capacity * sizeof (uint32),
+    ptr->hashes = REALLOC(ptr->hashes, ptr->capacity * sizeof (uint32),
                                  size * sizeof (uint32));
     ptr->capacity = size;
 }
@@ -80,7 +130,7 @@ int array_map_get(array_map_p ptr, const void* key, void* oldVal){
     ASSERT(oldVal != NULL);
     ASSERT(key != NULL);
     //handle hash.
-    uint32 hash = fasthash32(key, ptr->key_ele_size, HASH_SEED);
+    uint32 hash = fasthash32(key, ptr->key_ele_size, DEFAULT_HASH_SEED);
     int pos = binarySearch_uint32(ptr->hashes, 0, ptr->len_entry, hash);
     if(pos >= 0){
         void* val_dst = (char*)ptr->values + ptr->val_ele_size * pos;
@@ -93,7 +143,7 @@ int array_map_get(array_map_p ptr, const void* key, void* oldVal){
 void* array_map_rawget(array_map_p ptr, const void* key){
     ASSERT(key != NULL);
     //handle hash.
-    uint32 hash = fasthash32(key, ptr->key_ele_size, HASH_SEED);
+    uint32 hash = fasthash32(key, ptr->key_ele_size, DEFAULT_HASH_SEED);
     int pos = binarySearch_uint32(ptr->hashes, 0, ptr->len_entry, hash);
     if(pos >= 0){
         //void* val_dst = (char*)ptr->values + ptr->val_ele_size * ptr->len_entry;
@@ -105,7 +155,7 @@ void* array_map_rawget(array_map_p ptr, const void* key){
 int array_map_remove(array_map_p ptr, const void* key, void* oldVal){
     ASSERT(key != NULL);
     //handle hash.
-    uint32 hash = fasthash32(key, ptr->key_ele_size, HASH_SEED);
+    uint32 hash = fasthash32(key, ptr->key_ele_size, DEFAULT_HASH_SEED);
     int pos = binarySearch_uint32(ptr->hashes, 0, ptr->len_entry, hash);
     if(pos >= 0){
         if(oldVal){
@@ -125,20 +175,18 @@ array_map_p array_map_copy(array_map_p ptr1){
     return array_map_deep_copy(ptr1, NULL, NULL);
 }
 
-array_map_p array_map_deep_copy(array_map_p ptr1, Func_Map_KV_cpy fk,
-                                Func_Map_KV_cpy fv){
-    struct core_allocator* ca = ptr1->ca;
+array_map_p array_map_deep_copy(array_map_p ptr1){
+    Func_Map_KV_cpy fk = ptr1->cpy_key;
+    Func_Map_KV_cpy fv = ptr1->cpy_value;
     uint32 init_len = ptr1->capacity;
     uint16 key_unit_size = ptr1->key_ele_size;
     uint16 val_unit_size = ptr1->val_ele_size;
     uint32 val_len = ptr1->len_entry;
     //
-    array_map_p ptr = (array_map_p)ca->Alloc(sizeof (struct array_map));
-    ptr->ref = 1;
-    ptr->ca = ca;
-    ptr->keys = ca->Alloc(init_len * key_unit_size);
-    ptr->values = ca->Alloc(init_len * val_unit_size);
-    ptr->hashes = ca->Alloc(init_len * sizeof (uint32));
+    array_map_p ptr = (array_map_p)ALLOC(sizeof (struct array_map));
+    ptr->keys = ALLOC(init_len * key_unit_size);
+    ptr->values = ALLOC(init_len * val_unit_size);
+    ptr->hashes = ALLOC(init_len * sizeof (uint32));
     ptr->capacity = init_len;
     ptr->len_entry = ptr1->len_entry;
     ptr->key_ele_size = key_unit_size;

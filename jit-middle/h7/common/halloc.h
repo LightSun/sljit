@@ -3,8 +3,8 @@
 
 #include "h7/common/c_common.h"
 
-typedef void* (*Alloc1)(uint32 size);
-typedef void* (*Realloc1)(void* ptr, uint32 old, uint32 newSize);
+typedef void* (*Alloc1)(size_t size);
+typedef void* (*Realloc1)(void* ptr, size_t oldSize,size_t newSize);
 typedef void (*Free1)(void* ptr);
 
 typedef struct core_allocator core_allocator;
@@ -33,7 +33,7 @@ void h7_set_core_allocator(struct core_allocator* alloc);
 struct core_allocator* h7_get_core_allocator();
 
 #define ALLOC(size) h7_get_core_allocator()->Alloc(size)
-#define REALLOC(ptr,nsize) h7_get_core_allocator()->Realloc(ptr, 0, nsize)
+#define REALLOC(ptr, o, nsize) h7_get_core_allocator()->Realloc(ptr, o, nsize)
 #define FREE(ptr) h7_get_core_allocator()->Free(ptr)
 
 

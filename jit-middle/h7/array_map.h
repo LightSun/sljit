@@ -4,6 +4,7 @@
 #include "h7/common/dtypes.h"
 
 typedef void (*Func_Map_KV_cpy)(void* src, void* dst, int count);
+typedef void (*Func_Map_Hash)(void* p);
 
 typedef struct array_map array_map;
 typedef array_map* array_map_p;
@@ -12,19 +13,18 @@ struct array_map{
     IObject obj;
     uint32 capacity;
     uint32 len_entry;
-    uint16 key_ele_size;
-    uint16 val_ele_size;
-    volatile int ref;
+    uint16 key_dt;
+    uint16 val_dt;
 
-    struct core_allocator* ca;
     void* keys;
     void* values;
     uint32* hashes;
     Func_Map_KV_cpy cpy_key;
     Func_Map_KV_cpy cpy_value;
 };
+DEF_IOBJ_CHILD_FUNCS(array_map)
 
-array_map_p array_map_new(struct core_allocator* ca, uint16 key_unit_size,
+array_map_p array_map_new(uint16 key_unit_size,
                           uint16 val_unit_size, uint32 init_len);
 //
 void array_map_prepare_size(array_map_p ptr, uint32 size);

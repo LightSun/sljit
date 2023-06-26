@@ -1,6 +1,8 @@
 #ifndef H_LIST_H
 #define H_LIST_H
 
+#include "h7/common/c_common.h"
+
 typedef struct array_list{
    void** data;
    int element_count;
@@ -26,9 +28,17 @@ void array_list_delete2(array_list* list, void (*Func)(void* ele));
 
 void array_list_ensure_capacity(array_list* list, int cap);
 
+void array_list_ensure_size(array_list* list, int size);
+
 int array_list_size(array_list* list);
 
 void array_list_add(array_list* list, void* ele);
+
+static inline void array_list_set(array_list* list,
+                                  int index, void* ele){
+    ASSERT(index < list->element_count);
+    list->data[index] = ele;
+}
 /**
  * @brief array_list_remove: remove element from array
  * @param array_list: the list
@@ -81,6 +91,8 @@ void array_list_travel(array_list* list,
 array_list* array_list_copy(array_list* list,
             void* (*Func_cpy)(void* ud, void* ele),
                             void* ud);
-
+uint32 array_list_hash(array_list* list,
+            uint32 (*Func_hash)(void* ud, void* ele, uint32 seed),
+                            void* ud, uint32 seed);
 
 #endif // H_LIST_H
