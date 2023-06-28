@@ -50,6 +50,28 @@ hstring* hstring_append(hstring* owner, const char *str){
     owner->total_len += len;
     return owner;
 }
+hstring* hstring_append2(hstring* owner, const char *str, uint32 len){
+    StringFragment *frag = NULL;
+    if (NULL == str || '\0' == *str)
+        return owner;
+    frag = ALLOC(sizeof (StringFragment));
+
+    frag->next = NULL;
+    frag->length = len;
+    frag->str = ALLOC(len + 1);
+    //strcpy(frag->str, str);
+    memcpy((void *) frag->str, (const void *)str, sizeof(char) * (len + 1));
+
+    if(owner->head == NULL){
+        owner->head = owner->cur = frag;
+    }else{
+        owner->cur->next = frag;
+        owner->cur = frag;
+    }
+    owner->total_len += len;
+    return owner;
+}
+
 #define HSTRING_BUF_LEN 1024
 hstring* hstring_appendf(hstring* owner, const char *format ,...){
     if (format == NULL) {

@@ -35,6 +35,10 @@ typedef signed long long sint64;
 typedef uint64_t uint64;
 #endif
 
+#define s32 sint32
+#define s64 sint64
+#define c8 sint8
+
 #ifdef __cplusplus
 #define CPP_START extern "C" {
 #define CPP_END }
@@ -46,15 +50,17 @@ typedef uint64_t uint64;
 #ifdef __ANDROID_NDK__
     #include <android/log.h>
     #ifndef LOG_TAG
-    #define LOG_TAG "h7"
+    #define LOG_TAG "hjit"
     #endif
     #define LOGD(fmt, ...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, fmt, ##__VA_ARGS__)
     #define LOGV(fmt, ...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, fmt, ##__VA_ARGS__)
     #define LOGW(fmt, ...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG, fmt, ##__VA_ARGS__)
+    #define LOGE(fmt, ...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, fmt, ##__VA_ARGS__)
 #else
     #define LOGD(fmt, ...) printf(fmt, ##__VA_ARGS__)
     #define LOGV(fmt, ...) printf(fmt, ##__VA_ARGS__)
-    #define LOGW(fmt, ...) printf(fmt, ##__VA_ARGS__)
+    #define LOGW(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
+    #define LOGE(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
 #endif
 
 #ifndef kroundup32

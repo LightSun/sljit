@@ -4,10 +4,12 @@
 
 CPP_START
 
-void arrays_insert(void* arr, int already_ele_count, unsigned int ele_unit_size,
+void arrays_insert(void* arr, int already_ele_count,
+                   unsigned int ele_unit_size,
                    const void* data, unsigned int target_pos);
 
-void arrays_remove(void* arr, int already_ele_count, unsigned int ele_unit_size,
+void arrays_remove(void* arr, int already_ele_count,
+                   unsigned int ele_unit_size,
                    unsigned int target_pos);
 
 /**
@@ -17,7 +19,8 @@ void arrays_remove(void* arr, int already_ele_count, unsigned int ele_unit_size,
  * @param offset the offset of memory block which will be remove
  * @param size the size of memory block to remove
  */
-void mem_remove(void* mem, unsigned int total_size, unsigned int offset, unsigned int size);
+void mem_remove(void* mem, unsigned int total_size,
+                unsigned int offset, unsigned int size);
 
 
 /**
@@ -28,7 +31,8 @@ void mem_remove(void* mem, unsigned int total_size, unsigned int offset, unsigne
  * @param data the new data which will be insert
  * @param size the data size
  */
-void mem_insert(void* mem, unsigned int total_size, unsigned int offset, const void* data, unsigned int size);
+void mem_insert(void* mem, unsigned int total_size,
+                unsigned int offset, const void* data, unsigned int size);
 
 CPP_END
 

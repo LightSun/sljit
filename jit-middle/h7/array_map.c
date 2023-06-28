@@ -12,26 +12,26 @@ static inline void __array_map_init(array_map_p arr);
 static void array_map_prepare_size(array_map_p ptr, uint32 size);
 
 static inline void __grow(array_map_p list, int minCapacity){
-   int oldCapacity = list->capacity;
+   int oldCapacity = (int)list->capacity;
    int newCapacity = oldCapacity + (oldCapacity >> 1);
    if (newCapacity - minCapacity < 0){
        newCapacity = minCapacity;
    }
-   array_map_prepare_size(list, newCapacity);
+   array_map_prepare_size(list, (uint32)newCapacity);
 }
-void array_map_ensure_capacity(array_map_p list, int cap){
-    if((int)list->capacity < cap){
-        __grow(list, cap);
+void array_map_ensure_capacity(array_map_p list, uint32 cap){
+    if(list->capacity < cap){
+        __grow(list, (int)cap);
     }
 }
-void array_map_ensure_size(array_map_p list, int size){
-    array_map_ensure_capacity(list, size / list->factor + 1);
+void array_map_ensure_size(array_map_p list, uint32 size){
+    array_map_ensure_capacity(list, (uint32)(size / list->factor) + 1);
     list->len_entry = size;
 }
 
 static inline void _array_map_copy(int dt, void* srcData,
                                         void* dstData,
-                                        int val_len){
+                                        uint32 val_len){
     if(val_len == 0){
         return;
     }
@@ -39,7 +39,7 @@ static inline void _array_map_copy(int dt, void* srcData,
         memcpy(dstData, srcData, dt_size(dt) * val_len);
     }if(dt_is_pointer(dt)){
         IObject* iobj = ((void**)srcData)[0];
-        for(int i = 0 ; i < val_len ; ++i){
+        for(uint32 i = 0 ; i < val_len ; ++i){
             iobj->Func_copy(((void**)srcData)[i], ((void**)dstData)[i]);
         }
     }else{
@@ -47,7 +47,7 @@ static inline void _array_map_copy(int dt, void* srcData,
     }
 }
 static inline void _array_map_free(int dt, void* srcData,
-                                        int val_len){
+                                        uint32 val_len){
     if(val_len == 0){
         return;
     }
@@ -55,7 +55,7 @@ static inline void _array_map_free(int dt, void* srcData,
         FREE(srcData);
     }if(dt_is_pointer(dt)){
         IObject* iobj = ((void**)srcData)[0];
-        for(int i = 0 ; i < val_len ; ++i){
+        for(uint32 i = 0 ; i < val_len ; ++i){
             iobj->Func_ref(((void**)srcData)[i], -1);
         }
     }else{
@@ -63,7 +63,7 @@ static inline void _array_map_free(int dt, void* srcData,
     }
 }
 static inline uint32 _array_map_hash(int dt, void* data,
-                                   int val_len, uint32 seed){
+                                   uint32 val_len, uint32 seed){
     if(val_len == 0){
         return seed;
     }
@@ -72,7 +72,7 @@ static inline uint32 _array_map_hash(int dt, void* data,
     }if(dt_is_pointer(dt)){
         void** sd = (void**)data;
         IObject* iobj = (sd)[0];
-        for(int i = 0 ; i < val_len ; ++i){
+        for(uint32 i = 0 ; i < val_len ; ++i){
             seed = iobj->Func_hash(sd[i], seed);
         }
         return seed;
@@ -134,7 +134,7 @@ static inline uint32 __hash(int dt, const void* data, int size){
     }
 }
 //-------------------------------------------
-IObjPtr (Func_copy0)(IObjPtr src1, IObjPtr dst1){
+static IObjPtr (Func_copy0)(IObjPtr src1, IObjPtr dst1){
     array_map_p ptr1 = (array_map_p)src1;
     array_map_p dst;
     if(dst1){
@@ -161,7 +161,11 @@ IObjPtr (Func_copy0)(IObjPtr src1, IObjPtr dst1){
     memcpy(ptr->hashes, ptr1->hashes, init_len * sizeof (uint32));
     return ptr;
 }
-int (Func_equals0)(IObjPtr src1, IObjPtr dst1){
+static int (Func_equals0)(IObjPtr src1, IObjPtr dst1){
+    int ret = IObject_eqauls_base(src1, dst1);
+    if(ret != kState_NEXT){
+        return ret;
+    }
     array_map_p src = (array_map_p)src1;
     array_map_p dst = (array_map_p)dst1;
     if(src->key_dt != dst->key_dt || src->val_dt != dst->val_dt){
@@ -184,7 +188,7 @@ int (Func_equals0)(IObjPtr src1, IObjPtr dst1){
     }
     return kState_OK;
 }
-uint32 (Func_hash0)(IObjPtr src, uint32 hash){
+static uint32 (Func_hash0)(IObjPtr src, uint32 hash){
     array_map_p ptr1 = (array_map_p)src;
     uint32 nhash = _array_map_hash(ptr1->key_dt, ptr1->keys,
                     ptr1->len_entry, hash);
@@ -192,7 +196,7 @@ uint32 (Func_hash0)(IObjPtr src, uint32 hash){
                         ptr1->len_entry, nhash);
     return nhash;
 }
-void (Func_dump0)(IObjPtr src, hstring* hs){
+static void (Func_dump0)(IObjPtr src, hstring* hs){
      array_map_p ptr1 = (array_map_p)src;
     //_dump_target
     hstring_append(hs, "{");
@@ -208,7 +212,7 @@ void (Func_dump0)(IObjPtr src, hstring* hs){
     }
     hstring_append(hs, "}");
 }
-void (Func_ref0)(IObjPtr src, int c){
+static void (Func_ref0)(IObjPtr src, int c){
     array_map_p ptr = (array_map_p)src;
     if(h_atomic_add(&ptr->baseObj.ref, c) == -c){
         _array_map_free(ptr->key_dt, ptr->keys, ptr->len_entry);
@@ -219,7 +223,7 @@ void (Func_ref0)(IObjPtr src, int c){
 }
 
 static inline void __array_map_init(array_map_p arr){
-    IObject_set_name(arr, "array_map");
+    IObject_set_name(arr, "__$array_map");
     arr->baseObj.ref = 1;
     arr->baseObj.Func_copy = Func_copy0;
     arr->baseObj.Func_dump = Func_dump0;

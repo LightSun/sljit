@@ -24,8 +24,8 @@ DEF_IOBJ_CHILD_FUNCS(array_map)
 array_map_p array_map_new(uint16 key_dt,
                           uint16 val_dt, uint32 init_len);
 
-void array_map_ensure_capacity(array_map_p list, int cap);
-void array_map_ensure_size(array_map_p list, int size);
+void array_map_ensure_capacity(array_map_p list, uint32 cap);
+void array_map_ensure_size(array_map_p list, uint32 size);
 //
 void array_map_put(array_map_p ptr, const void* key,
                    const void* value, void* oldVal);

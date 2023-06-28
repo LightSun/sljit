@@ -7,6 +7,7 @@ typedef struct hstring hstring;
 
 //latter will opt.
 hstring* hstring_append(hstring* owner, const char *str);
+hstring* hstring_append2(hstring* owner, const char *str, uint32 len);
 hstring* hstring_appendf(hstring* owner, const char *format, ...);
 char* hstring_tostring(hstring* owner);
 

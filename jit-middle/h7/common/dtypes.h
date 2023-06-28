@@ -6,8 +6,10 @@
 
 #define kState_FAILED 0
 #define kState_OK 1
+#define kState_NEXT -1
 #define DEFAULT_HASH_SEED 0
 #define IOBJ_NAME_MAX_SIZE 20
+#define DEFAULT_LOAD_FACTOR 0.75f
 
 enum DT{
     kType_VOID, //only used for func-def
@@ -76,8 +78,22 @@ inline void t##_unref(t* arr){\
     obj->Func_ref(arr, -1);\
 }
 
+static inline int IObject_eqauls_base(void* p1, void* p2){
+    if(p1 == NULL){
+        if(p2 == NULL){
+            return kState_OK;
+        }else{
+            return kState_FAILED;
+        }
+    }else{
+        if(p2 == NULL){
+            return kState_FAILED;
+        }
+    }
+    return kState_NEXT;
+}
 //-----------------------------------
-static inline int dt_size(int dt){
+static inline uint32 dt_size(int dt){
     switch (dt) {
     case kType_S8:
     case kType_U8:

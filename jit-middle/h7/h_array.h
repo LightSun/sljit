@@ -5,16 +5,15 @@
 
 struct array_list;
 struct hstring;
+struct VarArray;
 typedef struct core_allocator core_allocator;
 typedef struct harray harray;
 
 struct harray{
     IObject baseObj;
     sint8 dt;
-    sint8 free_data;//should free data or not
-    int data_size;
-    int ele_count;  //element count
-    void* data;
+    sint8 free_data;
+    struct VarArray* baseArr;           //the base array.
     struct array_list* ele_list; //for pointer array.
 };
 
@@ -35,7 +34,7 @@ union harray_ele{
 DEF_IOBJ_CHILD_FUNCS(harray)
 
 harray* harray_new(sint8 dt, int c);
-harray* harray_new_nodata(sint8 dt, int count);
+harray* harray_new_nodata(sint8 dt, int c);
 
 /**
 new multi level array. like 'char arr[2][3][5]'
@@ -65,12 +64,9 @@ harray* harray_new_chars(const char* str);
 //create array as fix length. and copy str to it.
 harray* harray_new_chars2(const char* str, int len);
 
-void harray_ensure_data(harray* str);
+int harray_get_count(harray* arr);
 
-static inline int harray_get_count(harray* arr){
-    return arr->ele_count;
-}
-void* get_ptr_at(harray* p, int index);
+void* harray_get_ptr_at(harray* p, int index);
 int harray_geti(harray* arr, int index, union harray_ele* ptr);
 int harray_seti(harray* arr, int index, union harray_ele* ptr);
 int harray_seti2(harray* arr, int index, void* ptr);
