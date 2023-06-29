@@ -118,12 +118,11 @@ static int (Func_equals0)(IObjPtr src1, IObjPtr dst1){
 }
 static void (Func_dump0)(IObjPtr src1, hstring* hs){
     harray* arr = (harray*)src1;
-    DEF_DT_ALL_SWITCH(__HARRAY_TYPE_STR, arr->dt)
     hstring_append(hs, "[");
-
     if(dt_is_pointer(arr->dt)){
         switch (arr->dt) {
         case kType_P_FUNC:
+        case kType_P_FIELD:
         case kType_P_MAP:
         case kType_P_OBJECT:
         case kType_P_STRING:

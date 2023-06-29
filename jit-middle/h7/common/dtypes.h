@@ -26,7 +26,7 @@ union htype_value{
 };
 
 enum DT{
-    kType_VOID, //only used for func-def
+    kType_VOID,   //only used for func-def
     kType_S8 = 1,
     kType_U8,
     kType_S16,
@@ -42,6 +42,7 @@ enum DT{
     kType_P_STRING,
     kType_P_OBJECT,
     kType_P_FUNC,
+    kType_P_FIELD,
 };
 
 typedef struct IObject IObject;
@@ -56,11 +57,13 @@ struct IObject{
     void (*Func_dump)(IObjPtr src, hstring*);
     void (*Func_ref)(IObjPtr src, int c);
 };
-extern void* dtype_obj_cpy(void* ud, void* ele);
-extern int dtype_obj_equals(void* ud, void* ele1, void* ele2);
-extern uint32 dtype_obj_hash(void* ud, void* ele, uint32 seed);
-extern void dtype_obj_delete(void* ud, void* ele);
-extern void dtype_obj_dump(void* ud, void* ele, hstring*);
+
+void* dtype_obj_cpy(void* ud, void* ele);
+int dtype_obj_equals(void* ud, void* ele1, void* ele2);
+uint32 dtype_obj_hash(void* ud, void* ele, uint32 seed);
+void dtype_obj_delete(void* ud, void* ele);
+void dtype_obj_dump(void* ud, void* ele, hstring*);
+int IObject_eqauls_base(void* p1, void* p2);
 
 static inline void IObject_set_name(void* arr, const char* name){
     IObject* obj = (IObject*)arr;
@@ -70,49 +73,39 @@ static inline void IObject_set_name(void* arr, const char* name){
 }
 
 #define DEF_IOBJ_CHILD_FUNCS(t)\
-inline t* t##_copy(t* src){\
+static inline t* t##_copy(t* src){\
     IObject* obj = (IObject*)src;\
     return (t*)obj->Func_copy(src, NULL);\
 }\
-inline void t##_delete(t* arr){\
+static inline void t##_delete(t* arr){\
     IObject* obj = (IObject*)arr;\
     obj->Func_ref(arr, -1);\
 }\
-inline int t##_equals(t* arr, t* arr2){\
+static inline int t##_equals(t* arr, t* arr2){\
+    int ret = IObject_eqauls_base(arr, arr2);\
+    if(ret != kState_NEXT){\
+        return ret;\
+    }\
     IObject* obj = (IObject*)arr;\
     return obj->Func_equals(arr, arr2);\
 }\
-inline uint32 t##_hash(t* arr, uint32 seed){\
+static inline uint32 t##_hash(t* arr, uint32 seed){\
     IObject* obj = (IObject*)arr;\
     return obj->Func_hash(arr, seed);\
 }\
-inline void t##_dump(t* arr, struct hstring* hs){\
+static inline void t##_dump(t* arr, struct hstring* hs){\
     IObject* obj = (IObject*)arr;\
     obj->Func_dump(arr, hs);\
 }\
-inline void t##_ref(t* arr){\
+static inline void t##_ref(t* arr){\
     IObject* obj = (IObject*)arr;\
     obj->Func_ref(arr, 1);\
 }\
-inline void t##_unref(t* arr){\
+static inline void t##_unref(t* arr){\
     IObject* obj = (IObject*)arr;\
     obj->Func_ref(arr, -1);\
 }
 
-static inline int IObject_eqauls_base(void* p1, void* p2){
-    if(p1 == NULL){
-        if(p2 == NULL){
-            return kState_OK;
-        }else{
-            return kState_FAILED;
-        }
-    }else{
-        if(p2 == NULL){
-            return kState_FAILED;
-        }
-    }
-    return kState_NEXT;
-}
 //-----------------------------------
 static inline uint32 dt_size(int dt){
     switch (dt) {
@@ -139,9 +132,50 @@ static inline uint32 dt_size(int dt){
     case kType_P_STRING:
     case kType_P_OBJECT:
     case kType_P_FUNC:
+    case kType_P_FIELD:
         return sizeof(void*);
     }
     return 0;
+}
+
+static inline const char* dt2str(int dt){
+    switch (dt) {
+    case kType_S8:
+        return "sint8";
+    case kType_U8:
+        return "uint8";
+    case kType_S16:
+        return "int16";
+    case kType_U16:
+        return "uint16";
+    case kType_S32:
+        return "int32";
+    case kType_U32:
+        return "uint32";
+    case kType_S64:
+        return "int64";
+    case kType_U64:
+        return "uint64";
+
+    case kType_F32:
+        return "float";
+    case kType_F64:
+        return "double";
+
+    case kType_P_ARRAY:
+        return "<array>";
+    case kType_P_MAP:
+        return "<map>";
+    case kType_P_STRING:
+        return "<string>";
+    case kType_P_OBJECT:
+        return "<object>";
+    case kType_P_FUNC:
+        return "<function>";
+    case kType_P_FIELD:
+        return "<field>";
+    }
+    return "<unknown>";
 }
 
 static inline int dt_is_pointer(int dt){
@@ -151,6 +185,7 @@ static inline int dt_is_pointer(int dt){
     case kType_P_STRING:
     case kType_P_OBJECT:
     case kType_P_FUNC:
+    case kType_P_FIELD:
         return 1;
     }
     return 0;
@@ -201,6 +236,7 @@ macro(kType_P_MAP, "<map>")\
 macro(kType_P_STRING, "<string>")\
 macro(kType_P_OBJECT, "<object>")\
 macro(kType_P_FUNC, "<function>")\
+macro(kType_P_FIELD, "<field>")\
 macro(kType_VOID, "<void>")\
 }
 

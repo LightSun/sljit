@@ -39,6 +39,12 @@ typedef uint64_t uint64;
 #define s64 sint64
 #define c8 sint8
 
+#ifdef _WIN32
+#define NEW_LINE "\r\n"
+#else
+#define NEW_LINE "\n"
+#endif
+
 #ifdef __cplusplus
 #define CPP_START extern "C" {
 #define CPP_END }

@@ -1,9 +1,16 @@
 #ifndef H_STRING_H
 #define H_STRING_H
 
+#include <string.h>
 #include "h7/common/halloc.h"
 
 typedef struct hstring hstring;
+
+static inline char* hstrdup(const char* str){
+    char* data = ALLOC(strlen(str) + 1);
+    strcpy(data, str);
+    return data;
+}
 
 //latter will opt.
 hstring* hstring_append(hstring* owner, const char *str);

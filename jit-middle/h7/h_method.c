@@ -12,12 +12,12 @@ static IObjPtr (Func_copy0)(IObjPtr src1, IObjPtr dst1){
      hmethod* dst = (hmethod*)dst1;
      if(dst == NULL){
         //src->ret
-        dst = hmethod_new(hmember_copy(src->ret),
+        dst = hmethod_new(src->name, hfield_copy(src->ret),
                           harray_copy(src->params));
      }else{
-        hmember_unref(dst->ret);
+        hfield_unref(dst->ret);
         harray_unref(dst->params);
-        dst->ret = hmember_copy(src->ret);
+        dst->ret = hfield_copy(src->ret);
         dst->params = harray_copy(src->params);
      }
      return dst;
@@ -29,7 +29,7 @@ static int (Func_equals0)(IObjPtr src1, IObjPtr dst1){
     }
     hmethod* src = (hmethod*)src1;
     hmethod* dst = (hmethod*)dst1;
-    if(!hmember_equals(src->ret, dst->ret)){
+    if(!hfield_equals(src->ret, dst->ret)){
         return kState_FAILED;
     }
     if(!harray_equals(src->params, dst->params)){
@@ -39,21 +39,22 @@ static int (Func_equals0)(IObjPtr src1, IObjPtr dst1){
 }
 static uint32 (Func_hash0)(IObjPtr src1, uint32 seed){
     hmethod* src = (hmethod*)src1;
-    seed = hmember_hash(src->ret, seed);
+    seed = hfield_hash(src->ret, seed);
     return harray_hash(src->params, seed);
 }
 static void (Func_dump0)(IObjPtr src1, hstring* hs){
     hmethod* src = (hmethod*)src1;
     hstring_append(hs, "ret = ");
-    hmember_dump(src->ret, hs);
+    hfield_dump(src->ret, hs);
     hstring_append(hs, ", params = ");
     harray_dump(src->params, hs);
 }
 static void (Func_ref0)(IObjPtr src1, int c){
     hmethod* src = (hmethod*)src1;
     if(h_atomic_add(&src->baseObj.ref, c) == -c){
-        hmember_unref(src->ret);
+        hfield_unref(src->ret);
         harray_unref(src->params);
+        FREE(src->name);
         FREE(src);
     }
 }
@@ -68,9 +69,10 @@ static inline void __hmethod_init(hmethod* arr){
 }
 
 //---------------------------------------------------
-hmethod_p hmethod_new(hmember_p ret, harray_p params){
+hmethod_p hmethod_new(const char* name, hfield_p ret, harray_p params){
     hmethod_p p = ALLOC_T(hmethod);
     __hmethod_init(p);
+    p->name = hstrdup(name);
     p->ret = ret;
     p->params = params;
     return p;
