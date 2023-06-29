@@ -4,6 +4,7 @@
 #include "h7/common/dtypes.h"
 #include "h7/common/halloc.h"
 #include "h7/numbers.h"
+#include "h7/hash.h"
 
 typedef struct VarArray VarArray;
 struct VarArray{
@@ -19,6 +20,11 @@ static inline int _VarArray_alloc_ele_len(VarArray* list){
 }
 static inline uint32 VarArray_valid_data_size(VarArray* list){
     return list->ele_size * list->ele_count;
+}
+
+static inline uint32 VarArray_hash(VarArray* list, uint32 seed){
+    return fasthash32(list->data,
+                 VarArray_valid_data_size(list), seed);
 }
 
 static inline void __grow(VarArray* list, int minCapacity){

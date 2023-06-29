@@ -26,7 +26,6 @@ void array_map_ensure_capacity(array_map_p list, uint32 cap){
 }
 void array_map_ensure_size(array_map_p list, uint32 size){
     array_map_ensure_capacity(list, (uint32)(size / list->factor) + 1);
-    list->len_entry = size;
 }
 
 static inline void _array_map_copy(int dt, void* srcData,
@@ -35,9 +34,7 @@ static inline void _array_map_copy(int dt, void* srcData,
     if(val_len == 0){
         return;
     }
-    if(dt == kType_P_FUNC){
-        memcpy(dstData, srcData, dt_size(dt) * val_len);
-    }if(dt_is_pointer(dt)){
+    if(dt_is_pointer(dt)){
         IObject* iobj = ((void**)srcData)[0];
         for(uint32 i = 0 ; i < val_len ; ++i){
             iobj->Func_copy(((void**)srcData)[i], ((void**)dstData)[i]);
@@ -51,9 +48,7 @@ static inline void _array_map_free(int dt, void* srcData,
     if(val_len == 0){
         return;
     }
-    if(dt == kType_P_FUNC){
-        FREE(srcData);
-    }if(dt_is_pointer(dt)){
+    if(dt_is_pointer(dt)){
         IObject* iobj = ((void**)srcData)[0];
         for(uint32 i = 0 ; i < val_len ; ++i){
             iobj->Func_ref(((void**)srcData)[i], -1);
@@ -67,9 +62,7 @@ static inline uint32 _array_map_hash(int dt, void* data,
     if(val_len == 0){
         return seed;
     }
-    if(dt == kType_P_FUNC){
-        return fasthash32(data, dt_size(dt) * val_len, seed);
-    }if(dt_is_pointer(dt)){
+    if(dt_is_pointer(dt)){
         void** sd = (void**)data;
         IObject* iobj = (sd)[0];
         for(uint32 i = 0 ; i < val_len ; ++i){
@@ -88,9 +81,7 @@ case hffi_t:{\
 
 static inline void _dump_target(int dt, void* data, hstring* hs){
 
-    if(dt == kType_P_FUNC){
-        hstring_appendf(hs, "func<%p>", data);
-    }if(dt_is_pointer(dt)){
+    if(dt_is_pointer(dt)){
         IObject* iobj = (IObject*)data;
         iobj->Func_dump(data, hs);
     }else{
@@ -103,11 +94,8 @@ static inline uint32 _array_map_eq(int dt, void* data1,
     if(val_len == 0){
         return kState_OK;
     }
-    if(dt == kType_P_FUNC){
-        if(memcmp(data1, data2, dt_size(dt) * val_len) != 0){
-            return kState_FAILED;
-        }
-    }if(dt_is_pointer(dt)){
+
+    if(dt_is_pointer(dt)){
         void** sd1 = (void**)data1;
         void** sd2 = (void**)data2;
         IObject* iobj = (sd1)[0];
@@ -124,9 +112,8 @@ static inline uint32 _array_map_eq(int dt, void* data1,
     return kState_OK;
 }
 static inline uint32 __hash(int dt, const void* data, int size){
-    if(dt == kType_P_FUNC){
-        return fasthash32(data, size, DEFAULT_HASH_SEED);
-    }if(dt_is_pointer(dt)){
+
+    if(dt_is_pointer(dt)){
         IObject* iobj = (IObject*)data;
         return iobj->Func_hash((void*)data, DEFAULT_HASH_SEED);
     }else{
@@ -137,22 +124,22 @@ static inline uint32 __hash(int dt, const void* data, int size){
 static IObjPtr (Func_copy0)(IObjPtr src1, IObjPtr dst1){
     array_map_p ptr1 = (array_map_p)src1;
     array_map_p dst;
+    //
+    uint32 init_len = ptr1->capacity;
+    uint32 val_len = ptr1->len_entry;
     if(dst1){
         dst = (array_map_p)dst1;
+        dst->key_dt = ptr1->key_dt;
+        dst->val_dt = ptr1->val_dt;
+        dst->factor = ptr1->factor;
+        array_map_ensure_capacity(dst, ptr1->capacity);
     }else{
         dst = array_map_new(ptr1->key_dt, ptr1->val_dt,
                             ptr1->capacity);
         __array_map_init(dst);
     }
-    uint32 init_len = ptr1->capacity;
-    uint16 key_unit_size = dt_size(ptr1->key_dt);
-    uint16 val_unit_size = dt_size(ptr1->val_dt);
-    uint32 val_len = ptr1->len_entry;
     //
     array_map_p ptr = dst;
-    ptr->keys = ALLOC(init_len * key_unit_size);
-    ptr->values = ALLOC(init_len * val_unit_size);
-    ptr->hashes = ALLOC(init_len * sizeof (uint32));
     ptr->capacity = init_len;
     ptr->len_entry = ptr1->len_entry;
 
@@ -250,7 +237,7 @@ array_map_p array_map_new(uint16 key_dt,
 
 void array_map_put(array_map_p ptr, const void* key,
                    const void* value, void* oldVal){
-
+    array_map_ensure_size(ptr, ptr->len_entry + 1);
     uint32 key_ele_size = dt_size(ptr->key_dt);
     uint32 val_ele_size = dt_size(ptr->val_dt);
     //handle hash.
@@ -278,10 +265,6 @@ void array_map_put(array_map_p ptr, const void* key,
         arrays_insert(ptr->hashes, ptr->len_entry,
                       sizeof (uint32), &hash, pos1);
         ptr->len_entry ++;
-    }
-    //add if need
-    if(ptr->len_entry >= ptr->factor * ptr->capacity){
-        __grow(ptr, 0);
     }
 }
 

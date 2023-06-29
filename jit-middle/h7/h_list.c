@@ -72,6 +72,23 @@ void array_list_add(array_list* list, void* ele){
         __grow(list, 0);
     }
 }
+void array_list_addI(array_list* list, int index, void* ele){
+    if(index > list->element_count){
+        index = list->element_count;
+    }
+    if(list->element_count + 1 >= list->factor * list->max_count){
+        __grow(list, 0);
+    }
+    if(index < list->element_count){
+        //move
+        int offset = index * sizeof (void*);
+        int total_c = (list->element_count - index) * sizeof (void*);
+        char* data = (char*)list->data + offset;
+        memmove(data + sizeof (void*), data, total_c);
+    }
+    list->data[index] = ele;
+    list->element_count ++;
+}
 void* array_list_get(array_list* list, int idx){
     if(idx >= list->element_count){
         return NULL;

@@ -34,6 +34,8 @@ int array_list_size(array_list* list);
 
 void array_list_add(array_list* list, void* ele);
 
+void array_list_addI(array_list* list, int index, void* ele);
+
 static inline void array_list_set(array_list* list,
                                   int index, void* ele){
     ASSERT(index < list->element_count);

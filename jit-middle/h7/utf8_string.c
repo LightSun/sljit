@@ -69,8 +69,8 @@ Utf8String *utf8_create() {
 
     int length = 32;
     Utf8String *uni_str;
-
     uni_str = (Utf8String *)ALLOC(sizeof(Utf8String));
+    __Utf8String_init(uni_str);
     uni_str->_alloced = length;
     uni_str->length = 0;
     /* Allocate the data array */

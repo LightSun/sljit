@@ -37,5 +37,7 @@ struct core_allocator* h7_get_core_allocator();
 #define REALLOC2(ptr, nsize) h7_get_core_allocator()->Realloc(ptr, 0, nsize)
 #define FREE(ptr) h7_get_core_allocator()->Free(ptr)
 
+#define ALLOC_T(t) (t*)ALLOC(sizeof(t))
+
 
 #endif // H7_ALLOC_H

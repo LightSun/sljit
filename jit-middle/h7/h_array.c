@@ -72,8 +72,7 @@ static IObjPtr (Func_copy0)(IObjPtr src1, IObjPtr dst1){
 static uint32 (Func_hash0)(IObjPtr src, uint32 seed){
     harray* arr = (harray*)src;
     if(arr->baseArr){
-        return fasthash32(arr->baseArr->data,
-                          VarArray_valid_data_size(arr->baseArr), seed);
+        return VarArray_hash(arr->baseArr, seed);
     }
     if(arr->ele_list){
         return array_list_hash(arr->ele_list, dtype_obj_hash,
@@ -180,10 +179,10 @@ harray* harray_new_arrays(struct array_list* arrays){
     arr->free_data = 0;
     return arr;
 }
-harray* harray_new(sint8 dt, int c){
-    harray* arr = harray_new_nodata(dt, c);
+harray* harray_new(int dt, int initc){
+    harray* arr = harray_new_nodata(dt, initc);
     if(!dt_is_pointer(dt)){
-        arr->baseArr = VarArray_new_size(dt_size(dt), 8);
+        arr->baseArr = VarArray_new(dt_size(dt), initc);
         arr->free_data = 1;
     }
     return arr;
@@ -203,7 +202,7 @@ static void setChildArray(harray* parent,sint8 dt,
         array_list_set(parent->ele_list, j, harr_tmp);
     }
 }
-harray* harray_new_multi(sint8 dt,
+harray* harray_new_multi(int dt,
                          int* arr_count, int size){
     //multi level array
     int totalCount = 1;
@@ -225,7 +224,7 @@ harray* harray_new_multi(sint8 dt,
     }
     return arr;
 }
-harray* harray_new_nodata(sint8 dt, int count){
+harray* harray_new_nodata(int dt, int initc){
     harray* arr = MALLOC( sizeof(harray));
     __harray_init(arr);
     arr->dt = dt;
@@ -233,7 +232,7 @@ harray* harray_new_nodata(sint8 dt, int count){
     arr->free_data = 0;
     //element is pointer
     if(dt_is_pointer(dt)){
-        arr->ele_list = array_list_new2(count * 4 / 3 + 1);
+        arr->ele_list = array_list_new2(initc * 4 / 3 + 1);
     }else{
         arr->ele_list = NULL;
     }
@@ -258,7 +257,7 @@ harray* harray_new_chars2(const char* str, int len){
     ((char*)arr->baseArr->data)[len] = '\0';
     return arr;
 }
-harray* harray_new_from_data(sint8 dt,
+harray* harray_new_from_data(int dt,
                              void* data, int data_size,
                              int ele_count, sint8 free_data){
     harray* arr = MALLOC( sizeof (harray));
@@ -288,7 +287,7 @@ case hffi_t:{\
     ptr->_##t = ((t*)arr->baseArr->data)[index];\
 }return kState_OK;
 
-int harray_geti(harray* arr, int index, union harray_ele* ptr){
+int harray_geti(harray* arr, int index, harray_ele* ptr){
     if(index >= (int)arr->baseArr->ele_count){
         return kState_FAILED;
     }
@@ -312,7 +311,12 @@ case hffi_t:{\
     ((t*)arr->baseArr->data)[index] = *((t*)ptr);\
 }return kState_OK;
 
-int harray_seti(harray* arr, int index, union harray_ele* ptr){
+#define __ADD_I(hffi_t, t)\
+case hffi_t:{\
+    ((t*)arr->baseArr->data)[index] = *((t*)ptr);\
+}return kState_OK;
+
+int harray_seti(harray* arr, int index, harray_ele* ptr){
     if(index >= harray_get_count(arr)){
         return kState_FAILED;
     }
@@ -336,6 +340,19 @@ int harray_seti2(harray* arr, int index, void* ptr){
         DEF_DT_BASE_SWITCH(__SET_I_2, arr->dt);
     }
     return kState_FAILED;
+}
+
+int harray_add(harray* arr, int index, void* ptr){
+    int cur_c = harray_get_count(arr);
+    if(index >= cur_c){
+        index = cur_c;
+    }
+    if(dt_is_pointer(arr->dt)){
+        array_list_addI(arr->ele_list, index, ptr);
+    }else{
+        VarArray_add(arr->baseArr, index, ptr);
+    }
+    return kState_OK;
 }
 
 

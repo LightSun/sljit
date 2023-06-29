@@ -7,42 +7,29 @@ struct array_list;
 struct hstring;
 struct VarArray;
 typedef struct core_allocator core_allocator;
-typedef struct harray harray;
+typedef union htype_value harray_ele;
 
-struct harray{
+typedef struct harray{
     IObject baseObj;
-    sint8 dt;
+    int dt;
     sint8 free_data;
     struct VarArray* baseArr;           //the base array.
     struct array_list* ele_list; //for pointer array.
-};
+}harray, *harray_p;
 
-union harray_ele{
-    sint8 _sint8;
-    uint8 _uint8;
-    sint16 _sint16;
-    uint16 _uint16;
-    sint32 _sint32;
-    uint32 _uint32;
-    sint64 _sint64;
-    uint64 _uint64;
-    float _float;
-    double _double;
-    void* _extra;  //can be harray or struct.
-};
 //-----------------------
 DEF_IOBJ_CHILD_FUNCS(harray)
 
-harray* harray_new(sint8 dt, int c);
-harray* harray_new_nodata(sint8 dt, int c);
+harray* harray_new(int dt, int initc);
+harray* harray_new_nodata(int dt, int initc);
 
 /**
 new multi level array. like 'char arr[2][3][5]'
 */
-harray* harray_new_multi(sint8 dt,
+harray* harray_new_multi(int dt,
                          int* arr_count, int size);
 //free_data: true to free data on recycle.
-harray* harray_new_from_data(sint8 dt,
+harray* harray_new_from_data(int dt,
                              void* data, int data_size,
                              int ele_count, sint8 free_data);
 
@@ -67,11 +54,11 @@ harray* harray_new_chars2(const char* str, int len);
 int harray_get_count(harray* arr);
 
 void* harray_get_ptr_at(harray* p, int index);
-int harray_geti(harray* arr, int index, union harray_ele* ptr);
-int harray_seti(harray* arr, int index, union harray_ele* ptr);
+
+int harray_geti(harray* arr, int index, harray_ele* ptr);
+int harray_seti(harray* arr, int index, harray_ele* ptr);
 int harray_seti2(harray* arr, int index, void* ptr);
-
-
+int harray_add(harray* arr, int index, void* ptr);
 
 
 #endif // H_ARRAY_H

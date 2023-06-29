@@ -8,8 +8,22 @@
 #define kState_OK 1
 #define kState_NEXT -1
 #define DEFAULT_HASH_SEED 0
-#define IOBJ_NAME_MAX_SIZE 20
+#define IOBJ_NAME_MAX_SIZE 28
 #define DEFAULT_LOAD_FACTOR 0.75f
+
+union htype_value{
+    sint8 _sint8;
+    uint8 _uint8;
+    sint16 _sint16;
+    uint16 _uint16;
+    sint32 _sint32;
+    uint32 _uint32;
+    sint64 _sint64;
+    uint64 _uint64;
+    float _float;
+    double _double;
+    void* _extra;  //can be any object
+};
 
 enum DT{
     kType_VOID, //only used for func-def
@@ -43,19 +57,22 @@ struct IObject{
     void (*Func_ref)(IObjPtr src, int c);
 };
 extern void* dtype_obj_cpy(void* ud, void* ele);
+extern int dtype_obj_equals(void* ud, void* ele1, void* ele2);
 extern uint32 dtype_obj_hash(void* ud, void* ele, uint32 seed);
 extern void dtype_obj_delete(void* ud, void* ele);
+extern void dtype_obj_dump(void* ud, void* ele, hstring*);
 
 static inline void IObject_set_name(void* arr, const char* name){
     IObject* obj = (IObject*)arr;
-    memset(obj->name, 0, IOBJ_NAME_MAX_SIZE);
-    memcpy(obj->name, name, strlen(name));
+    int len = strlen(name);
+    memcpy(obj->name, name, len);
+    obj->name[len] = '\0';
 }
 
 #define DEF_IOBJ_CHILD_FUNCS(t)\
 inline t* t##_copy(t* src){\
     IObject* obj = (IObject*)src;\
-    return obj->Func_copy(src, NULL);\
+    return (t*)obj->Func_copy(src, NULL);\
 }\
 inline void t##_delete(t* arr){\
     IObject* obj = (IObject*)arr;\
@@ -64,6 +81,10 @@ inline void t##_delete(t* arr){\
 inline int t##_equals(t* arr, t* arr2){\
     IObject* obj = (IObject*)arr;\
     return obj->Func_equals(arr, arr2);\
+}\
+inline uint32 t##_hash(t* arr, uint32 seed){\
+    IObject* obj = (IObject*)arr;\
+    return obj->Func_hash(arr, seed);\
 }\
 inline void t##_dump(t* arr, struct hstring* hs){\
     IObject* obj = (IObject*)arr;\
