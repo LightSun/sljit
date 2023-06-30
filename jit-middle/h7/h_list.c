@@ -96,14 +96,16 @@ void* array_list_get(array_list* list, int idx){
     return list->data[idx];
 }
 void* array_list_remove_by_index(array_list* list, int idx){
-    if(idx >= list->element_count){
+    if(idx < 0 || idx >= list->element_count){
         return NULL;
     }
     void* old_data = list->data[idx];
     // 3,  0 -> 2  :: 3, 1 -> 1 ::3, 2 -> 0
-    int size = sizeof (void*) * (list->element_count - 1 - idx);
-    if(size > 0){
-        memcpy(list->data + idx * sizeof (void*), list->data + (idx + 1) * sizeof (void*), size);
+    int move_c = list->element_count - idx - 1;
+    if(move_c > 0){
+        char* data = (char*)list->data + idx * sizeof (void*);
+        memmove(data, data + sizeof (void*),
+                move_c * sizeof (void*));
     }
     list->element_count -- ;
     return old_data;

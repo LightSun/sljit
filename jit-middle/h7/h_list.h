@@ -8,7 +8,7 @@ typedef struct array_list{
    int element_count;
    int max_count;
    float factor; //the load factor
-}array_list;
+}array_list, *array_list_p;
 
 #define array_list_new_simple() array_list_new(8, 0.75f)
 #define array_list_new2(init_count) array_list_new(init_count, 0.75f)
@@ -36,6 +36,7 @@ void array_list_add(array_list* list, void* ele);
 
 void array_list_addI(array_list* list, int index, void* ele);
 
+//careful, you may need to free old before this
 static inline void array_list_set(array_list* list,
                                   int index, void* ele){
     ASSERT(index < list->element_count);

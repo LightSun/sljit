@@ -3,9 +3,6 @@
 
 #include "h7/common/dtypes.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 typedef unsigned char utf8_char;
 
 typedef struct Utf8String {
@@ -98,10 +95,6 @@ int utf8_insert(Utf8String *ustr, int index, utf8_char data);
 int _utf8_enlarge(Utf8String *ustr);
 
 int _utf8_space_require(Utf8String *ustr, int size);
-
-#ifdef __cplusplus
-};
-#endif
 
 #endif
 

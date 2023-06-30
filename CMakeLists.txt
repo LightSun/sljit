@@ -44,6 +44,7 @@ SET(SRC_TEST
     ${SRC_VM}
     test_src/sljitTest.c
     test_src/sljitMain.cpp
+    test_src/test_jit_middle.c
     test_src/test_base1.c
     test_src/test_branch.c
     test_src/test_loop.c

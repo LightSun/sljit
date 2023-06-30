@@ -6,14 +6,13 @@
 #include "h7/numbers.h"
 #include "h7/hash.h"
 
-typedef struct VarArray VarArray;
-struct VarArray{
+typedef struct VarArray{
     void* data;
     uint32 alloc;
     uint32 ele_size; //the every size of element.
     uint32 ele_count;
     float factor; //the load factor;
-};
+}VarArray,*VarArray_p;
 
 static inline int _VarArray_alloc_ele_len(VarArray* list){
     return list->alloc / list->ele_size;
@@ -111,7 +110,10 @@ static inline void VarArray_remove(VarArray* p,int index){
     ASSERT(index >= 0 && index < (int)p->ele_count);
     char* data = (char*)p->data + index * p->ele_size;
     int move_c = (int)p->ele_count - index - 1;
-    memmove(data, data + p->ele_size * move_c, p->ele_size * move_c);
+    if(move_c > 0){
+        memmove(data, data + p->ele_size * move_c, p->ele_size * move_c);
+    }
+    p->ele_count --;
 }
 
 static inline void VarArray_get(VarArray* p,int index, void* out_d){
