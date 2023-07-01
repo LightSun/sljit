@@ -18,6 +18,8 @@ hstring* hstring_append2(hstring* owner, const char *str, uint32 len);
 hstring* hstring_appendf(hstring* owner, const char *format, ...);
 char* hstring_tostring(hstring* owner);
 
+void hstring_log_and_delete(hstring* owner);
+
 hstring* hstring_new();
 void hstring_delete(hstring* owner);
 

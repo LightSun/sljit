@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <memory.h>
 
-void arrays_insert(void* arr, int already_ele_count, unsigned int ele_unit_size,
+void arrays_insert(void* arr, unsigned int already_ele_count, unsigned int ele_unit_size,
                    const void* data, unsigned int target_pos){
     if(already_ele_count == 0){
          ASSERT(target_pos == 0);
@@ -11,7 +11,7 @@ void arrays_insert(void* arr, int already_ele_count, unsigned int ele_unit_size,
          return;
     }
     char* dst = (char*)arr + target_pos * ele_unit_size;
-    unsigned int moveSize = (already_ele_count - target_pos) * ele_unit_size;
+    unsigned int moveSize = ((uint32)already_ele_count - target_pos) * ele_unit_size;
     if(moveSize > 0){
         void* copy = malloc( moveSize);
         memcpy(copy, dst, moveSize);
@@ -23,11 +23,11 @@ void arrays_insert(void* arr, int already_ele_count, unsigned int ele_unit_size,
     }
 }
 
-void arrays_remove(void* arr, int already_ele_count, unsigned int ele_unit_size,
+void arrays_remove(void* arr, unsigned int already_ele_count, unsigned int ele_unit_size,
                    unsigned int target_pos){
     if(already_ele_count > 0){
         char* dst = (char*)arr + target_pos * ele_unit_size;
-        unsigned int moveSize = (already_ele_count - target_pos - 1) * ele_unit_size;
+        unsigned int moveSize = ((uint32)already_ele_count - target_pos - 1) * ele_unit_size;
         if(moveSize > 0){
             void* copy = malloc( moveSize);
             memcpy(copy, dst + ele_unit_size, moveSize);

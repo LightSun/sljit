@@ -1,7 +1,9 @@
 
+#include <string.h>
 #include "h7/common/dtypes.h"
 #include "h7/h_atomic.h"
 #include "h7/hash.h"
+#include "h7/h_string.h"
 
 int IObject_eqauls_base(void* p1, void* p2){
     if(p1 == NULL){
@@ -13,6 +15,9 @@ int IObject_eqauls_base(void* p1, void* p2){
     }else{
         if(p2 == NULL){
             return kState_FAILED;
+        }
+        if(p1 == p2){
+            return kState_OK;
         }
         IObject* obj1 = (IObject*)p1;
         IObject* obj2 = (IObject*)p2;
@@ -75,7 +80,10 @@ int dtype_obj_equals(void* ud, void* ele1, void* ele2){
     return kState_FAILED;
 }
 
-void dtype_obj_delete(void* ud, void* ele){
+void dtype_obj_ref(void* ud, void* ele, int c){
+    if(!ele){
+        return;
+    }
     int dt = *(int*)(ud);
     switch (dt) {
     case kType_P_FUNC:
@@ -85,7 +93,7 @@ void dtype_obj_delete(void* ud, void* ele){
     case kType_P_OBJECT:
     case kType_P_MAP:{
         IObject* obj = (IObject*)ele;
-        return obj->Func_ref(ele, -1);
+        return obj->Func_ref(ele, c);
     }
     }
 }
@@ -106,7 +114,8 @@ void dtype_obj_dump(void* ud, void* ele, hstring* hs){
     }
 }
 
-void dtype_obj_ref(void* ele, int c){
-    IObject* obj = (IObject*)ele;
-    obj->Func_ref(ele, c);
+void dtype_obj_log(void* ud, void* ele){
+    hstring* hs = hstring_new();
+    dtype_obj_dump(ud, ele, hs);
+    hstring_log_and_delete(hs);
 }

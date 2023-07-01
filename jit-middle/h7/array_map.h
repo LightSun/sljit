@@ -34,10 +34,11 @@ int array_map_get(array_map_p ptr, const void* key, void* oldVal);
 
 void* array_map_rawget(array_map_p ptr, const void* key);
 
-int array_map_remove(array_map_p ptr, const void* key, void* oldVal);
+int array_map_remove(array_map_p ptr, const void* key,
+                     void* oldKey, void* oldVal);
 
 #define array_map_new2(kt,vt) array_map_new(kt, vt, 8)
-#define array_map_size(ptr) ptr->len_entry
+#define array_map_size(ptr) (int)ptr->len_entry
 #define array_map_keys(ptr) ptr->keys
 #define array_map_values(ptr) ptr->values
 

@@ -60,11 +60,13 @@ typedef uint64_t uint64;
     #endif
     #define LOGD(fmt, ...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, fmt, ##__VA_ARGS__)
     #define LOGV(fmt, ...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, fmt, ##__VA_ARGS__)
+    #define LOGI(fmt, ...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, fmt, ##__VA_ARGS__)
     #define LOGW(fmt, ...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG, fmt, ##__VA_ARGS__)
     #define LOGE(fmt, ...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, fmt, ##__VA_ARGS__)
 #else
     #define LOGD(fmt, ...) printf(fmt, ##__VA_ARGS__)
     #define LOGV(fmt, ...) printf(fmt, ##__VA_ARGS__)
+    #define LOGI(fmt, ...) printf(fmt, ##__VA_ARGS__)
     #define LOGW(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
     #define LOGE(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
 #endif

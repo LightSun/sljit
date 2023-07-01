@@ -3,6 +3,7 @@
 
 #include "h7/common/c_common.h"
 #include <memory.h>
+#include <string.h>
 
 #define kState_FAILED 0
 #define kState_OK 1
@@ -48,6 +49,7 @@ enum DT{
 typedef struct IObject IObject;
 typedef struct hstring hstring;
 typedef void* IObjPtr;
+
 struct IObject{
     volatile int ref;
     char name[IOBJ_NAME_MAX_SIZE];
@@ -61,13 +63,27 @@ struct IObject{
 void* dtype_obj_cpy(void* ud, void* ele);
 int dtype_obj_equals(void* ud, void* ele1, void* ele2);
 uint32 dtype_obj_hash(void* ud, void* ele, uint32 seed);
-void dtype_obj_delete(void* ud, void* ele);
+void dtype_obj_ref(void* ud, void* ele, int ref);
 void dtype_obj_dump(void* ud, void* ele, hstring*);
 int IObject_eqauls_base(void* p1, void* p2);
 
+void dtype_obj_log(void* ud, void* ele);
+
+static inline void dtype_obj_delete(void* ud, void* ele){
+    dtype_obj_ref(ud, ele, -1);
+}
+
+//
+typedef int (*dt_func_eq)(void* ud, void* e1, void* e2);
+typedef void* (*dt_func_cpy)(void* ud, void* e1);
+typedef uint32 (*dt_func_hash)(void* ud, void* ele, uint32 seed);
+typedef void (*dt_func_delete)(void* ud, void* ele);
+typedef void (*dt_func_dump)(void* ud, void* ele, hstring*);
+
+
 static inline void IObject_set_name(void* arr, const char* name){
     IObject* obj = (IObject*)arr;
-    int len = strlen(name);
+    uint32 len = (uint32)strlen(name);
     memcpy(obj->name, name, len);
     obj->name[len] = '\0';
 }
@@ -136,6 +152,10 @@ static inline uint32 dt_size(int dt){
         return sizeof(void*);
     }
     return 0;
+}
+
+static inline uint32 dt_is_float(int dt){
+    return dt == kType_F32 || dt == kType_F64;
 }
 
 static inline const char* dt2str(int dt){

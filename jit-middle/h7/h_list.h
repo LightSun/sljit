@@ -1,7 +1,7 @@
 #ifndef H_LIST_H
 #define H_LIST_H
 
-#include "h7/common/c_common.h"
+#include "h7/common/dtypes.h"
 
 typedef struct array_list{
    void** data;
@@ -22,7 +22,7 @@ array_list* array_list_new(int init_count, float factor);
  * @param ud the userdata
  */
 void array_list_delete(array_list* list,
-                       void (*Func)(void* ud,void* ele), void* ud);
+                       dt_func_delete func, void* ud);
 
 void array_list_delete2(array_list* list, void (*Func)(void* ele));
 
@@ -49,9 +49,13 @@ static inline void array_list_set(array_list* list,
  * @param Func: the function to judge the element is the same or not.
  * @return the old data. or NULL if not found
  */
-void* array_list_remove(array_list* list, void* ele, int (*Func)(void* ud, void* rawEle, void* pEle), void* ud);
+void* array_list_remove(array_list* list, void* ele, void* ud, dt_func_eq func);
 
-void* array_list_remove_by_index(array_list* list, int index);
+void* array_list_remove_at(array_list* list, int index);
+
+//int dtype_obj_equals(void* ud, void* ele1, void* ele2);
+int array_list_index_of(array_list* list, void* val, void* ud,
+                        dt_func_eq func);
 
 /**
  * @brief array_list_get: get element by target index
@@ -67,35 +71,22 @@ void* array_list_get(array_list* list, int index);
  * @param out_list: the remove element list. can be null
  * @return remove count
  */
-int array_list_remove_all(array_list* list, int (*Func)(void* ud,int size,int index,void* ele), void* ud, array_list* out_list);
-/**
- * @brief array_list_find:find e element by function.
- * @param list the list
- * @param Func: the function ptr. return 0 if found
- * @return the element if found , or NULL
- */
-void* array_list_find(array_list* list,int (*Func)(void* ud, int size, int index,void* ele), void* ud);
+int array_list_remove_all(array_list* list, void* val, void* ud,
+                          dt_func_eq func, array_list* out_list);
+
 /**
  * @brief array_list_find_all: found the all match elements
  * @param list the list
  * @param Func the function ptr. return 0 if found
  * @param out_list the out list.
  */
-void array_list_find_all(array_list* list,int (*Func)(void* ud, int size, int index,void* ele), void* ud, array_list* out_list);
-
-/**
- * @brief array_list_travel: travel all elements
- * @param list: the list
- */
-void array_list_travel(array_list* list,
-                       void (*Func)(void* ud, int size, int index,void* ele), void* ud);
+void array_list_find_all(array_list* list,void* val, void* ud,
+                         dt_func_eq func, array_list* out_list);
 
 
-array_list* array_list_copy(array_list* list,
-            void* (*Func_cpy)(void* ud, void* ele),
-                            void* ud);
+array_list* array_list_copy(array_list* list, void* ud,
+            dt_func_cpy func);
 uint32 array_list_hash(array_list* list,
-            uint32 (*Func_hash)(void* ud, void* ele, uint32 seed),
-                            void* ud, uint32 seed);
+                            void* ud, uint32 seed, dt_func_hash func);
 
 #endif // H_LIST_H

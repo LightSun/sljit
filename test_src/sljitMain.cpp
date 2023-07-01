@@ -90,6 +90,7 @@ void devel(void)
 //https://www.mirrorservice.org/pub/NetBSD/NetBSD-current/src/sys/external/bsd/sljit/dist/doc/tutorial/sljit_tutorial.html
 int main(int argc, char* argv[])
 {
+    setbuf(stdout, NULL);
 	/* devel(); */
     //return sljit_test(argc, argv);
    // g_test1();

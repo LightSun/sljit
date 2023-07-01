@@ -3,12 +3,13 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include "h_string.h"
+#include "h7/common/c_common.h"
 
 typedef struct StringFragment StringFragment;
 
 struct StringFragment {
     struct StringFragment *next;
-    int length;
+    uint32 length;
     char *str;
 };
 struct hstring{
@@ -27,29 +28,9 @@ hstring* hstring_new(){
 }
 
 hstring* hstring_append(hstring* owner, const char *str){
-    int len = 0;
-    StringFragment *frag = NULL;
-    if (NULL == str || '\0' == *str)
-        return owner;
-
-    len = strlen(str);
-    frag = ALLOC(sizeof (StringFragment));
-
-    frag->next = NULL;
-    frag->length = len;
-    frag->str = ALLOC(len + 1);
-    //strcpy(frag->str, str);
-    memcpy((void *) frag->str, (const void *) str, sizeof(char) * (len + 1));
-
-    if(owner->head == NULL){
-        owner->head = owner->cur = frag;
-    }else{
-        owner->cur->next = frag;
-        owner->cur = frag;
-    }
-    owner->total_len += len;
-    return owner;
+    return hstring_append2(owner, str, (uint32)strlen(str));
 }
+
 hstring* hstring_append2(hstring* owner, const char *str, uint32 len){
     StringFragment *frag = NULL;
     if (NULL == str || '\0' == *str)
@@ -60,7 +41,8 @@ hstring* hstring_append2(hstring* owner, const char *str, uint32 len){
     frag->length = len;
     frag->str = ALLOC(len + 1);
     //strcpy(frag->str, str);
-    memcpy((void *) frag->str, (const void *)str, sizeof(char) * (len + 1));
+    memcpy(frag->str, (const void *)str, len);
+    frag->str[len] = '\0';
 
     if(owner->head == NULL){
         owner->head = owner->cur = frag;
@@ -73,7 +55,7 @@ hstring* hstring_append2(hstring* owner, const char *str, uint32 len){
 }
 
 #define HSTRING_BUF_LEN 1024
-hstring* hstring_appendf(hstring* owner, const char *format ,...){
+hstring* hstring_appendf(hstring* owner, const char *format,...){
     if (format == NULL) {
         printf("wrong format\n");
         return owner;
@@ -89,7 +71,7 @@ hstring* hstring_appendf(hstring* owner, const char *format ,...){
     if (rc <= 0)
         return owner;
 
-    return hstring_append(owner, buf);
+    return hstring_append2(owner, buf, (uint32)rc);
 }
 char* hstring_tostring(hstring* owner){
     if(owner->total_buf == NULL){
@@ -103,13 +85,19 @@ char* hstring_tostring(hstring* owner){
 
     c = owner->total_buf;
     for (frag = owner->head; frag; frag = frag->next) {
-        // strncpy(c, frag->str, frag->length);
-        memcpy(c, frag->str, sizeof(char) * frag->length);
+        //strncpy(c, frag->str, frag->length);
+        memcpy(c, frag->str, frag->length);
         c += frag->length;
     }
     *c = '\0';
     //owner->total_buf[owner->total_len] = '\0';
     return owner->total_buf;
+}
+
+void hstring_log_and_delete(hstring* owner){
+    char* s = hstring_tostring(owner);
+    LOGI("%s\n", s);
+    hstring_delete(owner);
 }
 
 void hstring_delete(hstring* owner){

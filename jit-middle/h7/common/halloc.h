@@ -32,9 +32,9 @@ struct core_mem{
 void h7_set_core_allocator(struct core_allocator* alloc);
 struct core_allocator* h7_get_core_allocator();
 
-#define ALLOC(size) h7_get_core_allocator()->Alloc(size)
-#define REALLOC(ptr, o, nsize) h7_get_core_allocator()->Realloc(ptr, o, nsize)
-#define REALLOC2(ptr, nsize) h7_get_core_allocator()->Realloc(ptr, 0, nsize)
+#define ALLOC(size) h7_get_core_allocator()->Alloc((size_t)(size))
+#define REALLOC(ptr, o, nsize) h7_get_core_allocator()->Realloc(ptr, o, (size_t)(nsize))
+#define REALLOC2(ptr, nsize) h7_get_core_allocator()->Realloc(ptr, 0, (size_t)(nsize))
 #define FREE(ptr) h7_get_core_allocator()->Free(ptr)
 
 #define ALLOC_T(t) (t*)ALLOC(sizeof(t))

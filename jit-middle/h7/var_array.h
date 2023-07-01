@@ -106,20 +106,61 @@ static inline void VarArray_set(VarArray* p,int index, void* sd){
     memcpy(data, sd, p->ele_size);
 }
 
-static inline void VarArray_remove(VarArray* p,int index){
-    ASSERT(index >= 0 && index < (int)p->ele_count);
-    char* data = (char*)p->data + index * p->ele_size;
-    int move_c = (int)p->ele_count - index - 1;
-    if(move_c > 0){
-        memmove(data, data + p->ele_size * move_c, p->ele_size * move_c);
+static inline int VarArray_indexOf(VarArray* p,void* data, int dt){
+    char* d = (char*)p->data;
+    if(dt == kType_F32){
+         for(int i = 0 ; i < p->ele_count ; ++i){
+             char* tdata = d + p->ele_size * i;
+             if(isFloatEquals2(tdata, data)){
+                 return i;
+             }
+         }
+    }else if(dt == kType_F64){
+        for(int i = 0 ; i < p->ele_count ; ++i){
+             char* tdata = d + p->ele_size * i;
+             if(isDoubleEquals2(tdata, data)){
+                 return i;
+             }
+        }
+    }else{
+        for(int i = 0 ; i < p->ele_count ; ++i){
+            char* tdata = d + p->ele_size * i;
+            if(memcmp(tdata, data, p->ele_size) == 0){
+                return i;
+            }
+        }
     }
-    p->ele_count --;
+    return -1;
+}
+
+static inline int VarArray_remove_at(VarArray* p,int index){
+    if(index >= 0 && index < (int)p->ele_count){
+        char* data = (char*)p->data + index * p->ele_size;
+        int move_c = (int)p->ele_count - index - 1;
+        if(move_c > 0){
+            memmove(data, data + p->ele_size * move_c, p->ele_size * move_c);
+        }
+        p->ele_count --;
+        return kState_OK;
+    }
+    return kState_FAILED;
 }
 
 static inline void VarArray_get(VarArray* p,int index, void* out_d){
     ASSERT(index >= 0 && index < (int)p->ele_count);
     char* data = (char*)p->data + index * p->ele_size;
     memcpy(out_d, data, p->ele_size);
+}
+
+
+#define __VAR_ARR_GET2_I(hffi_t, t)\
+case hffi_t:{\
+    po->_##t = ((t*)p->data)[index];\
+}break;
+
+static inline void VarArray_get2(VarArray* p,int index, int dt, union htype_value* po){
+    ASSERT(index >= 0 && index < (int)p->ele_count);
+    DEF_DT_BASE_SWITCH(__VAR_ARR_GET2_I, dt);
 }
 
 static inline int VarArray_equals_float_data(VarArray* p1, VarArray* p2){

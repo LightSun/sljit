@@ -1,14 +1,38 @@
 ﻿#ifndef H7_MEM_H
 #define H7_MEM_H
-#include "h7_common.h"
 
-CPP_START
+#include "h7/h7_common.h"
+#include <string.h>
 
-void arrays_insert(void* arr, int already_ele_count,
+#define DEF_ARRAY_INSERT_ONE(_data, ele_c, unit_size, ptr, index)\
+if((uint32)index < (uint32)ele_c){\
+    uint32 _ele_c = (uint32)ele_c;\
+    uint32 _unit_size = (uint32)unit_size;\
+    uint32 _index = (uint32)index;\
+    uint32 move_c = _ele_c - _index;\
+    char* data = (char*)_data + _index * _unit_size;\
+    memmove(data + move_c * _unit_size, data, move_c * _unit_size);\
+}\
+if(ptr){\
+    char* data = (char*)_data + (uint32)index * (uint32)unit_size;\
+    memcpy(data, ptr, (uint32)unit_size);\
+}
+
+#define DEF_ARRAY_REMOVE_ONE(_data, ele_c, unit_size, index)\
+{\
+    uint32 _move_c = (uint32)(ele_c - (uint32)index - 1);\
+    if(_move_c > 0){\
+        uint32 _unit_size = (uint32)unit_size;\
+        char* data = (char*)_data + (uint32)index * _unit_size;\
+        memmove(data, data + _unit_size, (uint32)_move_c * _unit_size);\
+    }\
+}
+
+void arrays_insert(void* arr, unsigned int already_ele_count,
                    unsigned int ele_unit_size,
                    const void* data, unsigned int target_pos);
 
-void arrays_remove(void* arr, int already_ele_count,
+void arrays_remove(void* arr, unsigned int already_ele_count,
                    unsigned int ele_unit_size,
                    unsigned int target_pos);
 
@@ -34,6 +58,5 @@ void mem_remove(void* mem, unsigned int total_size,
 void mem_insert(void* mem, unsigned int total_size,
                 unsigned int offset, const void* data, unsigned int size);
 
-CPP_END
 
 #endif

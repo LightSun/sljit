@@ -16,6 +16,14 @@ DEF_IOBJ_CHILD_FUNCS(hfield)
 
 hfield_p hfield_new(const char* name, int dt);
 
+int hfield_set(hfield_p p, void* ptr);
+
+static inline hfield_p hfield_new2(const char* name, int dt, void* ptr){
+    hfield_p p = hfield_new(name, dt);
+    hfield_set(p, ptr);
+    return p;
+}
+
 static inline void hfield_as_onlyType(hfield_p p){
     p->onlyType = 1;
 }
@@ -27,5 +35,7 @@ static inline int hfield_get_value(hfield_p p,union htype_value* val_ptr){
     *val_ptr = p->value;
     return kState_OK;
 }
+
+
 
 #endif // HMEMBER_H

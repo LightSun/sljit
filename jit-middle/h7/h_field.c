@@ -82,8 +82,8 @@ static uint32 (Func_hash0)(IObjPtr src1, uint32 seed){
 
 static void (Func_dump0)(IObjPtr src1, hstring* hs){
     hfield* src = (hfield*)src1;
-    hstring_appendf(hs, "[field]: dt = %s, onlyType = %d, val = ",
-                    dt2str(src->dt), src->onlyType);
+    //hstring_appendf(hs, "[field]: dt = %s, onlyType = %d, val = ",
+    //                dt2str(src->dt), src->onlyType);
     if(dt_is_pointer(src->dt)){
         dtype_obj_dump(&src->dt, src->value._extra, hs);
     }else{
@@ -118,8 +118,22 @@ hfield_p hfield_new(const char* name, int dt){
     p->dt = dt;
     p->flags = 0;
     p->onlyType = 0;
-    p->name = hstrdup(name);
+    p->name = name ? hstrdup(name) : NULL;
     return p;
+}
+
+#define __SET(hffi_t, t)\
+case hffi_t:{\
+    p->value._##t = *(t*)ptr;\
+}return kState_OK;
+
+int hfield_set(hfield_p p, void* ptr){
+    if(dt_is_pointer(p->dt)){
+        p->value._extra = ptr;
+    }else{
+        DEF_DT_BASE_SWITCH(__SET, p->dt);
+    }
+    return kState_OK;
 }
 
 #define __SET_I(hffi_t, t)\

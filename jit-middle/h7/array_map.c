@@ -1,12 +1,13 @@
-﻿#include "array_map.h"
-#include "h7_common.h"
-#include <memory.h>
-#include "hash.h"
-#include "binary_search.h"
-#include "mem.h"
+﻿#include <memory.h>
+#include "h7/array_map.h"
+#include "h7/h7_common.h"
+#include "h7/hash.h"
+#include "h7/binary_search.h"
+#include "h7/mem.h"
 #include "h7/h_atomic.h"
 #include "h7/common/halloc.h"
 #include "h7/h_string.h"
+#include "h7/numbers.h"
 
 static inline void __array_map_init(array_map_p arr);
 static void array_map_prepare_size(array_map_p ptr, uint32 size);
@@ -25,7 +26,7 @@ void array_map_ensure_capacity(array_map_p list, uint32 cap){
     }
 }
 void array_map_ensure_size(array_map_p list, uint32 size){
-    array_map_ensure_capacity(list, (uint32)(size / list->factor) + 1);
+    array_map_ensure_capacity(list, (uint32)((float)size / list->factor) + 1);
 }
 
 static inline void _array_map_copy(int dt, void* srcData,
@@ -76,10 +77,10 @@ static inline uint32 _array_map_hash(int dt, void* data,
 
 #define __dump_impl(hffi_t, type, format)\
 case hffi_t:{\
-    hstring_appendf(hs, format, *((type*)data));\
+    hstring_appendf(hs, format, ((type*)data)[index]);\
 }break;
 
-static inline void _dump_target(int dt, void* data, hstring* hs){
+static inline void _dump_target(int dt, void* data, uint32 index, hstring* hs){
 
     if(dt_is_pointer(dt)){
         IObject* iobj = (IObject*)data;
@@ -94,7 +95,6 @@ static inline uint32 _array_map_eq(int dt, void* data1,
     if(val_len == 0){
         return kState_OK;
     }
-
     if(dt_is_pointer(dt)){
         void** sd1 = (void**)data1;
         void** sd2 = (void**)data2;
@@ -105,13 +105,31 @@ static inline uint32 _array_map_eq(int dt, void* data1,
             }
         }
     }else{
-        if(memcmp(data1, data2, dt_size(dt) * val_len) != 0){
-            return kState_FAILED;
+        if(dt == kType_F32){
+            for(int i = 0 ; i < val_len ; i ++){
+                if(!isFloatEquals(((float*)data1)[i],
+                                  ((float*)data2)[i])
+                        ){
+                    return kState_FAILED;
+                }
+            }
+        }else if(dt == kType_F64){
+            for(int i = 0 ; i < val_len ; i ++){
+                if(!isDoubleEquals(((float*)data1)[i],
+                                  ((float*)data2)[i])
+                        ){
+                    return kState_FAILED;
+                }
+            }
+        }else{
+            if (memcmp(data1, data2, dt_size(dt) *(uint32) val_len) != 0){
+                return kState_FAILED;
+            }
         }
     }
     return kState_OK;
 }
-static inline uint32 __hash(int dt, const void* data, int size){
+static inline uint32 __hash(int dt, const void* data, uint32 size){
 
     if(dt_is_pointer(dt)){
         IObject* iobj = (IObject*)data;
@@ -166,11 +184,11 @@ static int (Func_equals0)(IObjPtr src1, IObjPtr dst1){
         return kState_FAILED;
     }
     if(!_array_map_eq(src->key_dt, src->keys,
-                     dst->keys, src->len_entry)){
+                     dst->keys, (int)src->len_entry)){
         return kState_FAILED;
     }
     if(!_array_map_eq(src->val_dt, src->values,
-                     dst->values, src->len_entry)){
+                     dst->values, (int)src->len_entry)){
         return kState_FAILED;
     }
     return kState_OK;
@@ -189,13 +207,22 @@ static void (Func_dump0)(IObjPtr src, hstring* hs){
     hstring_append(hs, "{");
     for(uint32 i = 0 ; i < ptr1->len_entry ; ++i){
         hstring_append(hs, "(");
-        _dump_target(ptr1->key_dt, ptr1->keys, hs);
+        _dump_target(ptr1->key_dt, ptr1->keys, i, hs);
         hstring_append(hs, ":");
-        _dump_target(ptr1->val_dt, ptr1->values, hs);
+        _dump_target(ptr1->val_dt, ptr1->values, i, hs);
         hstring_append(hs, ")");
         if(i != ptr1->len_entry - 1){
             hstring_append(hs, ", ");
         }
+    }
+    hstring_append(hs, "}");
+    //
+    hstring_append(hs, "\n  hash = {");
+    for(uint32 i = 0 ; i < ptr1->len_entry ; ++i){
+         hstring_appendf(hs, "%u", ptr1->hashes[i]);
+         if(i != ptr1->len_entry - 1){
+             hstring_append(hs, ", ");
+         }
     }
     hstring_append(hs, "}");
 }
@@ -243,27 +270,30 @@ void array_map_put(array_map_p ptr, const void* key,
     //handle hash.
     uint32 hash = __hash(ptr->key_dt, key, key_ele_size);
     if(ptr->len_entry == 0){
-        arrays_insert(ptr->keys, 0, key_ele_size, key, 0);
-        arrays_insert(ptr->values, 0, val_ele_size, value, 0);
-        arrays_insert(ptr->hashes, 0, sizeof (uint32), &hash, 0);
+        memcpy(ptr->keys, key, key_ele_size);
+        memcpy(ptr->values, value, val_ele_size);
+        memcpy(ptr->hashes, &hash, sizeof (uint32));
+        ptr->len_entry ++;
         return;
     }
-    int pos = binarySearch_uint32(ptr->hashes, 0, ptr->len_entry, hash);
+    int pos = binarySearch_uint32(ptr->hashes, 0, (int)ptr->len_entry, hash);
     if(pos >= 0){
-        // void* key_dst = (char*)ptr->keys + ptr->key_ele_size * ptr->len_entry;
-        void* val_dst = (char*)ptr->values + val_ele_size * ptr->len_entry;
-        //exist
+        void* val_dst = (char*)ptr->values + val_ele_size * (uint32)pos;
+        //exist.
         if(oldVal){
             memcpy(oldVal, val_dst, val_ele_size);
+        }else{
+            //no copy out delete.
+            dtype_obj_delete(&ptr->val_dt, val_dst);
         }
         memcpy(val_dst, value, val_ele_size);
     }else{
         // -(pos + 1)
         int pos1 = -(pos + 1);
-        arrays_insert(ptr->keys, ptr->len_entry, key_ele_size, key, pos1);
-        arrays_insert(ptr->values, ptr->len_entry, val_ele_size, value, pos1);
-        arrays_insert(ptr->hashes, ptr->len_entry,
-                      sizeof (uint32), &hash, pos1);
+        //arrays_insert(ptr->keys, ptr->len_entry, key_ele_size, key, pos1); DEF_ARRAY_INSERT_ONE
+        arrays_insert(ptr->keys, ptr->len_entry, key_ele_size,  key, (uint32)pos1);
+        arrays_insert(ptr->values, ptr->len_entry, val_ele_size, value, (uint32)pos1);
+        arrays_insert(ptr->hashes, ptr->len_entry, sizeof(uint32), &hash, (uint32)pos1);
         ptr->len_entry ++;
     }
 }
@@ -288,9 +318,9 @@ int array_map_get(array_map_p ptr, const void* key, void* oldVal){
     uint32 val_ele_size = dt_size(ptr->val_dt);
     //handle hash.
     uint32 hash = __hash(ptr->key_dt, key, key_ele_size);
-    int pos = binarySearch_uint32(ptr->hashes, 0, ptr->len_entry, hash);
+    int pos = binarySearch_uint32(ptr->hashes, 0, (int)ptr->len_entry, hash);
     if(pos >= 0){
-        void* val_dst = (char*)ptr->values + val_ele_size * pos;
+        void* val_dst = (char*)ptr->values + val_ele_size * (uint32)pos;
         memcpy(oldVal, val_dst, val_ele_size);
         return 1;
     }
@@ -303,29 +333,36 @@ void* array_map_rawget(array_map_p ptr, const void* key){
     uint32 val_ele_size = dt_size(ptr->val_dt);
     //handle hash.
     uint32 hash = __hash(ptr->key_dt, key, key_ele_size);
-    int pos = binarySearch_uint32(ptr->hashes, 0, ptr->len_entry, hash);
+    int pos = binarySearch_uint32(ptr->hashes, 0, (int)ptr->len_entry, hash);
     if(pos >= 0){
-        //void* val_dst = (char*)ptr->values + ptr->val_ele_size * ptr->len_entry;
-        return (char*)ptr->values + val_ele_size * pos;
+        return (char*)ptr->values + val_ele_size * (uint32)pos;
     }
     return NULL;
 }
 
-int array_map_remove(array_map_p ptr, const void* key, void* oldVal){
+int array_map_remove(array_map_p ptr, const void* key, void* oldKey, void* oldVal){
     ASSERT(key != NULL);
     uint32 key_ele_size = dt_size(ptr->key_dt);
     uint32 val_ele_size = dt_size(ptr->val_dt);
     //handle hash.
     uint32 hash = __hash(ptr->key_dt, key, key_ele_size);
-    int pos = binarySearch_uint32(ptr->hashes, 0, ptr->len_entry, hash);
+    int pos = binarySearch_uint32(ptr->hashes, 0, (int)ptr->len_entry, hash);
     if(pos >= 0){
+        void* val_dst = (char*)ptr->values + val_ele_size * (uint32)pos;
         if(oldVal){
-            void* val_dst = (char*)ptr->values + val_ele_size * ptr->len_entry;
             memcpy(oldVal, val_dst, val_ele_size);
+        }else{
+            dtype_obj_delete(&ptr->val_dt, val_dst);
         }
-        arrays_remove(ptr->keys, ptr->len_entry, key_ele_size, pos);
-        arrays_remove(ptr->values, ptr->len_entry, val_ele_size, pos);
-        arrays_remove(ptr->hashes, ptr->len_entry, sizeof (uint32), pos);
+        void* key_dst = (char*)ptr->keys + key_ele_size * (uint32)pos;
+        if(oldKey){
+            memcpy(oldKey, key_dst, key_ele_size);
+        }else{
+            dtype_obj_delete(&ptr->key_dt, key_dst);
+        }
+        DEF_ARRAY_REMOVE_ONE(ptr->keys, ptr->len_entry, key_ele_size, pos);
+        DEF_ARRAY_REMOVE_ONE(ptr->values, ptr->len_entry, val_ele_size, pos);
+        DEF_ARRAY_REMOVE_ONE(ptr->hashes, ptr->len_entry, sizeof (uint32), pos);
         ptr->len_entry -- ;
         return 1;
     }
