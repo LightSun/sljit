@@ -25,6 +25,12 @@ static long SLJIT_FUNC print_float(float a)
     return 0;
 }
 
+static long SLJIT_FUNC print_double(double a)
+{
+    printf("a = %g\n", a);
+    return 0;
+}
+
 #define REGISTER_SP SLJIT_S0
 #define REGISTER_LOCALVAR SLJIT_S1
 #define REGISTER_IP SLJIT_S2
@@ -55,6 +61,39 @@ long func(struct point_st *point)
 	return point->x;
 }
 */
+
+static int struct_access2(){
+    void *code;
+    sljit_uw len;
+    point_func_t func;
+
+    struct sljit_compiler *C = sljit_create_compiler(NULL, NULL);
+
+     sljit_emit_enter(C, 0, SLJIT_ARGS1(W, W),
+                      1, 1, 1, 0,
+                      0);
+        //sljit_emit_fcopy 用于float和 double 类型数据转换
+     sljit_emit_fset32(C, SLJIT_FR0, 1.234567f);
+
+     sljit_emit_fop1(C, SLJIT_MOV_F32,
+                    SLJIT_FR0, 0,
+                    SLJIT_IMM, 1.234567f
+                    );
+
+
+    code = sljit_generate_code(C);
+    len = sljit_get_generated_code_size(C);
+
+    /* Execute code */
+    //func = (point_func_t)code;
+    //printf("func return %ld\n", func(&point));
+
+    /* dump_code(code, len); */
+
+    /* Clean up */
+    sljit_free_compiler(C);
+    sljit_free_code(code, NULL);
+}
 
 static int struct_access()
 {

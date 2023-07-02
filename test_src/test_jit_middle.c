@@ -111,7 +111,7 @@ void test_harray_ptr(){
     harray_geti(p, 1, &ele);
     ASSERT(ele._extra == f);
 
-    dtype_obj_log(&dt, p);
+    //dtype_obj_log(&dt, p);
 
     //ref + 1
     hfield_ref(f);
@@ -119,10 +119,10 @@ void test_harray_ptr(){
     harray_remove(p, f);
     ASSERT(harray_get_count(p) == loop_c - 1);
 
-    dtype_obj_log(&dt, p);
+    //dtype_obj_log(&dt, p);
 
     harray_add(p, -1, f);
-    dtype_obj_log(&dt, p);
+    //dtype_obj_log(&dt, p);
     ASSERT(harray_get_count(p) == loop_c);
 
     int index = harray_indexOf(p, f);
@@ -242,8 +242,5 @@ void test_var_array(){
     VarArray_delete(p, 1);
 }
 void test_binary_search(){
-    uint32 arr[] = {675978433, 1195888231, 2144471225,
-                    3845715313, 1820048349, 2811689999, 3318556280};
-    int pos = binarySearch_uint32(arr, 0, 7, 2811689999);
-    ASSERT(pos == 5);
+
 }

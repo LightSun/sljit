@@ -4,6 +4,9 @@
 #include <math.h>
 #include <stdlib.h>
 
+#define __Abs(x)    ((x) < 0 ? -(x) : (x))
+#define __Max(a, b) ((a) > (b) ? (a) : (b))
+
 union __Uni_Float1{
     float f;
     int val;
@@ -13,9 +16,6 @@ union __Uni_Double1{
     double f;
     long long val;
 };
-
-#define __Abs(x)    ((x) < 0 ? -(x) : (x))
-#define __Max(a, b) ((a) > (b) ? (a) : (b))
 
 static inline double __RelDif(double a, double b)
 {
@@ -36,7 +36,7 @@ static inline int isFloatEquals(float a, float b){
 static inline int isDoubleEquals(double a, double b){
 //    union __Uni_Double1 uf1; uf1.f = a;
 //    union __Uni_Double1 uf2; uf2.f = b;
-//    return llabs(uf1.val - uf2.val) < 10; // have bug
+//    return llabs(uf1.val - uf2.val) < 10; // have bug when a, b = 8.88
 
 //    printf("isDoubleEquals >> %g\n", __RelDif(a, b));
     return __RelDif(a, b) <= 1.1e-07;  //1.28875e-08
