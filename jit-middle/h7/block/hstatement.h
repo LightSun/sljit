@@ -19,8 +19,17 @@ typedef enum hst_op{
     AND_EQ,  // &=
 }hst_op;
 
+typedef struct OpNum{
+    int reg;
+    int type;
+    union {
+        char ns[24]; //number str
+        void* ptr;
+    };
+}OpNum;
+
 typedef struct hstatement{
-    int op_c;  //sljit_emit_op2(C, SLJIT_AND, SLJIT_R0, 0, SLJIT_S0, 0, SLJIT_IMM, 1); op_c = 2
+    int op_code;  //sljit_emit_op2(C, SLJIT_AND, SLJIT_R0, 0, SLJIT_S0, 0, SLJIT_IMM, 1); op_c = 2
 
 }hstatement;
 

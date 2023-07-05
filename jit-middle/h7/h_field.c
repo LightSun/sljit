@@ -102,15 +102,9 @@ static void (Func_ref0)(IObjPtr src1, int c){
         FREE(src);
     }
 }
-static inline void __hfield_init(hfield* arr){
-    IObject_set_name(arr, "__$field");
-    arr->baseObj.ref = 1;
-    arr->baseObj.Func_copy = Func_copy0;
-    arr->baseObj.Func_dump = Func_dump0;
-    arr->baseObj.Func_equals = Func_equals0;
-    arr->baseObj.Func_hash = Func_hash0;
-    arr->baseObj.Func_ref = Func_ref0;
-}
+
+DEF_IOBJ_INIT_CHILD(hfield, "__$field")
+
 //----------------------------
 hfield_p hfield_new(const char* name, int dt){
     hfield_p p = ALLOC(sizeof(hfield));

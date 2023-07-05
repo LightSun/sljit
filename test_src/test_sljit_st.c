@@ -1,5 +1,8 @@
 
 #include "sljitLir.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 typedef long (SLJIT_FUNC *Func)();
 
@@ -18,6 +21,12 @@ static long SLJIT_FUNC print_num2(long a, long b)
 sljit_emit_op2(C, op, SLJIT_R0, 0, SLJIT_IMM, num1, SLJIT_IMM, num2);\
 printf("%s: %d, %d = \n", #op, num1, num2);\
 /*//异或 return W = word(64 bit int), param p = pointer is the function addr.*/\
+sljit_emit_icall(C, SLJIT_CALL, SLJIT_ARGS1(W, P),\
+                 SLJIT_IMM, SLJIT_FUNC_ADDR(print_num));
+
+#define HEMIT1(op, num1)\
+sljit_emit_op1(C, op, SLJIT_R0, 0, SLJIT_IMM, num1);\
+printf("%s: %d = \n", #op, num1);\
 sljit_emit_icall(C, SLJIT_CALL, SLJIT_ARGS1(W, P),\
                  SLJIT_IMM, SLJIT_FUNC_ADDR(print_num));
 
@@ -64,6 +73,8 @@ void test_sljit_st1(){
     //return W = word(64 bit int), param p = pointer is the function addr.
     sljit_emit_icall(C, SLJIT_CALL, SLJIT_ARGS1(W, P),
                      SLJIT_IMM, SLJIT_FUNC_ADDR(print_num));
+    const char* val= "2";
+    HEMIT(SLJIT_ADD, 8, atoi(val));
     HEMIT(SLJIT_ADD, 8, 2);
     HEMIT(SLJIT_SUB, 8, 2);
     HEMIT(SLJIT_MUL, 8, 2);
@@ -88,6 +99,11 @@ void test_sljit_st1(){
     //
     //sljit_emit_atomic_load() / sljit_emit_atomic_store()
 
+    //u8 max = 255
+    HEMIT1(SLJIT_MOV_U8, 256);
+    //反转字节序.
+    // 0000 0000 0000 1101 -> 0000 1101 0000 0000
+    HEMIT1(SLJIT_REV_U16, 13);
     //
     sljit_emit_return(C, SLJIT_MOV, SLJIT_IMM, 0);
 

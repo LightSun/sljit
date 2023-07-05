@@ -67,15 +67,7 @@ static void (Func_ref0)(IObjPtr src1, int c){
         FREE(src);
     }
 }
-static inline void __hobject_init(hobject* arr){
-    IObject_set_name(arr, "__$object");
-    arr->baseObj.ref = 1;
-    arr->baseObj.Func_copy = Func_copy0;
-    arr->baseObj.Func_dump = Func_dump0;
-    arr->baseObj.Func_equals = Func_equals0;
-    arr->baseObj.Func_hash = Func_hash0;
-    arr->baseObj.Func_ref = Func_ref0;
-}
+DEF_IOBJ_INIT_CHILD(hobject, "__$object")
 
 //-----------------------------------------------------
 hobject* hobject_new(harray_p fields, harray_p methods){

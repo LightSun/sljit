@@ -53,6 +53,7 @@ typedef void* IObjPtr;
 struct IObject{
     volatile int ref;
     char name[IOBJ_NAME_MAX_SIZE];
+    struct IObject* super;
     IObjPtr (*Func_copy)(IObjPtr src, IObjPtr dst);
     int (*Func_equals)(IObjPtr src, IObjPtr dst);
     uint32 (*Func_hash)(IObjPtr src, uint32 seed);
@@ -86,6 +87,18 @@ static inline void IObject_set_name(void* arr, const char* name){
     uint32 len = (uint32)strlen(name);
     memcpy(obj->name, name, len);
     obj->name[len] = '\0';
+}
+
+#define DEF_IOBJ_INIT_CHILD(T, name)\
+static inline void __##T##_init(T* arr){\
+    arr->baseObj.ref = 1;\
+    arr->baseObj.super = NULL;\
+    IObject_set_name(arr, name);\
+    arr->baseObj.Func_copy = Func_copy0;\
+    arr->baseObj.Func_dump = Func_dump0;\
+    arr->baseObj.Func_equals = Func_equals0;\
+    arr->baseObj.Func_hash = Func_hash0;\
+    arr->baseObj.Func_ref = Func_ref0;\
 }
 
 #define DEF_IOBJ_CHILD_FUNCS(t)\

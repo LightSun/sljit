@@ -54,15 +54,8 @@ static void (Func_ref0)(IObjPtr src1, int c){
         FREE(src);
     }
 }
-static inline void __Utf8String_init(Utf8String* arr){
-    IObject_set_name(arr, "__$string");
-    arr->baseObj.ref = 1;
-    arr->baseObj.Func_copy = Func_copy0;
-    arr->baseObj.Func_dump = Func_dump0;
-    arr->baseObj.Func_equals = Func_equals0;
-    arr->baseObj.Func_hash = Func_hash0;
-    arr->baseObj.Func_ref = Func_ref0;
-}
+
+DEF_IOBJ_INIT_CHILD(Utf8String, "__$string")
 
 //-----------------------
 Utf8String *utf8_create() {

@@ -158,15 +158,7 @@ static void Func_ref0(IObjPtr src1, int c){
     }
 }
 
-static inline void __harray_init(harray* arr){
-    arr->baseObj.ref = 1;
-    IObject_set_name(arr, "__$array");
-    arr->baseObj.Func_copy = Func_copy0;
-    arr->baseObj.Func_dump = Func_dump0;
-    arr->baseObj.Func_equals = Func_equals0;
-    arr->baseObj.Func_hash = Func_hash0;
-    arr->baseObj.Func_ref = Func_ref0;
-}
+DEF_IOBJ_INIT_CHILD(harray, "__$array")
 
 //======================================================
 harray* harray_new_arrays(struct array_list* arrays){

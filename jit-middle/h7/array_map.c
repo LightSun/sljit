@@ -236,15 +236,7 @@ static void (Func_ref0)(IObjPtr src, int c){
     }
 }
 
-static inline void __array_map_init(array_map_p arr){
-    IObject_set_name(arr, "__$array_map");
-    arr->baseObj.ref = 1;
-    arr->baseObj.Func_copy = Func_copy0;
-    arr->baseObj.Func_dump = Func_dump0;
-    arr->baseObj.Func_equals = Func_equals0;
-    arr->baseObj.Func_hash = Func_hash0;
-    arr->baseObj.Func_ref = Func_ref0;
-}
+DEF_IOBJ_INIT_CHILD(array_map, "__$array_map")
 
 //--------------------------------------------------
 array_map_p array_map_new(uint16 key_dt,
