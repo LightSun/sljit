@@ -50,7 +50,11 @@ sljit_emit_icall(C, SLJIT_CALL, SLJIT_ARGS1(W, P),\
 
 static void test_sljit_st1();
 
+static void test_atomic();
+extern int test_atomic2(void);
+
 void test_sljit_st(){
+    test_atomic2();
     test_sljit_st1();
 }
 
@@ -60,7 +64,7 @@ void test_sljit_st1(){
     sljit_uw len;
     struct sljit_compiler *C = sljit_create_compiler(NULL, NULL);
 
-    /* 3 arg, 1 temp reg, 3 save reg */
+    /* 0 arg, 2 temp reg, 2 temp float reg */
     sljit_emit_enter(C, 0, SLJIT_ARGS0(W),
                      4, 0, 2, 0,
                      0);
@@ -112,6 +116,59 @@ void test_sljit_st1(){
 
     Func func = (Func)code;
     func();
+
+    sljit_free_compiler(C);
+    sljit_free_code(code, NULL);
+}
+#define FUNCTION_CHECK_IS_REG(r) \
+    (((r) >= SLJIT_R0 && (r) < (SLJIT_R0 + C->scratches)) \
+    || ((r) > (SLJIT_S0 - C->saveds) && (r) <= SLJIT_S0))
+
+void test_atomic(){
+    void *code;
+    sljit_uw len;
+    struct sljit_compiler *C = sljit_create_compiler(NULL, NULL);
+
+    //for use local var of a func. we need assign the last param.
+    sljit_emit_enter(C, 0, SLJIT_ARGS0(W),
+                     4, 0, 2, 0,
+                     sizeof (sljit_sw));
+
+    sljit_emit_op1(C, SLJIT_MOV,
+                   SLJIT_R0, 0,
+                   SLJIT_IMM, 42);
+    sljit_emit_op1(C, SLJIT_MOV,
+                   SLJIT_R1, 0,
+                   SLJIT_MEM1(SLJIT_SP), 0);
+
+    int c = SLJIT_MEM1(SLJIT_SP);
+    int a = FUNCTION_CHECK_IS_REG(c);
+    printf("FUNCTION_CHECK_IS_REG = %d, c = %d\n", a, c);
+    //store R0 to memory
+    sljit_emit_atomic_store(C, SLJIT_MOV,
+                           SLJIT_R0, SLJIT_R1, SLJIT_R2);
+
+    sljit_emit_op2(C, SLJIT_ADD,
+                   SLJIT_R0, 0,
+                   SLJIT_MEM1(SLJIT_SP), 0,
+                   SLJIT_IMM, 8);
+
+    //load memory to R1
+    //for atomic can't use 'SLJIT_MEM1'
+    sljit_emit_atomic_load(C, SLJIT_MOV, SLJIT_R1,
+                           SLJIT_MEM1(SLJIT_SP));
+    //R0 = RO + R1
+    sljit_emit_op1(C, SLJIT_ADD,
+                   SLJIT_R0, 0,
+                   SLJIT_R1, 0);
+
+    sljit_emit_return(C, SLJIT_MOV, SLJIT_R0, 0);
+    code = sljit_generate_code(C);
+    len = sljit_get_generated_code_size(C);
+
+    Func func = (Func)code;
+    long val = func();
+    printf("test_atomic : ret = %ld\n", val);
 
     sljit_free_compiler(C);
     sljit_free_code(code, NULL);
