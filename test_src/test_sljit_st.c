@@ -144,7 +144,7 @@ void test_atomic(){
     int c = SLJIT_MEM1(SLJIT_SP);
     int a = FUNCTION_CHECK_IS_REG(c);
     printf("FUNCTION_CHECK_IS_REG = %d, c = %d\n", a, c);
-    //store R0 to memory
+    //store R0 to stack
     sljit_emit_atomic_store(C, SLJIT_MOV,
                            SLJIT_R0, SLJIT_R1, SLJIT_R2);
 
@@ -153,8 +153,12 @@ void test_atomic(){
                    SLJIT_MEM1(SLJIT_SP), 0,
                    SLJIT_IMM, 8);
 
-    //load memory to R1
-    //for atomic can't use 'SLJIT_MEM1'
+    sljit_emit_op1(C, SLJIT_MOV,
+                   SLJIT_R2, 0,
+                   SLJIT_IMM, 99);
+
+    //load stack to R1
+    //TODO for atomic mem_reg can't use 'SLJIT_MEM1'
     sljit_emit_atomic_load(C, SLJIT_MOV, SLJIT_R1,
                            SLJIT_MEM1(SLJIT_SP));
     //R0 = RO + R1
