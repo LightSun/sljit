@@ -113,6 +113,7 @@ hfield_p hfield_new(const char* name, int dt){
     p->flags = 0;
     p->onlyType = 0;
     p->name = name ? hstrdup(name) : NULL;
+    p->value._sint64 = 0;
     return p;
 }
 

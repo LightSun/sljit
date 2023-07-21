@@ -13,7 +13,7 @@ typedef struct harray{
     IObject baseObj;
     int dt;
     sint8 free_data;
-    struct VarArray* baseArr;           //the base array.
+    struct VarArray* baseArr;    //the base array.
     struct array_list* ele_list; //for pointer array.
 }harray, *harray_p;
 
@@ -52,6 +52,9 @@ harray* harray_new_chars(const char* str);
 harray* harray_new_chars2(const char* str, uint32 len);
 
 int harray_get_count(harray* arr);
+static inline int harray_size(harray* arr){
+    return harray_get_count(arr);
+}
 
 void* harray_get_ptr_at(harray* p, int index);
 
@@ -60,6 +63,9 @@ int harray_seti(harray* arr, int index, harray_ele* ptr);
 int harray_set(harray* arr, int index, void* ptr);
 
 int harray_add(harray* arr, int index, void* ptr);
+static inline int harray_add2(harray* arr, void* ptr){
+    return harray_add(arr, harray_get_count(arr), ptr);
+}
 int harray_remove(harray* arr, void* ptr);
 //ptr: can be null.
 int harray_remove_at(harray* arr, int index, harray_ele* ptr);
