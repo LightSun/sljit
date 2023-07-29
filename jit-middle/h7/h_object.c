@@ -4,6 +4,7 @@
 #include "h7/h_atomic.h"
 #include "h7/hash.h"
 #include "h7/h_string.h"
+#include "h7/h_field.h"
 
 static inline void __hobject_init(hobject* arr);
 
@@ -59,6 +60,13 @@ static void (Func_ref0)(IObjPtr src1, int c){
     hobject* src = (hobject*)src1;
     if(h_atomic_add(&src->baseObj.ref, c) == -c){
         if(src->fields){
+//            if(src->data){
+//                int size = harray_size(src->fields);
+//                for(int i = 0 ; i < size ; ++i){
+//                    hfield* hf = harray_get_ptr_at(src->fields, i);
+
+//                }
+//            }
             harray_delete(src->fields);
         }
         if(src->methods){
@@ -75,5 +83,6 @@ hobject* hobject_new(harray_p fields, harray_p methods){
     __hobject_init(p);
     p->fields = fields;
     p->methods = methods;
+    //p->data = NULL;
     return p;
 }

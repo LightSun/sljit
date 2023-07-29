@@ -38,6 +38,7 @@ struct core_allocator* h7_get_core_allocator();
 #define FREE(ptr) h7_get_core_allocator()->Free(ptr)
 
 #define ALLOC_T(t) (t*)ALLOC(sizeof(t))
+#define ALLOC_KS(k,s) ALLOC(k*s)
 
 
 #endif // H7_ALLOC_H
