@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include "sarray.h"
 
+struct sljit_compiler;
+
 typedef enum hst_op{
     ADD = 1, DEC, MUL, DIV, MOD,
     OPN, // -10, -t
@@ -17,11 +19,12 @@ typedef enum hst_op{
     LSHIFT_EQ, RSHIFT_EQ,
     OR_EQ,   // |=,
     AND_EQ,  // &=
+    ASSIGN,
 }hst_op;
 
 typedef struct OpNum{
     int reg;
-    int type;
+    int dt;
     union {
         char ns[24]; //number str
         void* ptr;
@@ -30,9 +33,14 @@ typedef struct OpNum{
 
 typedef struct hstatement{
     int op_code;  //sljit_emit_op2(C, SLJIT_AND, SLJIT_R0, 0, SLJIT_S0, 0, SLJIT_IMM, 1); op_c = 2
-
+    OpNum dst;
+    OpNum left;
+    OpNum right;
 }hstatement;
 
 SARRAY_INIT(hstatement);
+
+void hstatement_compile(struct sljit_compiler* sc, hstatement* hs);
+
 
 #endif
