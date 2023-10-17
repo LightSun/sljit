@@ -17,11 +17,11 @@ struct hjit_scope{
     //const pool: string + obj
     //type info map: type_desc <-> func_to_create_obj
     hjit_scope* parent;
-    array_map_p const_pool; //kv = name,obj
-    array_map_p type_map;   //kv = desc, hjit_object_info
+    array_map_p const_pool; //kv = name, obj
+    array_map_p type_map;   //kv = desc, hjit_desc_info
 };
 
-struct hjit_field{
+struct hjit_Field{
     Utf8String* type_desc;
     uint32 offset;
     uint32 flags;
@@ -29,15 +29,17 @@ struct hjit_field{
 
 struct hjit_object{
     IObject baseObj;
-    harray_p field_type_descs;
-    harray_p field_offsets;
+    harray_p names;
+    harray_p fields;    //List<hjit_member>
     void* data;
+    uint32 size;
+    uint32 flags;
 };
 
 struct hjit_desc_info{
-    Utf8String* super; //may be null
+    Utf8String* super;         //may be null
     harray_p super_interfaces; //List<Utf8String>
-    uint32 size;//exclude method
+    uint32 size;
 };
 
 //List<Student>

@@ -21,7 +21,7 @@ int IObject_eqauls_base(void* p1, void* p2){
         }
         IObject* obj1 = (IObject*)p1;
         IObject* obj2 = (IObject*)p2;
-        if(strcmp(obj1->name, obj2->name) != 0){
+        if(strcmp(obj1->class_info->type_desc, obj2->class_info->type_desc) != 0){
             return kState_FAILED;
         }
     }
@@ -38,7 +38,7 @@ void* dtype_obj_cpy(void* ud, void* ele){
     case kType_P_OBJECT:
     case kType_P_MAP:{
         IObject* obj = (IObject*)ele;
-        return obj->Func_copy(ele, NULL);
+        return obj->class_info->Func_copy(ele, NULL);
     }
     }
     return NULL;
@@ -54,7 +54,7 @@ uint32 dtype_obj_hash(void* ud, void* ele, uint32 seed){
     case kType_P_OBJECT:
     case kType_P_MAP:{
         IObject* obj = (IObject*)ele;
-        return obj->Func_hash(ele, seed);
+        return obj->class_info->Func_hash(ele, seed);
     }
     }
     return seed;
@@ -71,10 +71,10 @@ int dtype_obj_equals(void* ud, void* ele1, void* ele2){
     case kType_P_MAP:{
         IObject* obj = (IObject*)ele1;
         IObject* obj2 = (IObject*)ele2;
-        if(strcmp(obj->name, obj2->name)!= 0){
+        if(strcmp(obj->class_info->type_desc, obj2->class_info->type_desc)!= 0){
             return kState_FAILED;
         }
-        return obj->Func_equals(ele1, ele2);
+        return obj->class_info->Func_equals(ele1, ele2);
     }
     }
     return kState_FAILED;
@@ -93,7 +93,7 @@ void dtype_obj_ref(void* ud, void* ele, int c){
     case kType_P_OBJECT:
     case kType_P_MAP:{
         IObject* obj = (IObject*)ele;
-        return obj->Func_ref(ele, c);
+        return obj->class_info->Func_ref(ele, c);
     }
     }
 }
@@ -108,7 +108,7 @@ void dtype_obj_dump(void* ud, void* ele, hstring* hs){
     case kType_P_OBJECT:
     case kType_P_MAP:{
         IObject* obj = (IObject*)ele;
-        obj->Func_dump(ele, hs);
+        obj->class_info->Func_dump(ele, hs);
         break;
     }
     }

@@ -2,6 +2,7 @@
 #define DTYPES_H
 
 #include "h7/common/c_common.h"
+#include "h7/common/halloc.h"
 #include <memory.h>
 #include <string.h>
 
@@ -11,6 +12,14 @@
 #define DEFAULT_HASH_SEED 0
 #define IOBJ_NAME_MAX_SIZE 28
 #define DEFAULT_LOAD_FACTOR 0.75f
+
+#define DT_OFFSET_NONE -1
+
+static inline char* hstrdup(const char* str){
+    char* data = ALLOC(strlen(str) + 1);
+    strcpy(data, str);
+    return data;
+}
 
 union htype_value{
     sint8 _sint8;
@@ -48,12 +57,19 @@ enum DT{
 
 typedef struct IObject IObject;
 typedef struct hstring hstring;
+typedef struct IClass IClass;
+typedef struct harray harray;
+typedef struct hscope hscope;
 typedef void* IObjPtr;
 
-struct IObject{
+extern hscope* hscope_get_current();
+extern IClass* hscope_get_type(hscope* cur, const char* type);
+extern void hscope_put_type(hscope* cur, const char* type, IClass* cls);
+
+struct IClass{
     volatile int ref;
-    char name[IOBJ_NAME_MAX_SIZE];
-    struct IObject* super;
+    char* type_desc;
+   // harray* super_interfaces;
     IObjPtr (*Func_copy)(IObjPtr src, IObjPtr dst);
     int (*Func_equals)(IObjPtr src, IObjPtr dst);
     uint32 (*Func_hash)(IObjPtr src, uint32 seed);
@@ -61,19 +77,27 @@ struct IObject{
     void (*Func_ref)(IObjPtr src, int c);
 };
 
+struct IObject{
+    volatile int ref;
+    uint32 flags;
+    struct IObject* super;
+    IClass* class_info;
+};
+
+IClass* IClass_new(const char* type_desc);
+
 void* dtype_obj_cpy(void* ud, void* ele);
 int dtype_obj_equals(void* ud, void* ele1, void* ele2);
 uint32 dtype_obj_hash(void* ud, void* ele, uint32 seed);
 void dtype_obj_ref(void* ud, void* ele, int ref);
 void dtype_obj_dump(void* ud, void* ele, hstring*);
-int IObject_eqauls_base(void* p1, void* p2);
 
 void dtype_obj_log(void* ud, void* ele);
+int IObject_eqauls_base(void* p1, void* p2);
 
 static inline void dtype_obj_delete(void* ud, void* ele){
     dtype_obj_ref(ud, ele, -1);
 }
-
 //
 typedef int (*dt_func_eq)(void* ud, void* e1, void* e2);
 typedef void* (*dt_func_cpy)(void* ud, void* e1);
@@ -81,34 +105,61 @@ typedef uint32 (*dt_func_hash)(void* ud, void* ele, uint32 seed);
 typedef void (*dt_func_delete)(void* ud, void* ele);
 typedef void (*dt_func_dump)(void* ud, void* ele, hstring*);
 
-
-static inline void IObject_set_name(void* arr, const char* name){
+static inline void IObject_free(void* arr){
     IObject* obj = (IObject*)arr;
-    uint32 len = (uint32)strlen(name);
-    memcpy(obj->name, name, len);
-    obj->name[len] = '\0';
+    FREE(arr);
+}
+static inline void IObject_copy_base_unsafe(int type, void* src1, void* dst1){
+    IObject* src = (IObject*)src1;
+    IObject* dst = (IObject*)dst1;
+    dst->flags = src->flags;
+    dst->class_info = src->class_info;
+    //dst->super
+    dtype_obj_ref(&type, src->super, 1);
+    dst->super = src->super;
 }
 
-#define DEF_IOBJ_INIT_CHILD(T, name)\
+static inline void IObject_copy_base(int type, void* src1, void* dst1){
+    IObject* src = (IObject*)src1;
+    IObject* dst = (IObject*)dst1;
+    dst->flags = src->flags;
+    dst->class_info = src->class_info;
+    //dst->super
+    dtype_obj_ref(&type, dst->super, -1);
+    dtype_obj_ref(&type, src->super, 1);
+    dst->super = src->super;
+}
+
+#define FREE_OBJ(arr) IObject_free(arr)
+
+#define DEF_IOBJ_INIT_CHILD(T, type_desc)\
 static inline void __##T##_init(T* arr){\
     arr->baseObj.ref = 1;\
     arr->baseObj.super = NULL;\
-    IObject_set_name(arr, name);\
-    arr->baseObj.Func_copy = Func_copy0;\
-    arr->baseObj.Func_dump = Func_dump0;\
-    arr->baseObj.Func_equals = Func_equals0;\
-    arr->baseObj.Func_hash = Func_hash0;\
-    arr->baseObj.Func_ref = Func_ref0;\
+    arr->baseObj.flags = 0;\
+    IObject* obj = (IObject*)arr;\
+    hscope* scope = hscope_get_current();\
+    IClass* cls = hscope_get_type(scope, type_desc);\
+    if(cls == NULL){\
+        cls = IClass_new(type_desc);\
+        hscope_put_type(scope, type_desc, cls);\
+        cls->Func_copy = Func_copy0;\
+        cls->Func_dump = Func_dump0;\
+        cls->Func_equals = Func_equals0;\
+        cls->Func_hash = Func_hash0;\
+        cls->Func_ref = Func_ref0;\
+    }\
+    obj->class_info = cls;\
 }
 
 #define DEF_IOBJ_CHILD_FUNCS(t)\
 static inline t* t##_copy(t* src){\
     IObject* obj = (IObject*)src;\
-    return (t*)obj->Func_copy(src, NULL);\
+    return (t*)obj->class_info->Func_copy(src, NULL);\
 }\
 static inline void t##_delete(t* arr){\
     IObject* obj = (IObject*)arr;\
-    obj->Func_ref(arr, -1);\
+    obj->class_info->Func_ref(arr, -1);\
 }\
 static inline int t##_equals(t* arr, t* arr2){\
     int ret = IObject_eqauls_base(arr, arr2);\
@@ -116,23 +167,23 @@ static inline int t##_equals(t* arr, t* arr2){\
         return ret;\
     }\
     IObject* obj = (IObject*)arr;\
-    return obj->Func_equals(arr, arr2);\
+    return obj->class_info->Func_equals(arr, arr2);\
 }\
 static inline uint32 t##_hash(t* arr, uint32 seed){\
     IObject* obj = (IObject*)arr;\
-    return obj->Func_hash(arr, seed);\
+    return obj->class_info->Func_hash(arr, seed);\
 }\
 static inline void t##_dump(t* arr, struct hstring* hs){\
     IObject* obj = (IObject*)arr;\
-    obj->Func_dump(arr, hs);\
+    obj->class_info->Func_dump(arr, hs);\
 }\
 static inline void t##_ref(t* arr){\
     IObject* obj = (IObject*)arr;\
-    obj->Func_ref(arr, 1);\
+    obj->class_info->Func_ref(arr, 1);\
 }\
 static inline void t##_unref(t* arr){\
     IObject* obj = (IObject*)arr;\
-    obj->Func_ref(arr, -1);\
+    obj->class_info->Func_ref(arr, -1);\
 }
 
 //-----------------------------------

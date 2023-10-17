@@ -18,8 +18,8 @@ hjit_obj* hjit_obj_create(hjit_scope* scope, harray_p ps){
         harray_add2(fs, param->type_desc);
     }
     hjit_obj* obj = ALLOC_T(hjit_obj);
-    obj->field_type_descs = fs;
-    obj->field_offsets = offsets;
+    //obj->field_type_descs = fs;
+   // obj->field_offsets = offsets;
     obj->data = ALLOC(data_size);
     return obj;
 FAILED:

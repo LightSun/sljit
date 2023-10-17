@@ -6,12 +6,6 @@
 
 typedef struct hstring hstring;
 
-static inline char* hstrdup(const char* str){
-    char* data = ALLOC(strlen(str) + 1);
-    strcpy(data, str);
-    return data;
-}
-
 //latter will opt.
 hstring* hstring_append(hstring* owner, const char *str);
 hstring* hstring_append2(hstring* owner, const char *str, uint32 len);

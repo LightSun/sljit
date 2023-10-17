@@ -100,7 +100,7 @@ static int (Func_equals0)(IObjPtr src1, IObjPtr dst1){
             for(int i = 0, c = array_list_size(arr->ele_list) ;
                     i < c ; i ++){
                 IObject* hobj = (IObject*)harray_get_ptr_at(arr, i);
-                if(!hobj->Func_equals(
+                if(!hobj->class_info->Func_equals(
                             harray_get_ptr_at(arr,i),
                              harray_get_ptr_at(arr2,i))){
                     return kState_FAILED;
@@ -133,7 +133,7 @@ static void (Func_dump0)(IObjPtr src1, hstring* hs){
                     hstring_append(hs, ",");
                 }
                 IObject* hobj = (IObject*)harray_get_ptr_at(arr, i);
-                hobj->Func_dump(hobj, hs);
+                hobj->class_info->Func_dump(hobj, hs);
             }
         }break;
         }
@@ -154,11 +154,11 @@ static void Func_ref0(IObjPtr src1, int c){
         if(arr->baseArr){
             VarArray_delete(arr->baseArr, arr->free_data);
         }
-        FREE(arr);
+        FREE_OBJ(arr);
     }
 }
 
-DEF_IOBJ_INIT_CHILD(harray, "__$array")
+DEF_IOBJ_INIT_CHILD(harray, "$array")
 
 //======================================================
 harray* harray_new_arrays(struct array_list* arrays){

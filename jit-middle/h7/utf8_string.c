@@ -79,7 +79,7 @@ Utf8String *utf8_create() {
 void utf8_destory(Utf8String *uni_str) {
     if (uni_str != NULL) {
         FREE(uni_str->data);
-        FREE(uni_str);
+        FREE_OBJ(uni_str);
     }
 }
 

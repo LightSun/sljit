@@ -29,14 +29,12 @@ static IObjPtr (Func_copy0)(IObjPtr src1, IObjPtr dst1){
      if(dst == NULL){
          dst = (hfield_p)ALLOC(sizeof(struct hfield));
          __hfield_init(dst);
+         IObject_copy_base_unsafe(kType_P_FIELD, src, dst);
      }else{
-        if(dt_is_pointer(dst->dt)){
-            dtype_obj_delete(&dst->dt, dst->value._extra);
-        }
+         IObject_copy_base(kType_P_FIELD, src, dst);
      }
-     dst->onlyType = src->onlyType;
-     dst->dt = src->dt;
-     dst->value = src->value;
+     REALLOC2(dst->name, strlen(src->name) + 1);
+     dst->offset = src->offset;
      return dst;
 }
 
@@ -47,23 +45,10 @@ static int (Func_equals0)(IObjPtr src1, IObjPtr dst1){
     }
     hfield* src = (hfield*)src1;
     hfield* dst = (hfield*)dst1;
-    if(src->dt != dst->dt){
-        return kState_FAILED;
-    }
-    if(src->onlyType != dst->onlyType){
-        return kState_FAILED;
-    }
     if(src->onlyType){
         return kState_OK;
     }
-    //cmp value
-    if(dt_is_pointer(src->dt)){
-        return dtype_obj_equals(&src->dt, src->value._extra,
-                         dst->value._extra);
-    }else{
-       DEF_DT_BASE_SWITCH(__EQ_I, src->dt);
-    }
-    return kState_FAILED;
+    return kState_OK;
 }
 
 static uint32 (Func_hash0)(IObjPtr src1, uint32 seed){
@@ -103,59 +88,13 @@ static void (Func_ref0)(IObjPtr src1, int c){
     }
 }
 
-DEF_IOBJ_INIT_CHILD(hfield, "__$field")
+DEF_IOBJ_INIT_CHILD(hfield, "$Field")
 
 //----------------------------
-hfield_p hfield_new(const char* name, int dt){
+hfield_p hfield_new(const char* name){
     hfield_p p = ALLOC(sizeof(hfield));
     __hfield_init(p);
-    p->dt = dt;
-    p->flags = 0;
-    p->onlyType = 0;
+    p->offset = DT_OFFSET_NONE;
     p->name = name ? hstrdup(name) : NULL;
-    p->value._sint64 = 0;
     return p;
 }
-
-#define __SET(hffi_t, t)\
-case hffi_t:{\
-    p->value._##t = *(t*)ptr;\
-}return kState_OK;
-
-int hfield_set(hfield_p p, void* ptr){
-    if(dt_is_pointer(p->dt)){
-        p->value._extra = ptr;
-    }else{
-        DEF_DT_BASE_SWITCH(__SET, p->dt);
-    }
-    return kState_OK;
-}
-
-#define __SET_I(hffi_t, t)\
-case hffi_t:{\
-    p->value._##t = ptr->_##t;\
-}return kState_OK;
-
-#define __GET_I(hffi_t, t)\
-case hffi_t:{\
-    ptr->_##t = p->value._##t;\
-}return kState_OK;
-
-//int hfield_set_value(hfield_p p,union htype_value* ptr){
-//    if(dt_is_pointer(p->dt)){
-//        p->value._extra = ptr->_extra;
-//        return kState_OK;
-//    }else{
-//        DEF_DT_BASE_SWITCH(__SET_I, p->dt);
-//    }
-//    return kState_FAILED;
-//}
-//int hfield_get_value(hfield_p p,union htype_value* ptr){
-//    if(dt_is_pointer(p->dt)){
-//        ptr->_extra = p->value._extra;
-//        return kState_OK;
-//    }else{
-//        DEF_DT_BASE_SWITCH(__GET_I, p->dt);
-//    }
-//    return kState_FAILED;
-//}

@@ -38,7 +38,7 @@ static inline void _array_map_copy(int dt, void* srcData,
     if(dt_is_pointer(dt)){
         IObject* iobj = ((void**)srcData)[0];
         for(uint32 i = 0 ; i < val_len ; ++i){
-            iobj->Func_copy(((void**)srcData)[i], ((void**)dstData)[i]);
+            iobj->class_info->Func_copy(((void**)srcData)[i], ((void**)dstData)[i]);
         }
     }else{
         memcpy(dstData, srcData, dt_size(dt) * val_len);
@@ -52,7 +52,7 @@ static inline void _array_map_free(int dt, void* srcData,
     if(dt_is_pointer(dt)){
         IObject* iobj = ((void**)srcData)[0];
         for(uint32 i = 0 ; i < val_len ; ++i){
-            iobj->Func_ref(((void**)srcData)[i], -1);
+            iobj->class_info->Func_ref(((void**)srcData)[i], -1);
         }
     }else{
         FREE(srcData);
@@ -67,7 +67,7 @@ static inline uint32 _array_map_hash(int dt, void* data,
         void** sd = (void**)data;
         IObject* iobj = (sd)[0];
         for(uint32 i = 0 ; i < val_len ; ++i){
-            seed = iobj->Func_hash(sd[i], seed);
+            seed = iobj->class_info->Func_hash(sd[i], seed);
         }
         return seed;
     }else{
@@ -84,7 +84,7 @@ static inline void _dump_target(int dt, void* data, uint32 index, hstring* hs){
 
     if(dt_is_pointer(dt)){
         IObject* iobj = (IObject*)data;
-        iobj->Func_dump(data, hs);
+        iobj->class_info->Func_dump(data, hs);
     }else{
         DEF_DT_BASE_SWITCH_FORMAT(__dump_impl, dt);
     }
@@ -100,7 +100,7 @@ static inline uint32 _array_map_eq(int dt, void* data1,
         void** sd2 = (void**)data2;
         IObject* iobj = (sd1)[0];
         for(int i = 0 ; i < val_len ; ++i){
-            if(!iobj->Func_equals(sd1[i], sd2[i])){
+            if(!iobj->class_info->Func_equals(sd1[i], sd2[i])){
                 return kState_FAILED;
             }
         }
@@ -133,7 +133,7 @@ static inline uint32 __hash(int dt, const void* data, uint32 size){
 
     if(dt_is_pointer(dt)){
         IObject* iobj = (IObject*)data;
-        return iobj->Func_hash((void*)data, DEFAULT_HASH_SEED);
+        return iobj->class_info->Func_hash((void*)data, DEFAULT_HASH_SEED);
     }else{
         return fasthash32(data, size, DEFAULT_HASH_SEED);
     }
@@ -232,11 +232,11 @@ static void (Func_ref0)(IObjPtr src, int c){
         _array_map_free(ptr->key_dt, ptr->keys, ptr->len_entry);
         _array_map_free(ptr->val_dt, ptr->values, ptr->len_entry);
         FREE(ptr->hashes);
-        FREE(ptr);
+        FREE_OBJ(ptr);
     }
 }
 
-DEF_IOBJ_INIT_CHILD(array_map, "__$array_map")
+DEF_IOBJ_INIT_CHILD(array_map, "$array_map")
 
 //--------------------------------------------------
 array_map_p array_map_new(uint16 key_dt,
