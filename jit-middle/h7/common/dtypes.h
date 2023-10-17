@@ -36,6 +36,7 @@ union htype_value{
 };
 
 enum DT{
+    kType_NONE = -1,
     kType_VOID,   //only used for func-def
     kType_S8 = 1,
     kType_U8,
@@ -93,11 +94,15 @@ void dtype_obj_ref(void* ud, void* ele, int ref);
 void dtype_obj_dump(void* ud, void* ele, hstring*);
 
 void dtype_obj_log(void* ud, void* ele);
-int IObject_eqauls_base(void* p1, void* p2);
+
+int dtype_base_eq(int dt,void* p1, void* p2);
+void dtype_base_dump(int dt,void* p1, hstring* out);
 
 static inline void dtype_obj_delete(void* ud, void* ele){
     dtype_obj_ref(ud, ele, -1);
 }
+//base info of object is eq or not.
+int IObject_eqauls_base(void* p1, void* p2);
 //
 typedef int (*dt_func_eq)(void* ud, void* e1, void* e2);
 typedef void* (*dt_func_cpy)(void* ud, void* e1);
@@ -218,6 +223,23 @@ static inline uint32 dt_size(int dt){
     return 0;
 }
 
+static inline uint32 dt_is_base(int dt){
+    switch (dt) {
+        case kType_S8:
+        case kType_U8:
+        case kType_S16:
+        case kType_U16:
+        case kType_S32:
+        case kType_U32:
+        case kType_S64:
+        case kType_U64:
+        case kType_F32:
+        case kType_F64:
+            return 1;
+    }
+    return 0;
+}
+
 static inline uint32 dt_is_float(int dt){
     return dt == kType_F32 || dt == kType_F64;
 }
@@ -225,7 +247,7 @@ static inline uint32 dt_is_float(int dt){
 static inline const char* dt2str(int dt){
     switch (dt) {
     case kType_S8:
-        return "sint8";
+        return "int8";
     case kType_U8:
         return "uint8";
     case kType_S16:
@@ -247,19 +269,44 @@ static inline const char* dt2str(int dt){
         return "double";
 
     case kType_P_ARRAY:
-        return "<array>";
+        return "$array";
     case kType_P_MAP:
-        return "<map>";
+        return "$map";
     case kType_P_STRING:
-        return "<string>";
+        return "$string";
     case kType_P_OBJECT:
-        return "<object>";
+        return "$object";
     case kType_P_FUNC:
-        return "<function>";
+        return "$function";
     case kType_P_FIELD:
-        return "<field>";
+        return "$field";
+
+    case kType_VOID:
+        return "$void";
     }
-    return "<unknown>";
+    return "";
+}
+
+static inline int str2dt(const char* str){
+    if(strcmp(str, "int8")) return kType_S8;
+    if(strcmp(str, "uint8")) return kType_U8;
+    if(strcmp(str, "int16")) return kType_S16;
+    if(strcmp(str, "uint16")) return kType_U16;
+    if(strcmp(str, "int32")) return kType_S32;
+    if(strcmp(str, "uint32")) return kType_U32;
+    if(strcmp(str, "int64")) return kType_S64;
+    if(strcmp(str, "uint64")) return kType_U64;
+    if(strcmp(str, "float")) return kType_F32;
+    if(strcmp(str, "double")) return kType_F64;
+
+    if(strcmp(str, "$array")) return kType_P_ARRAY;
+    if(strcmp(str, "$map")) return kType_P_MAP;
+    if(strcmp(str, "$string")) return kType_P_STRING;
+    if(strcmp(str, "$function")) return kType_P_FUNC;
+    if(strcmp(str, "$field")) return kType_P_FIELD;
+    if(strcmp(str, "$void")) return kType_VOID;
+
+    return kType_NONE;
 }
 
 static inline int dt_is_pointer(int dt){

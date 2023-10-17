@@ -236,7 +236,7 @@ static void (Func_ref0)(IObjPtr src, int c){
     }
 }
 
-DEF_IOBJ_INIT_CHILD(array_map, "$array_map")
+DEF_IOBJ_INIT_CHILD(array_map, "$map")
 
 //--------------------------------------------------
 array_map_p array_map_new(uint16 key_dt,
