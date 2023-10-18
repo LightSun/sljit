@@ -4,9 +4,16 @@
 #include "h7/hash.h"
 #include "h7/h_string.h"
 #include "h7/numbers.h"
+#include "h7/h_scope.h"
 
 extern void* hobject_get_data_ptr(hobject* p, hfield* src);
-extern uint32 hobject_get_data_size(hobject* p, hfield* src);
+static inline uint32 _get_data_size(hfield* src){
+    int dt = str2dt(src->dt_desc);
+    if(dt_is_base(dt)){
+        return dt_size(dt);
+    }
+    return sizeof(void*);
+}
 
 #define __EQ_I(hffi_t, t)\
 case hffi_t:{\
@@ -39,15 +46,20 @@ static IObjPtr (Func_copy0)(IObjPtr src1, IObjPtr dst1){
      REALLOC2(dst->name, strlen(src->name) + 1);
      REALLOC2(dst->dt_desc, strlen(src->dt_desc) + 1);
      dst->offset = src->offset;
-     dst->owner = src->owner;
-     memcpy(dst->name, src->name, strlen(src->name));
-     memcpy(dst->dt_desc, src->dt_desc, strlen(src->dt_desc));
-     //copy
+     if(!dst->owner){
+         dst->owner = src->owner;
+     }
+     //copy data
      if(src->owner){
         void* d_src = hobject_get_data_ptr(src->owner, src);
-        void* d_dst = hobject_get_data_ptr(src->owner, dst);
-        memcpy(d_dst, d_src, hobject_get_data_size(src->owner, src));
+        void* d_dst = hobject_get_data_ptr(dst->owner, dst);
+        if(*(uint64*)d_dst == 0){
+            //TODO
+        }
+        memcpy(d_dst, d_src, _get_data_size(src));
      }
+     memcpy(dst->name, src->name, strlen(src->name));
+     memcpy(dst->dt_desc, src->dt_desc, strlen(src->dt_desc));
      return dst;
 }
 
@@ -94,11 +106,7 @@ static void (Func_dump0)(IObjPtr src1, hstring* hs){
     if(src->owner){
         int dt = str2dt(src->dt_desc);
         void* d_src = hobject_get_data_ptr(src->owner, src);
-        if(dt_is_base(dt)){
-            dtype_base_dump(dt, d_src, hs);
-        }else{
-            dtype_obj_dump(&dt, d_src, hs);
-        }
+        dtype_common_dump(dt, d_src, hs);
     }
 }
 static void (Func_ref0)(IObjPtr src1, int c){

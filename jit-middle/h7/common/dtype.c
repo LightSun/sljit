@@ -178,3 +178,10 @@ void dtype_base_dump(int dt, void* p1, hstring* out){
     }break;
     }
 }
+void dtype_common_dump(int dt, void* p1, hstring* hs){
+    if(dt_is_base(dt)){
+        dtype_base_dump(dt, p1, hs);
+    }else{
+        dtype_obj_dump(&dt, p1, hs);
+    }
+}

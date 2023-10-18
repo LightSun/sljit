@@ -98,6 +98,8 @@ void dtype_obj_log(void* ud, void* ele);
 int dtype_base_eq(int dt,void* p1, void* p2);
 void dtype_base_dump(int dt,void* p1, hstring* out);
 
+void dtype_common_dump(int dt,void* p1, hstring* out);
+
 static inline void dtype_obj_delete(void* ud, void* ele){
     dtype_obj_ref(ud, ele, -1);
 }
@@ -322,53 +324,53 @@ static inline int dt_is_pointer(int dt){
     return 0;
 }
 
-#define DEF_DT_BASE_SWITCH(macro, ffi_t)\
-switch (ffi_t) {\
-macro(kType_S8, sint8)\
-macro(kType_U8, uint8)\
-macro(kType_S16, sint16)\
-macro(kType_U16, uint16)\
-macro(kType_S32, sint32)\
-macro(kType_U32, uint32)\
-macro(kType_S64, sint64)\
-macro(kType_U64, uint64)\
-macro(kType_F32, float)\
-macro(kType_F64, double)\
-}
+//#define DEF_DT_BASE_SWITCH(macro, ffi_t)\
+//switch (ffi_t) {\
+//macro(kType_S8, sint8)\
+//macro(kType_U8, uint8)\
+//macro(kType_S16, sint16)\
+//macro(kType_U16, uint16)\
+//macro(kType_S32, sint32)\
+//macro(kType_U32, uint32)\
+//macro(kType_S64, sint64)\
+//macro(kType_U64, uint64)\
+//macro(kType_F32, float)\
+//macro(kType_F64, double)\
+//}
 
-#define DEF_DT_BASE_SWITCH_FORMAT(macro, ffi_t)\
-switch (ffi_t) {\
-macro(kType_S8, sint8, "%d")\
-macro(kType_U8, uint8, "%d")\
-macro(kType_S16, sint16, "%d")\
-macro(kType_U16, uint16, "%d")\
-macro(kType_S32, sint32, "%d")\
-macro(kType_U32, uint32, "%u")\
-macro(kType_S64, sint64, "%lld")\
-macro(kType_U64, uint64, "%llu")\
-macro(kType_F32, float, "%g")\
-macro(kType_F64, double, "%g")\
-}
+//#define DEF_DT_BASE_SWITCH_FORMAT(macro, ffi_t)\
+//switch (ffi_t) {\
+//macro(kType_S8, sint8, "%d")\
+//macro(kType_U8, uint8, "%d")\
+//macro(kType_S16, sint16, "%d")\
+//macro(kType_U16, uint16, "%d")\
+//macro(kType_S32, sint32, "%d")\
+//macro(kType_U32, uint32, "%u")\
+//macro(kType_S64, sint64, "%lld")\
+//macro(kType_U64, uint64, "%llu")\
+//macro(kType_F32, float, "%g")\
+//macro(kType_F64, double, "%g")\
+//}
 
-#define DEF_DT_ALL_SWITCH(macro, ffi_t)\
-switch (ffi_t) {\
-macro(kType_S8, "sint8")\
-macro(kType_U8, "uint8")\
-macro(kType_S16, "sint16")\
-macro(kType_U16, "uint16")\
-macro(kType_S32, "sint32")\
-macro(kType_U32, "uint32")\
-macro(kType_S64, "sint64")\
-macro(kType_U64, "uint64")\
-macro(kType_F32, "float")\
-macro(kType_F64, "double")\
-macro(kType_P_ARRAY, "<array>")\
-macro(kType_P_MAP, "<map>")\
-macro(kType_P_STRING, "<string>")\
-macro(kType_P_OBJECT, "<object>")\
-macro(kType_P_FUNC, "<function>")\
-macro(kType_P_FIELD, "<field>")\
-macro(kType_VOID, "<void>")\
-}
+//#define DEF_DT_ALL_SWITCH(macro, ffi_t)\
+//switch (ffi_t) {\
+//macro(kType_S8, "sint8")\
+//macro(kType_U8, "uint8")\
+//macro(kType_S16, "sint16")\
+//macro(kType_U16, "uint16")\
+//macro(kType_S32, "sint32")\
+//macro(kType_U32, "uint32")\
+//macro(kType_S64, "sint64")\
+//macro(kType_U64, "uint64")\
+//macro(kType_F32, "float")\
+//macro(kType_F64, "double")\
+//macro(kType_P_ARRAY, "<array>")\
+//macro(kType_P_MAP, "<map>")\
+//macro(kType_P_STRING, "<string>")\
+//macro(kType_P_OBJECT, "<object>")\
+//macro(kType_P_FUNC, "<function>")\
+//macro(kType_P_FIELD, "<field>")\
+//macro(kType_VOID, "<void>")\
+//}
 
 #endif // DTYPES_H
