@@ -69,6 +69,7 @@ extern void hscope_put_type(hscope* cur, const char* type, IClass* cls);
 
 struct IClass{
     volatile int ref;
+    uint32 size; // base size of object. like int(4), object(any)
     char* type_desc;
    // harray* super_interfaces;
     IObjPtr (*Func_copy)(IObjPtr src, IObjPtr dst);
@@ -149,6 +150,7 @@ static inline void __##T##_init(T* arr){\
     IClass* cls = hscope_get_type(scope, type_desc);\
     if(cls == NULL){\
         cls = IClass_new(type_desc);\
+        cls->size = sizeof(T);\
         hscope_put_type(scope, type_desc, cls);\
         cls->Func_copy = Func_copy0;\
         cls->Func_dump = Func_dump0;\
@@ -221,8 +223,11 @@ static inline uint32 dt_size(int dt){
     case kType_P_FUNC:
     case kType_P_FIELD:
         return sizeof(void*);
+
+    case kType_VOID:
+        return 0;
     }
-    return 0;
+    return sizeof(void*);
 }
 
 static inline uint32 dt_is_base(int dt){
