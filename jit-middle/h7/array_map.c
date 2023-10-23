@@ -86,7 +86,7 @@ static inline void _dump_target(int dt, void* data, uint32 index, hstring* hs){
         IObject* iobj = (IObject*)data;
         iobj->class_info->Func_dump(data, hs);
     }else{
-        DEF_DT_BASE_SWITCH_FORMAT(__dump_impl, dt);
+        //DEF_DT_BASE_SWITCH_FORMAT(__dump_impl, dt);
     }
 }
 static inline uint32 _array_map_eq(int dt, void* data1,

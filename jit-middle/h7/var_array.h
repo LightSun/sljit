@@ -160,7 +160,7 @@ case hffi_t:{\
 
 static inline void VarArray_get2(VarArray* p,int index, int dt, union htype_value* po){
     ASSERT(index >= 0 && index < (int)p->ele_count);
-    DEF_DT_BASE_SWITCH(__VAR_ARR_GET2_I, dt);
+    //DEF_DT_BASE_SWITCH(__VAR_ARR_GET2_I, dt);
 }
 
 static inline int VarArray_equals_float_data(VarArray* p1, VarArray* p2){

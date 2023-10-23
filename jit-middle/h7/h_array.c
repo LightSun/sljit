@@ -138,7 +138,7 @@ static void (Func_dump0)(IObjPtr src1, hstring* hs){
         }break;
         }
     }else{
-        DEF_DT_BASE_SWITCH_FORMAT(harray_dump_impl, arr->dt);
+        //DEF_DT_BASE_SWITCH_FORMAT(harray_dump_impl, arr->dt);
     }
     hstring_append(hs, "]");
 }

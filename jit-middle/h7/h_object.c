@@ -45,7 +45,7 @@ static uint32 (Func_hash0)(IObjPtr src1, uint32 seed){
 }
 static void (Func_dump0)(IObjPtr src1, hstring* hs){
     hobject* src = (hobject*)src1;
-    hstring_appendf(hs, "[%s]: fields=" NEW_LINE, src->baseObj.name);
+    //hstring_appendf(hs, "[%s]: fields=" NEW_LINE, src->baseObj.name);
     if(src->fields){
         harray_dump(src->fields, hs);
         hstring_append(hs, NEW_LINE);
