@@ -9,6 +9,7 @@ struct point_st {
 	short z;
 	char d;
     float f;
+    const char* str;
 };
 
 typedef long (SLJIT_FUNC *point_func_t)(struct point_st *point);;
@@ -102,7 +103,7 @@ static int struct_access()
 	point_func_t func;
 
 	struct point_st point = {
-        -5, -20, 5, 'a', 3.1415926f
+        -5, -20, 5, 'a', 3.1415926f, "heaven7"
 	};
 
 	/* Create a SLJIT compiler */
