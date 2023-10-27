@@ -44,12 +44,22 @@ struct Instruction{
 
 };
 
+struct Func{
+    CString name;
+    ValueType ret;
+    List<Param> ps;
+    List<Instruction> insts;
+};
+
 class CodeGen
 {
 public:
     void beginFunc(CString name, ValueType ret, CList<Param> ps);
     void endFunc();
     void pushIns();
+
+private:
+
 };
 
 }

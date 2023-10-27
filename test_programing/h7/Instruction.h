@@ -76,7 +76,7 @@ private:
 
 class Func{
 public:
-    Func(Func* p);
+    Func(Func* parent);
 
     void execute();
     void pushParams(CString name, const ManagedObject& obj);
