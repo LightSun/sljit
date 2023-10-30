@@ -11,6 +11,16 @@ enum ValueType{
     F32,
     F64,
 };
+typedef struct class_s              class_t;
+typedef struct class_s              object_t;
+typedef struct {
+    class_t         *isa;          // EVERY object must have an ISA pointer (8 bytes on a 64bit system)
+    union {                        // union takes 8 bytes on a 64bit system
+        long long  n;              // integer slot
+        double     f;              // float/double slot
+        object_t    *p;            // ptr to object slot
+    };
+} value_t;
 
 enum OpCode{
     MOV_REG_REG,     // reg to reg
@@ -41,25 +51,32 @@ struct Param{
 
 struct Instruction{
     OpCode opc;
-
+    String left;
+    String right;
+    String dst;
 };
 
 struct Func{
-    CString name;
+    String name;
     ValueType ret;
     List<Param> ps;
     List<Instruction> insts;
 };
+using Inst = const Instruction&;
+using SPFunc = std::shared_ptr<Func>;
 
+typedef struct _CodeGen_ctx _CodeGen_ctx;
 class CodeGen
 {
 public:
+    CodeGen();
+    ~CodeGen();
     void beginFunc(CString name, ValueType ret, CList<Param> ps);
     void endFunc();
-    void pushIns();
+    void pushIns(Inst ins);
 
 private:
-
+    _CodeGen_ctx* m_ptr;
 };
 
 }
