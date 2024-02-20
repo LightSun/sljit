@@ -7,6 +7,17 @@
 #include <memory>
 
 namespace h7 {
+    using Char = char;
+    using UChar = unsigned char;
+    using Short = short;
+    using UShort = unsigned short;
+    using Int = int;
+    using UInt = unsigned int;
+    using Long = long long;
+    using ULong = unsigned long long;
+    using Float = float;
+    using Double = double;
+
     using String = std::string;
     using CString = const std::string&;
 template<typename k, typename v>
