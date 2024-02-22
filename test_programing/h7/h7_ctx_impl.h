@@ -13,35 +13,64 @@ inline MemoryBlock MemoryBlock::makeUnchecked(UInt size){
     return b;
 }
 
-TypeInfo::~TypeInfo(){
-    if(subTypes){
-        delete subTypes;
-        subTypes = nullptr;
-    }
+TypeInfo TypeInfo::makeSimple(UInt type){
+    TypeInfo info; info.type = type; return info;
 }
-bool TypeInfo::isAlignSize(int expect)const{
-
+bool TypeInfo::isPrimitiveType()const{
     switch (type) {
-    case kType_NONE:
-        return false;
 
     case kType_bool:
     case kType_int8:
     case kType_uint8:
-        return sizeof(char) == expect;
     case kType_int16:
     case kType_uint16:
-        return sizeof(short) == expect;
 
     case kType_int32:
     case kType_uint32:
-        return sizeof(int) == expect;
 
     case kType_int64:
     case kType_uint64:
-        return sizeof(int64_t) == expect;
+
+    case kType_float:
+    case kType_double:
+        return true;
     }
-    return sizeof (void*) == expect;
+    return false;
+}
+bool TypeInfo::isArrayType() const{
+    return type == kType_array;
+}
+bool TypeInfo::isAlignSize(int expect)const{
+    return virtualSize() == expect;
+}
+
+int TypeInfo::virtualSize()const{
+    switch (type) {
+    case kType_NONE:
+        return 0;
+
+    case kType_bool:
+    case kType_int8:
+    case kType_uint8:
+        return sizeof(char);
+    case kType_int16:
+    case kType_uint16:
+        return sizeof(short);
+
+    case kType_int32:
+    case kType_uint32:
+        return sizeof(int);
+
+    case kType_int64:
+    case kType_uint64:
+        return sizeof(int64_t);
+
+    case kType_float:
+        return sizeof (float);
+    case kType_double:
+        return sizeof (double);
+    }
+    return sizeof (void*);
 }
 
 }

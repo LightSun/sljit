@@ -19,7 +19,7 @@ struct _Classer_ctx{
         }
         clsMap.clear();
     }
-    ClassInfo* newClass(CString name,CListTypeInfo fieldTypes){
+    ClassInfo* newClass(CString name,CListTypeInfo fieldTypes, CListString fns){
         ClassInfo* ptr_info;
         {
         MutexLockHolder lck(clsLock);
@@ -31,9 +31,7 @@ struct _Classer_ctx{
         clsMap[name] = ptr_info;
         }
         ptr_info->name = name;
-
-        //ptr_info->fieldNames = std::move(fieldNames);
-        //ptr_info->structSize = calStructSize(fieldTypes, &ptr_info->fieldOffsets);
+        Classer::alignStructSize(fieldTypes, fns, ptr_info);
         return ptr_info;
     }
 };
@@ -51,40 +49,8 @@ Classer::~Classer()
     }
 }
 
-#define _ALIGN_SIZE 8
-Long Classer::alignStructSize(CListTypeInfo fieldTypes, List<FieldInfo>* fieldInfo){
-    //find all 8 size fields.
-    //mark head and tail if is 8-size or not.
-    //align non-8-size fields by add.
-    int size = fieldTypes.size();
-    List<int> aligned_idxes;
-    for(int i = 0 ; i < size ; ++i){
-        if(fieldTypes[i].isAlignSize(_ALIGN_SIZE)){
-            aligned_idxes.push_back(i);
-        }
-    }
-    if(aligned_idxes.empty()){
-
-    }else if(aligned_idxes.size() == 1){
-
-    }else{
-        bool head_is_aligned = aligned_idxes[0] == 0;
-        bool tail_is_aligned = aligned_idxes[aligned_idxes.size()-1]
-                == size -1;
-        if(!head_is_aligned){
-            aligned_idxes.insert(aligned_idxes.begin(), 0);
-        }
-        if(!tail_is_aligned){
-            aligned_idxes.insert(aligned_idxes.end(), size - 1);
-        }
-        int asize = aligned_idxes.size();
-        for(int i = 0 ; i < asize ; ++i){
-
-        }
-    }
-}
-ClassHandle Classer::define(CString name,CListTypeInfo fieldTypes){
-    return (ClassHandle)m_impl->newClass(name, fieldTypes);
+ClassHandle Classer::define(CString name,CListTypeInfo fieldTypes, CListString fns){
+    return (ClassHandle)m_impl->newClass(name, fieldTypes, fns);
 }
 ObjectHandle Classer::create(ClassHandle handle){
     ClassInfo* ci = (ClassInfo*)handle;
@@ -94,7 +60,7 @@ ObjectHandle Classer::create(ClassHandle handle){
     return (ObjectHandle)obj;
 }
 Value Classer::getField(ObjectHandle oh, CString fieldName){
-
+    Object* obj = (Object*)oh;
 }
 void Classer::setField(ObjectHandle oh, CString fieldName, CValue val){
 

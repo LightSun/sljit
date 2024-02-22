@@ -18,6 +18,15 @@ namespace h7 {
     using Float = float;
     using Double = double;
 
+    using i8 = Char;
+    using u8 = UChar;
+    using i16 = Short;
+    using u16 = UShort;
+    using i32 = Int;
+    using u32 = UInt;
+    using i64 = Long;
+    using u64 = ULong;
+
     using String = std::string;
     using CString = const std::string&;
 template<typename k, typename v>
@@ -47,7 +56,7 @@ enum{
     kType_bool,
     kType_float,
     kType_double,
-    kType_ptr,
+    kType_object,
     kType_array,
     //kType_map,
     //kType_list,
@@ -62,25 +71,28 @@ struct MemoryBlock{
 };
 
 struct TypeInfo{
-    int type;
-    unsigned int length {0};
+    UInt type;
+    UInt length {0};
 
-    List<TypeInfo>* subTypes {nullptr};
+    List<TypeInfo> subTypes;
+
+    static inline TypeInfo makeSimple(UInt type);
 
     inline bool isPrimitiveType() const;
     inline bool isArrayType() const;
     inline bool isAlignSize(int expect) const;
-
-    ~TypeInfo();
+    inline int virtualSize()const;
 };
 
 typedef union Value{
     Char i8;
     UChar u8;
+    Short i16;
+    UShort u16;
     Int i32;
     UInt u32;
     Long i64;
-    ULong ui64;
+    ULong u64;
     Float f;
     Double d;
     void* ptr;
@@ -99,8 +111,12 @@ struct ClassInfo{
 };
 
 struct Object{
+    volatile int refCount {0};
     ClassHandle clsHandle;
     MemoryBlock block;
+
+    void ref();
+    void unref();
 };
 
 using ListTypeInfo = List<TypeInfo>;
@@ -111,5 +127,8 @@ using CTypeInfo = const TypeInfo&;
 
 using CFieldInfo = const FieldInfo&;
 using CValue = const Value&;
+
+void gValue_get(const void* data, UInt type, Value* out);
+void gValue_set(const void* data, UInt type, Value* out);
 
 }
