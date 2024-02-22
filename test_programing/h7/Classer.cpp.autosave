@@ -79,7 +79,7 @@ Long Classer::alignStructSize(CListTypeInfo fieldTypes, List<FieldInfo>* fieldIn
         }
         int asize = aligned_idxes.size();
         for(int i = 0 ; i < asize ; ++i){
-
+            
         }
     }
 }

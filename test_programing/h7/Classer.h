@@ -12,7 +12,9 @@ public:
     Classer();
     ~Classer();
 
-    ClassHandle define(CString name,CListTypeInfo fieldTypes, CListString fieldNames);
+    static Long alignStructSize(CListTypeInfo fieldTypes, List<FieldInfo>* fieldInfo);
+
+    ClassHandle define(CString name,CListTypeInfo fieldTypes);
     ObjectHandle create(ClassHandle handle);
     Value getField(ObjectHandle oh, CString fieldName);
     void setField(ObjectHandle oh, CString fieldName, CValue val);

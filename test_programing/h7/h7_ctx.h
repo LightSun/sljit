@@ -38,6 +38,8 @@ enum{
     kType_NONE,
     kType_int8,
     kType_uint8,
+    kType_int16,
+    kType_uint16,
     kType_int32,
     kType_uint32,
     kType_int64,
@@ -56,14 +58,20 @@ struct MemoryBlock{
     UInt size;
     UInt allocSize;
 
-    static MemoryBlock makeUnchecked(UInt size);
+    static inline MemoryBlock makeUnchecked(UInt size);
 };
 
 struct TypeInfo{
     int type;
     unsigned int length {0};
-    int subType  {kType_NONE};
-    int subType2 {kType_NONE};
+
+    List<TypeInfo>* subTypes {nullptr};
+
+    inline bool isPrimitiveType() const;
+    inline bool isArrayType() const;
+    inline bool isAlignSize(int expect) const;
+
+    ~TypeInfo();
 };
 
 typedef union Value{
@@ -81,14 +89,13 @@ typedef union Value{
 struct FieldInfo{
     String name;
     TypeInfo typeInfo;
-    Value val;
+    UInt offset; //offset of object data
 };
 
 struct ClassInfo{
     String name; //full name
     UInt structSize;
-    List<UInt> fieldOffsets;
-    List<String> fieldNames;
+    HashMap<String, FieldInfo> fieldMap;
 };
 
 struct Object{
