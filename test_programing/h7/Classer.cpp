@@ -2,66 +2,46 @@
 #include "h7_alloc.h"
 #include "h7_locks.h"
 #include "h7_ctx_impl.h"
+#include "h7/utils/h_atomic.h"
 
 using namespace h7;
 
-namespace h7 {
-
-struct _Classer_ctx{
-    HashMap<String, ClassInfo*> clsMap;
-    MutexLock clsLock;
-
-    ~_Classer_ctx(){
-        auto it = clsMap.begin();
-        while(it != clsMap.end()){
-            H7_DELETE(it->second);
-            ++it;
-        }
-        clsMap.clear();
-    }
-    ClassInfo* newClass(CString name,CListTypeInfo fieldTypes, CListString fns){
-        ClassInfo* ptr_info;
-        {
-        MutexLockHolder lck(clsLock);
-        auto it = clsMap.find(name);
-        if(it != clsMap.end()){
-            return 0;
-        }
-        ptr_info = H7_NEW_TYPE(ClassInfo);
-        clsMap[name] = ptr_info;
-        }
-        ptr_info->name = name;
-        Classer::alignStructSize(fieldTypes, fns, ptr_info);
-        return ptr_info;
-    }
-};
+void Object::ref(){
+    h_atomic_add(&refCount, 1);
 }
 
-Classer::Classer()
-{
-    m_impl = new _Classer_ctx();
-}
-Classer::~Classer()
-{
-    if(m_impl){
-        delete m_impl;
-        m_impl = nullptr;
+void Object::unref(){
+    if(h_atomic_add(&refCount, -1) == 1){
+        H7_DELETE(this);
     }
 }
-
-ClassHandle Classer::define(CString name,CListTypeInfo fieldTypes, CListString fns){
-    return (ClassHandle)m_impl->newClass(name, fieldTypes, fns);
+bool ObjectDelegate::getField(CString fn, Value* out){
+    auto info = getFieldInfo(fn);
+    if(!info){
+        return false;
+    }
+    int type = info->typeInfo.isPrimitiveType() ? info->typeInfo.type : kType_object;
+    gValue_get(getFieldAddress(info->offset), type, out);
+    return true;
 }
-ObjectHandle Classer::create(ClassHandle handle){
+bool ObjectDelegate::setField(CString fn, CValue val){
+    auto info = getFieldInfo(fn);
+    if(!info){
+        return false;
+    }
+    int type = info->typeInfo.isPrimitiveType() ? info->typeInfo.type : kType_object;
+    gValue_set(getFieldAddress(info->offset), type, (Value*)&val);
+    return true;
+}
+
+ClassHandle Classer::defineClass(CString name,CListTypeInfo fieldTypes,CListString fns){
+    return (ClassHandle)m_scope->defineClass(name, fieldTypes, fns);
+}
+ObjectPtr Classer::create(ClassHandle handle, ObjectPtr parent){
     ClassInfo* ci = (ClassInfo*)handle;
     Object* obj = H7_NEW_TYPE(Object);
     obj->block = MemoryBlock::makeUnchecked(ci->structSize);
-    obj->clsHandle = handle;
-    return (ObjectHandle)obj;
-}
-Value Classer::getField(ObjectHandle oh, CString fieldName){
-    Object* obj = (Object*)oh;
-}
-void Classer::setField(ObjectHandle oh, CString fieldName, CValue val){
-
+    obj->clsInfo = (ClassInfo*)handle;
+    obj->parent = parent;
+    return obj;
 }

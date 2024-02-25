@@ -11,6 +11,8 @@ using namespace h7;
 //in 64. must >= 8
 #define _ALIGN_SIZE 8
 
+//-----------------------------
+
 static inline List<int> _new_group(int v){
     return {v};
 }
@@ -44,7 +46,7 @@ static inline void _add_groups(List<List<int>>& ggs, CListTypeInfo fieldTypes, i
     }
 }
 
-Long Classer::alignStructSize(CListTypeInfo fieldTypes, CListString fns, ClassInfo* out){
+Long h7::alignStructSize(CListTypeInfo fieldTypes, CListString fns, ClassInfo* out){
     //1, find all 8 size fields.
     //2, mark head and tail if is 8-size or not.
     //3, align non-8-size fields by add.
@@ -136,7 +138,7 @@ Long Classer::alignStructSize(CListTypeInfo fieldTypes, CListString fns, ClassIn
                 info.name = fns[idx];
                 info.offset = offset;
                 info.typeInfo = ft;
-                out->fieldMap[info.name] = std::move(info);
+                (*out->fieldMap)[info.name] = std::move(info);
                 //
                 offset += vsize;
             }
@@ -147,7 +149,7 @@ Long Classer::alignStructSize(CListTypeInfo fieldTypes, CListString fns, ClassIn
 }
 //-------------------------------------------------
 
-void gValue_get(const void* data, UInt type, Value* out){
+void h7::gValue_get(const void* data, UInt type, Value* out){
     switch (type) {
     case kType_bool:{
         out->u8 = (*(UChar*)data) !=0 ? 1 : 0;
@@ -198,11 +200,83 @@ void gValue_get(const void* data, UInt type, Value* out){
         }break;
 
     default:
-        String msg = "gValue_get >> un impl, type = " + std::to_string(type);
-        H7_ASSERT_X(false, msg);
+        out->ptr = (void*)data;
+        //String msg = "gValue_get >> un impl, type = " + std::to_string(type);
+        //H7_ASSERT_X(false, msg);
     }
 }
-void gValue_set(const void* data, UInt type, Value* v){
+void h7::gValue_rawGet(const void* data, UInt type, void* out){
+
+#define _RAW_GET(t) *(t*)out = (*(t*)data); break;
+    switch (type) {
+    case kType_bool:{
+        *(UChar*)out = (*(UChar*)data) !=0 ? 1 : 0;
+    }break;
+
+    case kType_uint8: _RAW_GET(UChar);
+    case kType_int8: _RAW_GET(Char);
+
+    case kType_int16: _RAW_GET(Short);
+    case kType_uint16: _RAW_GET(UShort);
+
+    case kType_int32: _RAW_GET(Int);
+    case kType_uint32:_RAW_GET(UInt);
+
+    case kType_int64: _RAW_GET(Long);
+    case kType_uint64: _RAW_GET(ULong);
+
+    case kType_float:{
+        memcpy(out, data, sizeof (float));
+    }break;
+    case kType_double:
+    {
+        memcpy(out, data, sizeof(Double));
+    }break;
+
+    default:
+        ((void**)out)[0] = (void*)data;
+        //String msg = "gValue_get >> un impl, type = " + std::to_string(type);
+        //H7_ASSERT_X(false, msg);
+    }
+#undef _RAW_GET
+}
+void h7::gValue_rawSet(const void* data, UInt type, void* out){
+
+#define _RAW_SET(t) *(t*)data = (*(t*)out); break;
+    switch (type) {
+    case kType_bool:{
+        *(UChar*)data = (*(UChar*)out) !=0 ? 1 : 0;
+    }break;
+
+    case kType_uint8: _RAW_SET(UChar);
+    case kType_int8: _RAW_SET(Char);
+
+    case kType_int16: _RAW_SET(Short);
+    case kType_uint16: _RAW_SET(UShort);
+
+    case kType_int32: _RAW_SET(Int);
+    case kType_uint32:_RAW_SET(UInt);
+
+    case kType_int64: _RAW_SET(Long);
+    case kType_uint64: _RAW_SET(ULong);
+
+    case kType_float:{
+        memcpy((void*)data, out, sizeof(float));
+    }break;
+    case kType_double:
+    {
+        memcpy((void*)data, out, sizeof(Double));
+    }break;
+
+    default:
+        ((void**)data)[0] = out;
+        //String msg = "gValue_get >> un impl, type = " + std::to_string(type);
+        //H7_ASSERT_X(false, msg);
+    }
+#undef _RAW_SET
+}
+
+void h7::gValue_set(const void* data, UInt type, Value* v){
     switch (type) {
     case kType_bool:{
         (*(UChar*)data) = v->u8 != 0 ? 1 : 0;
@@ -253,17 +327,10 @@ void gValue_set(const void* data, UInt type, Value* v){
         }break;
 
     default:
-        String msg = "gValue_get >> un impl, type = " + std::to_string(type);
-        H7_ASSERT_X(false, msg);
+        memcpy((void*)data, &v->ptr, sizeof(void*));
+        //String msg = "gValue_get >> un impl, type = " + std::to_string(type);
+        //H7_ASSERT_X(false, msg);
     }
 }
 
-void Object::ref(){
-    h_atomic_add(&refCount, 1);
-}
 
-void Object::unref(){
-    if(h_atomic_add(&refCount, -1) == 1){
-        H7_DELETE(this);
-    }
-}
