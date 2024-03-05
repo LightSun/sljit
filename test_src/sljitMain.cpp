@@ -39,6 +39,7 @@ extern "C"{
  void test_sljit_st();
  void test_jit_middle_all();
 }
+extern void test_struct2();
 
 //---------------------
 int sljit_test(int argc, char* argv[]);
@@ -96,11 +97,13 @@ int main(int argc, char* argv[])
     //return sljit_test(argc, argv);
    // g_test1();
     //test_jit_middle_all();
-    test_sljit_st();
+   // test_sljit_st();
 //    test_base1();
 //    test_branch();
 //    test_loop();
 //    test_struct();
+
+    test_struct2();
 
     return 0;
 }

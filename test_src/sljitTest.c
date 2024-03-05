@@ -9603,9 +9603,13 @@ static void test79(void)
 	copy_u8(bbuf, 34, buf + 2, sizeof(sljit_sw));
 	copy_u8(bbuf, 34 + sizeof(sljit_sw), buf + 3, sizeof(sljit_sw));
 
-	sljit_emit_enter(compiler, 0, SLJIT_ARGS1(VOID, W), 5, 5, 0, 0, 3 * sizeof(sljit_sw));
+    sljit_emit_enter(compiler, 0, SLJIT_ARGS1(VOID, W),
+                     5, 5, 0, 0,
+                     3 * sizeof(sljit_sw));
 
-	sljit_emit_mem(compiler, SLJIT_MOV | SLJIT_MEM_LOAD, SLJIT_REG_PAIR(SLJIT_R0, SLJIT_R1), SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw));
+    sljit_emit_mem(compiler, SLJIT_MOV | SLJIT_MEM_LOAD,
+                   SLJIT_REG_PAIR(SLJIT_R0, SLJIT_R1),
+                   SLJIT_MEM1(SLJIT_S0), sizeof(sljit_sw));
 	/* buf[4] */
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_MEM1(SLJIT_S0), 4 * sizeof(sljit_sw), SLJIT_R0, 0);
 	/* buf[5] */

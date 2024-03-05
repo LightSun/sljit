@@ -1,3 +1,5 @@
+#include <stdlib.h>
+#include <memory.h>
 #include "Classer.h"
 #include "h7_alloc.h"
 #include "h7_locks.h"

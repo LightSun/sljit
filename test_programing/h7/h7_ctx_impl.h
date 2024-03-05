@@ -134,7 +134,7 @@ String TypeInfo::getTypeDesc()const{
     return str;
 }
 
-ClassInfo::ClassInfo(TypeInfo* arr){
+ClassInfo::ClassInfo(const TypeInfo* arr){
     if(arr){
         arrayDesc = std::make_unique<ArrayClassDesc>();
         arrayDesc->arrayDesc = *arr->arrayDesc;
@@ -142,6 +142,15 @@ ClassInfo::ClassInfo(TypeInfo* arr){
     }else{
         fieldMap = std::make_unique<HashMap<String, FieldInfo>>();
     }
+}
+int ClassInfo::getFieldOffset(CString name){
+    if(fieldMap){
+        auto it = fieldMap->find(name);
+        if(it != fieldMap->end()){
+            return it->second.offset;
+        }
+    }
+    return -1;
 }
 
 }

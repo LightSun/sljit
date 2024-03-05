@@ -32,9 +32,9 @@ void test_1(){
     List<String> fns = {"a1"};
 
     ClassInfo info;
-    Classer::alignStructSize(ls, fns, &info);
+    alignStructSize(ls, fns, &info);
     H7_ASSERT(info.structSize == 8);
-    H7_ASSERT(info.fieldMap["a1"].offset == 0);
+    H7_ASSERT(info.getFieldOffset("a1")== 0);
 }
 
 void test_tail_align(){
@@ -51,14 +51,14 @@ void test_tail_align(){
     List<String> fns = {"a1", "a2", "a3", "a4", "a5", "a6"};
 
     ClassInfo info;
-    Classer::alignStructSize(ls, fns, &info);
+    alignStructSize(ls, fns, &info);
     H7_ASSERT(info.structSize == 32);
-    H7_ASSERT(info.fieldMap["a1"].offset == 0);
-    H7_ASSERT(info.fieldMap["a2"].offset == 1);
-    H7_ASSERT(info.fieldMap["a3"].offset == 3);
-    H7_ASSERT(info.fieldMap["a4"].offset == 8);
-    H7_ASSERT(info.fieldMap["a5"].offset == 16);
-    H7_ASSERT(info.fieldMap["a6"].offset == 24);
+    H7_ASSERT(info.getFieldOffset("a1") == 0);
+    H7_ASSERT(info.getFieldOffset("a2") == 1);
+    H7_ASSERT(info.getFieldOffset("a3") == 3);
+    H7_ASSERT(info.getFieldOffset("a4") == 8);
+    H7_ASSERT(info.getFieldOffset("a5") == 16);
+    H7_ASSERT(info.getFieldOffset("a6") == 24);
 }
 
 void test_head_align(){
@@ -77,14 +77,14 @@ void test_head_align(){
     List<String> fns = {"a1", "a2", "a3", "a4", "a5", "a6"};
 
     ClassInfo info;
-    Classer::alignStructSize(ls, fns, &info);
+    alignStructSize(ls, fns, &info);
     H7_ASSERT(info.structSize == 40);
-    H7_ASSERT(info.fieldMap["a1"].offset == 0);
-    H7_ASSERT(info.fieldMap["a2"].offset == 8);
-    H7_ASSERT(info.fieldMap["a3"].offset == 16);
-    H7_ASSERT(info.fieldMap["a4"].offset == 24);
-    H7_ASSERT(info.fieldMap["a5"].offset == 26);
-    H7_ASSERT(info.fieldMap["a6"].offset == 32);
+    H7_ASSERT(info.getFieldOffset("a1") == 0);
+    H7_ASSERT(info.getFieldOffset("a2") == 8);
+    H7_ASSERT(info.getFieldOffset("a3") == 16);
+    H7_ASSERT(info.getFieldOffset("a4") == 24);
+    H7_ASSERT(info.getFieldOffset("a5") == 26);
+    H7_ASSERT(info.getFieldOffset("a6") == 32);
 }
 
 void test_align_no_head_tail(){
@@ -104,14 +104,14 @@ void test_align_no_head_tail(){
     List<String> fns = {"a1", "a2", "a3", "a4", "a5", "a6"};
 
     ClassInfo info;
-    Classer::alignStructSize(ls, fns, &info);
+    alignStructSize(ls, fns, &info);
     H7_ASSERT(info.structSize == 40);
-    H7_ASSERT(info.fieldMap["a1"].offset == 0);
-    H7_ASSERT(info.fieldMap["a2"].offset == 8);
-    H7_ASSERT(info.fieldMap["a3"].offset == 16);
-    H7_ASSERT(info.fieldMap["a4"].offset == 24);
-    H7_ASSERT(info.fieldMap["a5"].offset == 32);
-    H7_ASSERT(info.fieldMap["a6"].offset == 34);
+    H7_ASSERT(info.getFieldOffset("a1") == 0);
+    H7_ASSERT(info.getFieldOffset("a2") == 8);
+    H7_ASSERT(info.getFieldOffset("a3") == 16);
+    H7_ASSERT(info.getFieldOffset("a4") == 24);
+    H7_ASSERT(info.getFieldOffset("a5") == 32);
+    H7_ASSERT(info.getFieldOffset("a6") == 34);
 }
 
 void test_aligned_1_middle(){
@@ -127,11 +127,11 @@ void test_aligned_1_middle(){
     List<String> fns = {"a1", "a2", "a3"};
 
     ClassInfo info;
-    Classer::alignStructSize(ls, fns, &info);
+    alignStructSize(ls, fns, &info);
     H7_ASSERT(info.structSize == 24);
-    H7_ASSERT(info.fieldMap["a1"].offset == 0);
-    H7_ASSERT(info.fieldMap["a2"].offset == 8);
-    H7_ASSERT(info.fieldMap["a3"].offset == 16);
+    H7_ASSERT(info.getFieldOffset("a1") == 0);
+    H7_ASSERT(info.getFieldOffset("a2") == 8);
+    H7_ASSERT(info.getFieldOffset("a3") == 16);
 }
 
 void test_aligned_1_head(){
@@ -146,11 +146,11 @@ void test_aligned_1_head(){
     List<String> fns = {"a1", "a2", "a3"};
 
     ClassInfo info;
-    Classer::alignStructSize(ls, fns, &info);
+    alignStructSize(ls, fns, &info);
     H7_ASSERT(info.structSize == 16);
-    H7_ASSERT(info.fieldMap["a1"].offset == 0);
-    H7_ASSERT(info.fieldMap["a2"].offset == 8);
-    H7_ASSERT(info.fieldMap["a3"].offset == 9);
+    H7_ASSERT(info.getFieldOffset("a1") == 0);
+    H7_ASSERT(info.getFieldOffset("a2") == 8);
+    H7_ASSERT(info.getFieldOffset("a3") == 9);
 }
 
 void test_aligned_1_tail(){
@@ -163,9 +163,9 @@ void test_aligned_1_tail(){
     List<String> fns = {"a1", "a2", "a3"};
 
     ClassInfo info;
-    Classer::alignStructSize(ls, fns, &info);
+    alignStructSize(ls, fns, &info);
     H7_ASSERT(info.structSize == 16);
-    H7_ASSERT(info.fieldMap["a1"].offset == 0);
-    H7_ASSERT(info.fieldMap["a2"].offset == 1);
-    H7_ASSERT(info.fieldMap["a3"].offset == 8);
+    H7_ASSERT(info.getFieldOffset("a1") == 0);
+    H7_ASSERT(info.getFieldOffset("a2") == 1);
+    H7_ASSERT(info.getFieldOffset("a3") == 8);
 }

@@ -57,7 +57,7 @@ struct _ClassScope_ctx{
             return 0;
         }
         }
-        ptr_info = H7_NEW_OBJ1(ClassInfo, info.arrayDesc.get());
+        ptr_info = H7_NEW_OBJ1(ClassInfo, &info);
         clsMap[tyepStr] = ptr_info;
         //
         int size = info.virtualSize() * info.getTotalArraySize();

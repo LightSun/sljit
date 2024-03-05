@@ -52,6 +52,7 @@ SET(SRC_TEST
     test_src/test_branch.c
     test_src/test_loop.c
     test_src/test_struct.c
+    test_src/test_struct2.cpp
     test_src/test1.c
     test_src/test_sljit_st.c
     test_src/test_atomic.c

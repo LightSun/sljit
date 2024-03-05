@@ -84,12 +84,14 @@ struct TypeInfo{
     UInt type {kType_NONE};
     String* clsName {nullptr};
 
-    std::shared_ptr<List<UInt>> arrayDesc;
+    std::shared_ptr<List<UInt>> arrayDesc;// like p[2][3] -> arrayDesc =[2,3]
     std::shared_ptr<List<TypeInfo>> subDesc;
 
     TypeInfo(){}
     TypeInfo(UInt type):type(type){}
     inline ~TypeInfo();
+
+    static inline TypeInfo makeSimple(int type){return TypeInfo(type);}
 
     inline String getTypeDesc()const;
     inline int getTotalArraySize()const;
@@ -137,8 +139,10 @@ struct ClassInfo{
     std::unique_ptr<HashMap<String, FieldInfo>> fieldMap;
 
     //array or normal object
-    ClassInfo(TypeInfo* arr = nullptr);
+    inline ClassInfo(const TypeInfo* arr = nullptr);
     inline bool isArray()const {return arrayDesc != nullptr;}
+    ///-1 for no found.
+    inline int getFieldOffset(CString name);
 };
 
 using ListTypeInfo = List<TypeInfo>;
