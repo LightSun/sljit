@@ -56,6 +56,8 @@ SET(SRC_TEST
     test_src/test1.c
     test_src/test_sljit_st.c
     test_src/test_atomic.c
+    test_src/test_shift.cpp
+    test_src/test_h.h
     )
 add_executable(sljit_test ${SRC_TEST})
 target_link_libraries(sljit_test sljit_core)

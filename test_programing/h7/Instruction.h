@@ -3,103 +3,98 @@
 #include "h7_ctx.h"
 
 namespace h7 {
-class Func;
-class VM;
-using ShareFunc = std::shared_ptr<Func>;
-
-VM* vm_new();
+//using ShareFunc = std::shared_ptr<Func>;
 
 enum OpCode{
-    MOV_REG_REG,    //reg to reg
-    MOV_CONSTI_REG,  // const to reg
-    MOV_CONSTS_REG,  // string
-    MOV_CONSTP_REG,  // ptr
-    MOV_CONSTF_REG,  // float
-    MOV_CONSTD_REG,  // double
     NEW,
+    ASSIGN, //=
     CALL,
-    LOADI,
-    LOADS,
-    LOADP,
-    LOADF,
-    LOADD,
-    STOREI,
-    STORES,
-    STOREP,
-    STOREF,
-    STORED,
+    LOAD,
+    STORE,
+    //++, --
+    INC, DEC,
+    //
+    ADD, SUB, MUL, DIV, MOD,
+    // & | ~ !
+    AND, OR, XOR, NOT,
+    //signed/unsigned shift left/right
+    SHL, SHR, ASHL, ASHR,
+    RET, BREAK, DEFAULT
 };
 
-enum ObjectType{
-    INT,
-    FLOAT,
-    DOUBLE,
-    FUNC,
-    PTR
+enum SentFlags{
+    kSENT_FLAG_VALID_IP    = 0x0001,
+    kSENT_FLAG_VALID_LEFT  = 0x0002,
+    kSENT_FLAG_VALID_RIGHT = 0x0004,
 };
 
-struct ManagedObject{
-    union{
-        long long l;
-        float f;
-        double d;
-        void* ptr;
-    } val;
-    ObjectType type;
+struct Operand{
+    int type;
+    int r;
+    Long rw;
 };
 
-struct ObjectPool{
-    void put(CString identifier, const ManagedObject& obj);
+struct Sentence{
+    OpCode op;
+    int flags {0};
+    Operand ip;
+    Operand left;
+    Operand right;
+};
+using SPSentence = std::shared_ptr<Sentence>;
 
-    Func* owner;
-    HashMap<String, ManagedObject> objs;
+struct SentBlock{
+    List<SPSentence> sents_;
 };
 
-struct OP{
-    struct PName{
-        String oname; //object name
-        String mname; //member name
-    };
-    PName src;
-    PName dst;
+struct CaseBlock{
+    SentBlock case_;
+    SentBlock block_;
+};
+//---------------------
+struct Statement{
+
+};
+struct EasyStatement: public Statement{
+    SPSentence sent_;
 };
 
-class Instruction{
-public:
-    int opCode;
-    String n1;
-    String n2;
-    String nret;
-private:
-    Func* func;
+struct IfStatement: public Statement{
+    SentBlock if_;
+    SentBlock else_;
+    List<CaseBlock> elseifs_;
 };
 
-class Func{
-public:
-    Func(Func* parent);
+struct WhileStatement: public Statement{
+    SentBlock case_;
+    SentBlock block_;
+};
 
-    void execute();
-    void pushParams(CString name, const ManagedObject& obj);
-    void pushInstruction(const Instruction& ins);
-    void gen();
-private:
+struct SwitchStatement: public Statement{
+    SPSentence case_;
+    List<CaseBlock> blocks_;
+};
+struct ForStatement: public Statement{
+    SentBlock init_;
+    SentBlock case_;
+    SentBlock end_;
+    SentBlock body_;
+};
+using SPStatement = std::shared_ptr<Statement>;
+
+//------------------------------------
+struct FunctionParameter{
     String name;
-    Func* parent;
-    List<Instruction> ins;
-    ObjectPool func_params;
-    ObjectPool locals;
+    String type;
+};
+typedef struct FunctionContext FunctionContext;
+struct Function{
+    List<FunctionParameter> params;
+    FunctionContext* runCtx;
+    List<SPStatement> body;
 };
 
-class VM{
-public:
-    ~VM();
-
-    void beginFunc(Func* func);
-    void end();
-private:
-    Func* global;
-    Func* current;
-};
-
+//func(a, b){c = a+b; return c;}
+//c=a+b
 
 }
