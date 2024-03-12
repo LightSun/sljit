@@ -12,7 +12,7 @@ void Object::ref(){
 
 void Object::unref(){
     if(h_atomic_add(&refCount, -1) == 1){
-        H7_DELETE(this);
+        H7_DELETE_OBJ(this);
     }
 }
 bool ObjectDelegate::getField(CString fn, Value* out){

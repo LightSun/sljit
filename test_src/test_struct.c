@@ -116,6 +116,7 @@ static int struct_access()
     // S0->x --> R0
     sljit_emit_op1(C, SLJIT_MOV, SLJIT_R0, 0,
                    SLJIT_MEM1(SLJIT_S0), SLJIT_OFFSETOF(struct point_st, x));	// S0->x --> R0
+
     // print_num(R0);
     sljit_emit_icall(C, SLJIT_CALL, SLJIT_ARGS1(W, P),
                      SLJIT_IMM, SLJIT_FUNC_ADDR(print_num));								// print_num(R0);

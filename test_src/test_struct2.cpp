@@ -6,6 +6,7 @@
 struct Pt1{
     int age;
     float val;
+    float val2;
 };
 
 struct Pt2{
@@ -40,7 +41,7 @@ void test_struct2()
     Func_Pt func;
 
     struct Pt1 point = {
-        20, 1.225f
+        20, 1.225f, 21.22
     };
     struct Pt2 p2;
     p2.flag = 100;
@@ -59,9 +60,17 @@ void test_struct2()
     sljit_emit_op1(C, SLJIT_MOV, SLJIT_R1, 0,
                    SLJIT_MEM1(SLJIT_S0), SLJIT_OFFSETOF(struct Pt2, pt));
 
+    //pt.val = pt.val2
+    sljit_emit_fop1(C, SLJIT_MOV_F32,
+                    SLJIT_MEM1(SLJIT_R1), SLJIT_OFFSETOF(struct Pt1, val),
+                    SLJIT_MEM1(SLJIT_R1), SLJIT_OFFSETOF(struct Pt1, val2));
+
     // R1->val --> FR0
     sljit_emit_fop1(C, SLJIT_MOV_F32, SLJIT_FR0, 0,
                    SLJIT_MEM1(SLJIT_R1), SLJIT_OFFSETOF(struct Pt1, val));
+
+
+    // test op
     //S0->i8 -> R0
     sljit_emit_op1(C, SLJIT_MOV_S8, SLJIT_R0, 0,
                    SLJIT_MEM1(SLJIT_S0), SLJIT_OFFSETOF(struct Pt2, i8));
