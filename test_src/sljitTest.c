@@ -649,7 +649,7 @@ static void test7(void)
 	successful_tests++;
 }
 
-static void test8(void)
+void test8(void)
 {
 	/* Test flags (neg, cmp, test). */
 	executable_code code;
@@ -665,7 +665,7 @@ static void test8(void)
 	for (i = 1; i < 21; i++)
 		buf[i] = 3;
 
-	sljit_emit_enter(compiler, 0, SLJIT_ARGS1(VOID, P), 3, 2, 0, 0, 0);
+    sljit_emit_enter(compiler, 0, SLJIT_ARGS1(VOID, P), 4, 4, 0, 0, 0);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R0, 0, SLJIT_IMM, 20);
 	sljit_emit_op1(compiler, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, 10);
 	sljit_emit_op2u(compiler, SLJIT_SUB | SLJIT_SET_Z, SLJIT_IMM, 6, SLJIT_IMM, 5);
