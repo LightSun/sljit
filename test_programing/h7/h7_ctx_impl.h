@@ -1,8 +1,7 @@
 #pragma once
 
-#include "h7_ctx.h"
-#include "h7_alloc.h"
-
+#include "h7/h7_ctx.h"
+#include "h7/h7_alloc.h"
 #include "h7/common/common.h"
 
 namespace h7 {
@@ -90,6 +89,58 @@ int TypeInfo::virtualSize()const{
     }
     return sizeof (void*);
 }
+
+bool TypeInfo::isSigned()const{
+    switch (type) {
+    case kType_int8:
+    case kType_int16:
+    case kType_int32:
+    case kType_int64:
+    case kType_float:
+    case kType_double:
+        return true;
+
+    case kType_bool:
+    case kType_uint8:
+    case kType_uint16:
+    case kType_uint32:
+    case kType_uint64:
+        return false;
+    }
+    H7_ASSERT_X(false, "TypeInfo::isSigned >> should't reach here.");
+    return false;
+}
+
+bool TypeInfo::isFloatLikeType()const{
+    return type == kType_float
+            || type == kType_double;
+}
+int TypeInfo::computePrimitiveType(bool _float, bool _signed, int ret_size){
+    if(_float){
+        if(ret_size == sizeof(double)){
+            return kType_double;
+        }else{
+            return kType_float;
+        }
+    }else{
+        if(ret_size == sizeof(Long)){
+            return _signed ? kType_int64 : kType_uint64;
+        }
+        else if(ret_size == sizeof(Int)){
+            return _signed ? kType_int32 : kType_uint32;
+        }
+        else if(ret_size == sizeof(Short)){
+            return _signed ? kType_int16 : kType_uint16;
+        }
+        else if(ret_size == sizeof(Char)){
+            return _signed ? kType_int8 : kType_uint8;
+        }else{
+            gError_throwFmt("advancePrimitive: wrong_size = %d.", ret_size);
+            return kType_NONE;
+        }
+    }
+}
+
 String TypeInfo::getTypeDesc()const{
     String str;
     if(clsName){
@@ -133,6 +184,8 @@ String TypeInfo::getTypeDesc()const{
     }
     return str;
 }
+
+
 
 ClassInfo::ClassInfo(const TypeInfo* arr){
     if(arr){

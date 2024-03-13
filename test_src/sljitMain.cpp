@@ -41,6 +41,7 @@ extern "C"{
 }
 extern void test_struct2();
 extern void test_shift();
+extern void test_float();
 
 //---------------------
 int sljit_test(int argc, char* argv[]);
@@ -104,8 +105,9 @@ int main(int argc, char* argv[])
 //    test_loop();
 //    test_struct();
 
-   // test_struct2();
-    test_shift();
+    //test_struct2();
+    //test_shift();
+    test_float();
 
     return 0;
 }

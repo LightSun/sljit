@@ -35,10 +35,6 @@ typedef signed long long sint64;
 typedef uint64_t uint64;
 #endif
 
-#define s32 sint32
-#define s64 sint64
-#define c8 sint8
-
 #ifdef _WIN32
 #define NEW_LINE "\r\n"
 #else

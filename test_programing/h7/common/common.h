@@ -58,11 +58,20 @@
             std::cout << "Assertion failure: " << __FILE__ << "::" << __FUNCTION__  \
                                      << __LINE__ \
                                      << "\n" << (msg) << " >> " << #condition << std::endl;  \
-            __THROW_ERR("");                                                               \
+            __THROW_ERR(msg);                                                               \
         }                                                                   \
     } while (0)
 #endif
 
+#define __DISABLE_COPY_MOVE(T)\
+    T(const T&) = delete;\
+    T(T&) = delete;      \
+    T& operator=(const T&) = delete;\
+    T& operator=(T&) = delete;
+
 static inline void __THROW_ERR(const std::string& s){
+    if(!s.empty()){
+        fprintf(stderr, "%s\n", s.data());
+    }
     abort();
 }

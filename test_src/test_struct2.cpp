@@ -52,7 +52,7 @@ void test_struct2()
 
     //as Pt1: has a float . we need a temp float register.
     sljit_emit_enter(C, 0, SLJIT_ARGS1(W, W),
-                     2, 2,
+                     4, 2,
                      2, 0,
                      0);
     //-----------------------------------
@@ -69,6 +69,8 @@ void test_struct2()
     sljit_emit_fop1(C, SLJIT_MOV_F32, SLJIT_FR0, 0,
                    SLJIT_MEM1(SLJIT_R1), SLJIT_OFFSETOF(struct Pt1, val));
 
+    //SLJIT_FR0 -> SLJIT_R0 /RO->FR0 ?
+    //sljit_emit_fcopy(...);
 
     // test op
     //S0->i8 -> R0
@@ -82,6 +84,7 @@ void test_struct2()
      //---- call 'print_float2()'. ok
     sljit_emit_icall(C, SLJIT_CALL, SLJIT_ARGS2(W, F32,W),
                      SLJIT_IMM, SLJIT_FUNC_ADDR(print_float2));
+
 
     //return 0.
     sljit_emit_return(C, SLJIT_MOV, SLJIT_IMM, 0);

@@ -14,7 +14,7 @@ set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -fPIC -std=c11 ${TEST_INTERNAL_FLAGS}")
 include_directories(sljit_src/)
 include_directories(test_src/)
 
-add_compile_definitions(SLJIT_HAVE_CONFIG_PRE=1)
+#add_compile_definitions(SLJIT_HAVE_CONFIG_PRE=1)
 add_compile_definitions(USE_MALLOC_WRAPPERS)
 add_compile_definitions(USE_C11_ATOMICS)
 
@@ -58,6 +58,7 @@ SET(SRC_TEST
     test_src/test_atomic.c
     test_src/test_shift.cpp
     test_src/test_h.h
+    test_src/test_float.cpp
     )
 add_executable(sljit_test ${SRC_TEST})
 target_link_libraries(sljit_test sljit_core)

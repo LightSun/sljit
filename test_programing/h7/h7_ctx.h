@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdio.h>
 #include <string>
 #include <vector>
 #include <unordered_map>
@@ -101,6 +102,9 @@ struct TypeInfo{
     inline bool isArrayType() const;
     inline bool isAlignSize(int expect) const;
     inline int virtualSize()const;
+    inline bool isSigned()const;
+    inline bool isFloatLikeType()const;
+    inline static int computePrimitiveType(bool _float, bool _signed, int ret_size);
 };
 
 typedef union Value{
@@ -157,10 +161,17 @@ using CValue = const Value&;
 
 
 //--------
-Long alignStructSize(CListTypeInfo fieldTypes, CListString fns, ClassInfo* out);
-void gValue_get(const void* data, UInt type, Value* out);
-void gValue_set(const void* data, UInt type, Value* in);
-void gValue_rawGet(const void* data, UInt type, void* out);
-void gValue_rawSet(const void* data, UInt type, void* out);
+extern Long alignStructSize(CListTypeInfo fieldTypes, CListString fns, ClassInfo* out);
+extern void gValue_get(const void* data, UInt type, Value* out);
+extern void gValue_set(const void* data, UInt type, Value* in);
+extern void gValue_rawGet(const void* data, UInt type, void* out);
+extern void gValue_rawSet(const void* data, UInt type, void* out);
+
+#define gError_throwFmt(fmt,...)\
+    do{\
+        char buf[512];\
+        snprintf(buf, 512, fmt, ##__VA_ARGS__);\
+        __THROW_ERR(String(buf));\
+    }while(0);
 
 }

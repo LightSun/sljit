@@ -19,8 +19,9 @@ add_library(h7
 add_executable(h7_test_all
     tests/main.cpp
     tests/test_align_struct.cpp
+    tests/test_inst.cpp
     )
 
 target_link_libraries(h7_test_all PUBLIC
-    h7
+    h7 sljit_core
     )
