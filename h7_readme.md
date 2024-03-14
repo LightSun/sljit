@@ -7,6 +7,7 @@
 
 ## TODO
 - 实现常用指令
+- 可变参数实现
 - 函数内联 (抽象寄存器索引-DataStack+local_stack)
 - 多线程(async/await)
 - 泛型
