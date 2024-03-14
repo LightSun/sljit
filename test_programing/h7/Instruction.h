@@ -8,6 +8,7 @@ namespace h7 {
 #define REG_NONE 0
 
 enum OpCode{
+    NONE,
     NEW,
     ASSIGN, //=
     CALL,
@@ -25,7 +26,6 @@ enum OpCode{
     CAST,
 
     RET, BREAK, DEFAULT,
-    NEW_LOCAL_PRIMITIVE  // int,long,char ...etc bases.
 };
 
 enum SentFlags{
@@ -44,9 +44,9 @@ struct Operand{
     UShort flags {0};/// the desc of data
     UShort type;     /// base data-type
     /// when flags has kOperand_FLAG_DATA_STACK, this is index of DataStack
-    /// when flags has kOperand_FLAG_LOCAL, this is offset of local-stack.
+    /// when flags has kOperand_FLAG_LOCAL, this is index of local-stack.
     /// 0 is return ,1+ is params.
-    ULong rw;
+    ULong index;
 
     bool isLocal()const{return (flags & kOperand_FLAG_LOCAL) != 0;}
     bool isDataStack()const{return (flags & kOperand_FLAG_DATA_STACK) != 0;}
@@ -55,7 +55,7 @@ struct Operand{
 };
 
 struct Sentence{
-    OpCode op;
+    OpCode op {NONE};
     int flags {0};
     Operand ip;    ///current var
     Operand left;
@@ -64,8 +64,21 @@ struct Sentence{
     static std::shared_ptr<Sentence> New(){
         return std::make_shared<Sentence>();
     }
-    void makeAllValid(){
+    void setValidFlagsAll(){
         flags = kSENT_FLAG_VALID_IP | kSENT_FLAG_VALID_LEFT | kSENT_FLAG_VALID_RIGHT;
+    }
+    //all data from ds
+    void makeDSSimple3(int type, CULongArray3 indexArr){
+        flags = kSENT_FLAG_VALID_IP | kSENT_FLAG_VALID_LEFT | kSENT_FLAG_VALID_RIGHT;
+        ip.makeDataStack();
+        left.makeDataStack();
+        right.makeDataStack();
+        ip.index = indexArr[0];
+        left.index = indexArr[1];
+        right.index = indexArr[2];
+        ip.type = (UShort)type;
+        left.type = (UShort)type;
+        right.type = (UShort)type;
     }
 };
 using SPSentence = std::shared_ptr<Sentence>;
@@ -130,7 +143,9 @@ using SPStatement = std::shared_ptr<Statement>;
 
 //------------------------------------
 class DataStack;
+class LocalStackManager;
 using SPDataStack = std::unique_ptr<DataStack>;
+using SPLocalStackManager = std::unique_ptr<LocalStackManager>;
 
 class RegStack{
 private:
@@ -140,6 +155,7 @@ public:
     int nextReg(bool _float);
     void reset();
 };
+
 struct RegDesc{
     bool fs; //float style or not
     int op;
@@ -168,18 +184,27 @@ struct Function{
 
 public:
     Function(int pCount):pCount(pCount){};
-    ///gen function code, if gen failed, return the error msg.
+    /// gen function code, if gen failed, return the error msg.
     String compile(CodeDesc* out);
 
+    UInt getLocalOffset(UInt idx);
+    /// int,long,char ...etc bases.
+    bool allocLocalByType(UInt type);
+
+public:
     void addEasyStatment(SPSentence sp){
         auto st = std::make_shared<EasyStatement>();
         st->sent_ = sp;
         body.push_back(st);
     }
+    LocalStackManager* getLocalStackManager(){
+        return m_localSM.get();
+    }
 
 private:
     __DISABLE_COPY_MOVE(Function);
     RegStack m_regStack;
+    SPLocalStackManager m_localSM;
 
 private:
     String genEasy(void* compiler,SPStatement st);

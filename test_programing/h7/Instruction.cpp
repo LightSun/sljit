@@ -8,6 +8,8 @@ extern "C"{
 #include "h7/DataStack.h"
 #include "h7/h7_ctx_impl.h"
 
+#include "h7/LocalStackManager.h"
+
 using namespace h7;
 
 enum{
@@ -62,14 +64,23 @@ String CodeDesc::run(DataStack* ds){
     func(ptr);
     return "";
 }
+
+UInt Function::getLocalOffset(UInt idx){
+    return m_localSM->getAt(idx)->offset;
+}
+bool Function::allocLocalByType(UInt type){
+    if(!m_localSM){
+        m_localSM = LocalStackManager::New(localSize);
+    }
+    return m_localSM->allocByType(type);
+}
 //input: data-arr. all element offset is 8*N. return in S1
 String Function::compile(CodeDesc* out){
-
     struct sljit_compiler *C = sljit_create_compiler(NULL, NULL);
     sljit_emit_enter(C, 0, SLJIT_ARGS2(VOID, P, P),
                      4, 2, 4, 0, localSize);
     //
-    const int size = body.size();
+    const int size = (int)body.size();
     for(int i = 0; i < size ; ++i){
         auto& st = body[i];
         String msg;
@@ -111,7 +122,7 @@ String Function::genEasy(void* c,SPStatement _st){
 int Function::emitPrimitive(void* compiler, Operand& src, int targetType){
     struct sljit_compiler *C = (sljit_compiler*)compiler;
     if(src.isDataStack()){
-        H7_ASSERT_X((int)src.rw < pCount, "index param failed.");
+        H7_ASSERT_X((int)src.index < pCount, "index param failed.");
     }
     //
     int moveType = _typeToSLJIT_MoveType(src.type);
@@ -122,10 +133,10 @@ int Function::emitPrimitive(void* compiler, Operand& src, int targetType){
         if(src.isLocal()){
             //local stack
             sljit_emit_fop1(C, moveType, reg, 0,
-                           SLJIT_MEM1(SLJIT_SP), src.rw);
+                           SLJIT_MEM1(SLJIT_SP), getLocalOffset(src.index));
         }else{
             sljit_emit_fop1(C, moveType, reg, 0,
-                           SLJIT_MEM1(SLJIT_S0), src.rw * sizeof(void*));
+                           SLJIT_MEM1(SLJIT_S0), src.index * sizeof(void*));
         }
         if(targetType == kType_double){
             sljit_emit_fop1(C, SLJIT_CONV_F64_FROM_F32, reg, 0, reg, 0);
@@ -136,10 +147,10 @@ int Function::emitPrimitive(void* compiler, Operand& src, int targetType){
         int reg = m_regStack.nextReg(true);
         if(src.isLocal()){
             sljit_emit_fop1(C, moveType, reg, 0,
-                           SLJIT_MEM1(SLJIT_SP), src.rw);
+                           SLJIT_MEM1(SLJIT_SP), getLocalOffset(src.index));
         }else{
             sljit_emit_fop1(C, moveType, reg, 0,
-                           SLJIT_MEM1(SLJIT_S0), src.rw * sizeof(void*));
+                           SLJIT_MEM1(SLJIT_S0), src.index * sizeof(void*));
         }
         return reg;
     }
@@ -147,10 +158,10 @@ int Function::emitPrimitive(void* compiler, Operand& src, int targetType){
         int reg = m_regStack.nextReg(false);
         if(src.isLocal()){
             sljit_emit_op1(C, moveType, reg, 0,
-                           SLJIT_MEM1(SLJIT_SP), src.rw);
+                           SLJIT_MEM1(SLJIT_SP), getLocalOffset(src.index));
         }else{
             sljit_emit_op1(C, moveType, reg, 0,
-                           SLJIT_MEM1(SLJIT_S0), src.rw * sizeof(void*));
+                           SLJIT_MEM1(SLJIT_S0), src.index * sizeof(void*));
         }
         //convert if need.
         if(targetType == kType_float){
@@ -178,10 +189,10 @@ RegDesc Function::emitRegDesc(void *compiler, Operand& op, int targetType){
         desc.rw = 0;
     }else if(op.isLocal()){
         desc.r = SLJIT_MEM1(SLJIT_SP);
-        desc.rw = op.rw;
+        desc.rw = getLocalOffset(op.index);
     }else{
         desc.r = SLJIT_MEM1(SLJIT_S0);
-        desc.rw = op.rw * sizeof(void*);
+        desc.rw = op.index * sizeof(void*);
     }
     return desc;
 }
@@ -189,10 +200,10 @@ RegDesc Function::genRetRegDesc(Operand& op){
     RegDesc desc;
     if(op.isLocal()){
         desc.r = SLJIT_MEM1(SLJIT_SP);
-        desc.rw = op.rw;
+        desc.rw = getLocalOffset(op.index);
     }else{
         desc.r = SLJIT_MEM1(SLJIT_S0);
-        desc.rw = op.rw * sizeof(void*);
+        desc.rw = op.index * sizeof(void*);
     }
     return desc;
 }
@@ -206,10 +217,10 @@ RegDesc Function::genRetRegDesc(Operand& op, int opBase, int targetType){
         desc.rw = 0;
     }else if(op.isLocal()){
         desc.r = SLJIT_MEM1(SLJIT_SP);
-        desc.rw = op.rw;
+        desc.rw = getLocalOffset(op.index);
     }else{
         desc.r = SLJIT_MEM1(SLJIT_S0);
-        desc.rw = op.rw * sizeof(void*);
+        desc.rw = op.index * sizeof(void*);
     }
     desc.op = _genSLJIT_op(opBase, targetType);
     return desc;

@@ -47,6 +47,7 @@ template<typename T>
 template<typename T>
     using LinkList = std::list<T>;
 
+    using CULongArray3 = const std::array<ULong,3>&;
 //-------------------------------------
 
 using ClassHandle = Long;
