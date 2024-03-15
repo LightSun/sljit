@@ -1,10 +1,11 @@
-#ifndef H7_COMMON_H
-#define H7_COMMON_H
+#pragma once
 
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <inttypes.h>
+
+#define H7_UN_USED(t)
 
 #ifndef sint8
 typedef signed char sint8;
@@ -94,7 +95,5 @@ typedef uint64_t uint64;
 #define FORMAT_ATTR(pos) __attribute__((__format__(__printf__, pos, pos + 1)))
 #else
 #define FORMAT_ATTR(pos)
-#endif
-
 #endif
 

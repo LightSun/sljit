@@ -106,6 +106,7 @@ struct TypeInfo{
     inline bool isSigned()const;
     inline bool isFloatLikeType()const;
     inline static int computePrimitiveType(bool _float, bool _signed, int ret_size);
+    inline static int computeAdvanceType(int type1, int type2);
 };
 
 typedef union Value{

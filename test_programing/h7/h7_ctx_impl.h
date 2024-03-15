@@ -3,6 +3,7 @@
 #include "h7/h7_ctx.h"
 #include "h7/h7_alloc.h"
 #include "h7/common/common.h"
+#include "h7/common/c_common.h"
 
 namespace h7 {
 
@@ -140,6 +141,16 @@ int TypeInfo::computePrimitiveType(bool _float, bool _signed, int ret_size){
         }
     }
 }
+int TypeInfo::computeAdvanceType(int type1, int type2){
+    TypeInfo t_left(type1);
+    TypeInfo t_right(type2);
+    int leftSize = t_left.virtualSize();
+    int rightSize = t_right.virtualSize();
+    int maxSize = HMAX(leftSize, rightSize);
+    bool hasSigned = t_left.isSigned() || t_right.isSigned();
+    bool hasFT = t_left.isFloatLikeType() || t_right.isFloatLikeType();
+    return computePrimitiveType(hasFT, hasSigned, maxSize);
+}
 
 String TypeInfo::getTypeDesc()const{
     String str;
@@ -184,8 +195,6 @@ String TypeInfo::getTypeDesc()const{
     }
     return str;
 }
-
-
 
 ClassInfo::ClassInfo(const TypeInfo* arr){
     if(arr){
