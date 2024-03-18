@@ -99,6 +99,27 @@ RegDesc SLJITHelper::genRetRegDesc(Operand& op){
     genRegDesc(op, &desc);
     return desc;
 }
+List<RegDesc> SLJITHelper::genFuncRegDesc(Operand& op){
+    List<RegDesc> ret;
+    if(op.extra){
+        auto& fpi = op.extra->funcParamInfo;
+        auto it = fpi.begin();
+        for(; it != fpi.end() ; ++it){
+            RegDesc rd;
+            if(it->second.ls){
+                rd.r = SLJIT_MEM1(SLJIT_SP);
+                rd.rw = RI->getLSOffset(it->second.idx);
+            }else{
+                rd.r = SLJIT_MEM1(SLJIT_S0);
+                rd.rw = RI->getDSOffset(it->second.idx);
+            }
+            ret.push_back(rd);
+        }
+    }else{
+        H7_ASSERT(false);
+    }
+    return ret;
+}
 void SLJITHelper::genRegDesc(Operand& op, RegDesc* out){
     if(op.isLocal()){
         out->r = SLJIT_MEM1(SLJIT_SP);
@@ -119,6 +140,13 @@ void SLJITHelper::emitAdd(SPSentence st, int targetType){
         sljit_emit_op2(C, ret.op, ret.r, ret.rw,
                        left.r, left.rw, right.r, right.rw);
     }
+}
+void SLJITHelper::emitCall(SPSentence st){
+    //add(a,b,c) -> [ret,a,b,c]
+    //H7_ASSERT(RI->allocLocal());
+    //ip is ret, left is func.
+    //put param to reg
+
 }
 
 int _typeToSLJIT_MoveType(int type){
@@ -167,6 +195,10 @@ int _genSLJIT_op(int base, int targetType){
                 H7_ASSERT_X(false, "mod op for float/double is not support.");
             }break;
 
+            case kOP_LOAD:{
+                return SLJIT_MOV_F64;
+            }break;
+
             default:
                 H7_ASSERT(false);
             }
@@ -181,6 +213,10 @@ int _genSLJIT_op(int base, int targetType){
                 H7_ASSERT_X(false, "mod op for float/double is not support.");
             }break;
 
+            case kOP_LOAD:{
+                return SLJIT_MOV_F32;
+            }break;
+
             default:
                 H7_ASSERT(false);
             }
@@ -193,6 +229,10 @@ int _genSLJIT_op(int base, int targetType){
             case kOP_MUL: return SLJIT_MUL;
             case kOP_DIV: return ti.isSigned() ? SLJIT_DIV_SW : SLJIT_DIV_UW; //no remainder.
             case kOP_MOD: return ti.isSigned() ? SLJIT_DIVMOD_SW : SLJIT_DIVMOD_UW;
+            case kOP_LOAD:{
+                return SLJIT_MOV;
+            }break;
+
             default:
                 H7_ASSERT(false);
             }
@@ -203,6 +243,16 @@ int _genSLJIT_op(int base, int targetType){
             case kOP_MUL: return SLJIT_MUL32;
             case kOP_DIV: return ti.isSigned() ? SLJIT_DIV_S32 : SLJIT_DIV_U32; //no remainder.
             case kOP_MOD: return ti.isSigned() ? SLJIT_DIVMOD_S32 : SLJIT_DIVMOD_U32;
+            case kOP_LOAD:{
+                if(ti.virtualSize() == (int)sizeof(Int)){
+                    return ti.isSigned() ? SLJIT_MOV_S32 : SLJIT_MOV_U32;
+                }else if(ti.virtualSize() == (int)sizeof(Short)){
+                    return ti.isSigned() ? SLJIT_MOV_S16 : SLJIT_MOV_U16;
+                }else if(ti.virtualSize() == (int)sizeof(Char)){
+                    return ti.isSigned() ? SLJIT_MOV_S8 : SLJIT_MOV_U8;
+                }
+            }break;
+
             default:
                 H7_ASSERT(false);
             }

@@ -17,6 +17,7 @@ namespace h7 {
         kOP_MUL,
         kOP_DIV,
         kOP_MOD,
+        kOP_LOAD
     };
     class RegStack{
     private:
@@ -50,6 +51,7 @@ namespace h7 {
         }
 
         void emitAdd(SPSentence s, int targetType);
+        void emitCall(SPSentence st);
 
         int emitPrimitive(Operand& src, int targetType);
 
@@ -59,6 +61,7 @@ namespace h7 {
 
     private:
         void genRegDesc(Operand& op, RegDesc* out);
+        List<RegDesc> genFuncRegDesc(Operand& op);
 
     private:
         struct sljit_compiler *C;

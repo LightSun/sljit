@@ -109,6 +109,10 @@ String Function::genEasy(void* c,SPStatement _st){
         emitAdd(C, st);
     }break;
 
+    case OpCode::CALL:{
+        emitCall(C, st);
+    }break;
+
     default:
         gError_throwFmt("genEasy>> wrong op = %d", st->op);
     }
@@ -130,6 +134,11 @@ void Function::emitAdd(void *compiler, SPSentence st){
     H7_ASSERT_X(targetType == (int)t_ret.type, "advance type must = ret type.");
     SLJITHelper sh(C, &m_regStack, getRegisterIndexer());
     sh.emitAdd(st, targetType);
+}
+void Function::emitCall(void *compiler, SPSentence st){
+    struct sljit_compiler *C = (sljit_compiler*)compiler;
+    SLJITHelper sh(C, &m_regStack, getRegisterIndexer());
+    sh.emitCall(st);
 }
 void Function::updateParamIndex(){
     const int size = (int)body.size();

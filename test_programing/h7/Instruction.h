@@ -72,6 +72,7 @@ private:
 
 //--------------------
     void emitAdd(void *compiler, SPSentence st);
+    void emitCall(void *compiler, SPSentence st);
     void updateParamIndex();
 
 private:

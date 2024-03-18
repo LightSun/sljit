@@ -8,11 +8,12 @@ static inline ParamterInfo* _getParamInfo(ParamMap* pm, int index){
     return it != pm->end() ? &it->second : nullptr;
 }
 //return the count of LS changed.
+//TODO fix, current is wrong
 static inline void _updateIndex(Operand& ip,IFunction* owner){
     auto pinfo = owner->getParamInfo();
     auto pi = _getParamInfo(pinfo, ip.index);
     if(pi != nullptr){
-        if(pi->isLocal()){
+        if(pi->isLS()){
             if(ip.isDataStack()){
                 //src is DS, dst is LS
                 ip.index = owner->incNextLSIdx();
@@ -24,7 +25,7 @@ static inline void _updateIndex(Operand& ip,IFunction* owner){
         }else{
             if(ip.isDataStack()){
                 //src is DS, dst is DS
-                ip.index = pi->superParamIdx;
+                ip.index = pi->idx;
             }else{
                 //src is LS, dst is DS
                 H7_ASSERT(false);

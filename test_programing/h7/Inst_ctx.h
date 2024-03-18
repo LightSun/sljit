@@ -5,18 +5,21 @@
 
 namespace h7 {
 
-struct ParamterInfo{
-    bool ls; /// ls or ds
-    int superParamIdx; /// index(DS/LS) of the param.
-                  /// raw idx from super func. if need.
+enum ParamterDescFlag{
+    kPD_FLAG_LS    = 0x0001,
+    kPD_FLAG_DS    = 0x0002,
+    kPD_FLAG_FLOAT = 0x0004,
+    kPD_FLAG_64    = 0x0008,
+};
 
-    static ParamterInfo make(int idx, bool ls){
-        ParamterInfo info;
-        info.ls = ls;
-        info.superParamIdx = idx;
-        return info;
-    }
-    bool isLocal() const{return ls;}
+struct ParamterInfo{
+    UInt flags {0}; /// ls or ds
+    int idx; /// index(DS/LS) of the param.
+             /// may be from super func. if need.
+    bool isLS() const{return (flags & kPD_FLAG_LS) == kPD_FLAG_LS;}
+    bool isDS() const{return (flags & kPD_FLAG_DS) == kPD_FLAG_DS;}
+    bool isFloatLike() const{return (flags & kPD_FLAG_FLOAT) == kPD_FLAG_FLOAT;}
+    bool is64() const{return (flags & kPD_FLAG_64) == kPD_FLAG_64;}
 };
 using ParamMap = std::map<int, ParamterInfo>;//k,v = ret+param_index,
 
@@ -43,7 +46,7 @@ enum OpCode{
     NONE,
     NEW,
     ASSIGN, //=
-    CALL,
+    CALL,   // add(a,b,c)
     LOAD,
     STORE,
     //++, --
@@ -72,6 +75,10 @@ enum{
     kOperand_FLAG_DATA_STACK = 0x0002,
 };
 
+struct OpExtraInfo{
+    ParamMap funcParamInfo;
+};
+
 struct Operand{
     UShort flags {0};/// the desc of data
     UShort type;     /// base data-type
@@ -79,6 +86,7 @@ struct Operand{
     /// when flags has kOperand_FLAG_LOCAL, this is index of local-stack.
     /// 0 is return ,1+ is params.
     ULong index;
+    std::unique_ptr<OpExtraInfo> extra;
 
     bool isLocal()const{return (flags & kOperand_FLAG_LOCAL) != 0;}
     bool isDataStack()const{return (flags & kOperand_FLAG_DATA_STACK) != 0;}
