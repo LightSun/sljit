@@ -6,22 +6,26 @@
 namespace h7 {
 
 enum ParamterDescFlag{
-    kPD_FLAG_LS    = 0x0001,
-    kPD_FLAG_DS    = 0x0002,
-    kPD_FLAG_FLOAT = 0x0004,
-    kPD_FLAG_64    = 0x0008,
+    kPD_FLAG_LS     = 0x0001,
+    kPD_FLAG_DS     = 0x0002,
+    kPD_FLAG_FLOAT  = 0x0004,
+    kPD_FLAG_64     = 0x0008,
+    kPD_FLAG_RETURN = 0x0010,
+    kPD_FLAG_IMM    = 0x0020,
 };
 
-struct ParamterInfo{
+struct ParameterInfo{
     UInt flags {0}; /// ls or ds
-    int idx; /// index(DS/LS) of the param.
+    ULong idx; /// index(DS/LS) of the param.
              /// may be from super func. if need.
+             /// if -1 and is return info, means no need return.
     bool isLS() const{return (flags & kPD_FLAG_LS) == kPD_FLAG_LS;}
     bool isDS() const{return (flags & kPD_FLAG_DS) == kPD_FLAG_DS;}
     bool isFloatLike() const{return (flags & kPD_FLAG_FLOAT) == kPD_FLAG_FLOAT;}
     bool is64() const{return (flags & kPD_FLAG_64) == kPD_FLAG_64;}
+    bool isValidForReturn()const {return (flags & kPD_FLAG_RETURN) == 0;}
 };
-using ParamMap = std::map<int, ParamterInfo>;//k,v = ret+param_index,
+using ParamMap = std::map<int, ParameterInfo>;//k,v = ret+param_index,
 
 class IFunction{
 public:
@@ -76,7 +80,8 @@ enum{
 };
 
 struct OpExtraInfo{
-    ParamMap funcParamInfo;
+    ParamMap funcParams;
+    ParameterInfo funcRet;
 };
 
 struct Operand{

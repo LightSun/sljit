@@ -62,6 +62,7 @@ namespace h7 {
     private:
         void genRegDesc(Operand& op, RegDesc* out);
         List<RegDesc> genFuncRegDesc(Operand& op);
+        RegDesc genRegDesc(ParameterInfo& pi);
 
     private:
         struct sljit_compiler *C;

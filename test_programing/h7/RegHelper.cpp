@@ -102,23 +102,33 @@ RegDesc SLJITHelper::genRetRegDesc(Operand& op){
 List<RegDesc> SLJITHelper::genFuncRegDesc(Operand& op){
     List<RegDesc> ret;
     if(op.extra){
-        auto& fpi = op.extra->funcParamInfo;
+        //now just care out-func. latter care-about inner.
+        //return
+        if(op.extra->funcRet.isValidForReturn()){
+            ret.push_back(genRegDesc(op.extra->funcRet));
+        }
+        //params
+        auto& fpi = op.extra->funcParams;
         auto it = fpi.begin();
         for(; it != fpi.end() ; ++it){
-            RegDesc rd;
-            if(it->second.ls){
-                rd.r = SLJIT_MEM1(SLJIT_SP);
-                rd.rw = RI->getLSOffset(it->second.idx);
-            }else{
-                rd.r = SLJIT_MEM1(SLJIT_S0);
-                rd.rw = RI->getDSOffset(it->second.idx);
-            }
-            ret.push_back(rd);
+            ret.push_back(genRegDesc(it->second));
         }
     }else{
         H7_ASSERT(false);
     }
     return ret;
+}
+RegDesc SLJITHelper::genRegDesc(ParameterInfo& pi){
+    RegDesc rd;
+    rd.fs = pi.isFloatLike();
+    if(pi.isLS()){
+        rd.r = SLJIT_MEM1(SLJIT_SP);
+        rd.rw = RI->getLSOffset(pi.idx);
+    }else{
+        rd.r = SLJIT_MEM1(SLJIT_S0);
+        rd.rw = RI->getDSOffset(pi.idx);
+    }
+    return rd;
 }
 void SLJITHelper::genRegDesc(Operand& op, RegDesc* out){
     if(op.isLocal()){
@@ -146,7 +156,19 @@ void SLJITHelper::emitCall(SPSentence st){
     //H7_ASSERT(RI->allocLocal());
     //ip is ret, left is func.
     //put param to reg
-
+    RS->reset();
+    bool hasRet = st->ip.extra->funcRet.isValidForReturn();
+    auto list = genFuncRegDesc(st->ip);
+    int pidx = hasRet ? 1 : 0;
+    for(int i = pidx ; i < (int)list.size() ; ++i){
+        auto& rd = list[i];
+        int reg;
+        if(rd.fs){
+            reg = RS->nextReg(true);
+            //op =
+            //sljit_emit_fop1(C, op, reg, 0, rd.r, rd.rw);
+        }
+    }
 }
 
 int _typeToSLJIT_MoveType(int type){
