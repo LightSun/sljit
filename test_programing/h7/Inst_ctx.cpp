@@ -3,7 +3,7 @@
 
 using namespace h7;
 
-static inline ParamterInfo* _getParamInfo(ParamMap* pm, int index){
+static inline ParameterInfo* _getParamInfo(ParamMap* pm, int index){
     auto it = pm->find(index);
     return it != pm->end() ? &it->second : nullptr;
 }
@@ -14,18 +14,18 @@ static inline void _updateIndex(Operand& ip,IFunction* owner){
     auto pi = _getParamInfo(pinfo, ip.index);
     if(pi != nullptr){
         if(pi->isLS()){
-            if(ip.isDataStack()){
+            if(ip.isDS()){
                 //src is DS, dst is LS
                 ip.index = owner->incNextLSIdx();
-                ip.makeLocal();
+                ip.makeLS();
             }else{
                 //src is LS, dst is LS
                 ip.index = owner->incNextLSIdx();
             }
         }else{
-            if(ip.isDataStack()){
+            if(ip.isDS()){
                 //src is DS, dst is DS
-                ip.index = pi->idx;
+                ip.index = pi->index;
             }else{
                 //src is LS, dst is DS
                 H7_ASSERT(false);
@@ -37,9 +37,9 @@ static inline void _updateIndex(Operand& ip,IFunction* owner){
 //all data from ds
 void Sentence::makeDSSimple3(int type, CULongArray3 indexArr){
     flags = kSENT_FLAG_VALID_IP | kSENT_FLAG_VALID_LEFT | kSENT_FLAG_VALID_RIGHT;
-    ip.makeDataStack();
-    left.makeDataStack();
-    right.makeDataStack();
+    ip.makeDS();
+    left.makeDS();
+    right.makeDS();
     ip.index = indexArr[0];
     left.index = indexArr[1];
     right.index = indexArr[2];

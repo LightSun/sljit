@@ -16,9 +16,13 @@ namespace h7 {
 class DataStack
 {
 public:
-    DataStack(int c):m_count(c){
-        m_data = (char*)H7_NEW(c * sizeof(void*));
-        memset(m_data, 0, c * sizeof(void*));
+    DataStack(UInt c):m_count(c){
+        if(c > 0){
+            m_data = (char*)H7_NEW(c * sizeof(void*));
+            memset(m_data, 0, c * sizeof(void*));
+        }else{
+            m_data = nullptr;
+        }
     }
     ~DataStack(){
         if(m_data){
@@ -26,7 +30,18 @@ public:
             m_data = nullptr;
         }
     }
-    int getCount(){return m_count;}
+    void addCount(UInt c){
+        setCount(m_count + c);
+    }
+    void setCount(UInt c){
+        if(m_data){
+            H7_DELETE(m_data);
+            m_data = nullptr;
+        }
+        m_data = (char*)H7_NEW(c * sizeof(void*));
+        memset(m_data, 0, c * sizeof(void*));
+    }
+    UInt getCount(){return m_count;}
     void* getDataPtr(){return m_data;}
     __DATA_STACK_FUNC_SET(i8);
     __DATA_STACK_FUNC_SET(u8);
@@ -46,7 +61,7 @@ public:
 
 private:
     __DISABLE_COPY_MOVE(DataStack);
-    int m_count;
+    UInt m_count;
     char* m_data;
 };
 

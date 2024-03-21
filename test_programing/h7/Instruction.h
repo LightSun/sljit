@@ -29,7 +29,7 @@ private:
 
 struct Function{
     using PMap = ParamMap;
-    using CParamterInfo = const ParamterInfo&;
+    using CParameterInfo = const ParameterInfo&;
 public:
     int localSize {1024};
     int pCount {0};
@@ -47,13 +47,15 @@ public:
     UInt getDSOffset(UInt idx);
     UInt getOffset(UInt idx, bool ls_or_ds);
     /// int,long,char ...etc bases.
-    bool allocLocal();
+    int allocLocal();
+    /// if not alloc return-1
+    int getCurrentLocalIndex();
 
 public:
-    void setParameterInfo(int index, CParamterInfo info){
+    void setParameterInfo(int index, CParameterInfo info){
         m_pMap[index] = std::move(info);
     }
-    ParamterInfo* getParamterInfo(int index){
+    ParameterInfo* getParamterInfo(int index){
         auto it = m_pMap.find(index);
         return it != m_pMap.end() ? &it->second : nullptr;
     }
@@ -73,6 +75,7 @@ private:
 //--------------------
     void emitAdd(void *compiler, SPSentence st);
     void emitCall(void *compiler, SPSentence st);
+    void emitAssign(void *compiler, SPSentence st);
     void updateParamIndex();
 
 private:

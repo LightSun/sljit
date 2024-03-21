@@ -6,7 +6,7 @@ extern "C"{
 #include "sljitLir.h"
 }
 
-#define REG_NONE 0
+#define REG_NONE (SLJIT_R0 - 1)
 
 namespace h7 {
 
@@ -21,10 +21,18 @@ namespace h7 {
     };
     class RegStack{
     private:
+        enum{
+            kLRS_UNKNOWN,
+            kLRS_R,
+            kLRS_FR,
+        };
         int reg {REG_NONE};
         int freg {REG_NONE};
+        int lastRegState {kLRS_UNKNOWN};
     public:
         int nextReg(bool _float);
+        void backReg();
+        void backReg(int c, bool _float);
         void reset(){ reg = REG_NONE; freg = REG_NONE;}
     };
 
@@ -32,6 +40,7 @@ namespace h7 {
         bool fs; //float style or not
         int op;
         int r;
+        int argType;
         ULong rw;
     };
     class SLJITHelper{
@@ -52,17 +61,26 @@ namespace h7 {
 
         void emitAdd(SPSentence s, int targetType);
         void emitCall(SPSentence st);
+        void emitAssign(SPSentence st);
 
+    private:
         int emitPrimitive(Operand& src, int targetType);
 
         RegDesc emitRegDesc(Operand& op, int targetType);
         RegDesc genRetRegDesc(Operand& op, int opBase, int targetType);
-        RegDesc genRetRegDesc(Operand& op);
-
-    private:
+        RegDesc genRegDesc(Operand& op);
+        //
         void genRegDesc(Operand& op, RegDesc* out);
-        List<RegDesc> genFuncRegDesc(Operand& op);
-        RegDesc genRegDesc(ParameterInfo& pi);
+        ///reg: -1 means gen new reg.
+        int loadToReg(Operand& op, int reg);
+        void castType(Operand& dst, Operand& src);
+        List<RegDesc> genFuncRegDesc(OpExtraInfo* extra);
+        RegDesc genRegDesc(ParameterInfo& pi, int baseOp);
+        //
+        static int getMoveType(int type);
+        static int genSLJIT_op(int base, int targetType);
+        static int getArgType(int type); /// paramIndex >= 1
+        static int getConvType(int srcType, int dstType);
 
     private:
         struct sljit_compiler *C;

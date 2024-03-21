@@ -6,24 +6,28 @@
 namespace h7 {
 
 enum ParamterDescFlag{
-    kPD_FLAG_LS     = 0x0001,
-    kPD_FLAG_DS     = 0x0002,
-    kPD_FLAG_FLOAT  = 0x0004,
-    kPD_FLAG_64     = 0x0008,
-    kPD_FLAG_RETURN = 0x0010,
-    kPD_FLAG_IMM    = 0x0020,
+    kPD_FLAG_LS         = 0x0001,   /// local stack. every is sizeof(void*)
+    kPD_FLAG_DS         = 0x0002,   /// data-stack. every is sizeof(void*)
+    kPD_FLAG_RETURN     = 0x0004,   /// only for function return desc
+    kPD_FLAG_IMM        = 0x0008,
+    kPD_FLAG_MIN_SIZE   = 0x0010,  /// means. char.size = sizeof(char)...etc
 };
 
 struct ParameterInfo{
-    UInt flags {0}; /// ls or ds
-    ULong idx; /// index(DS/LS) of the param.
-             /// may be from super func. if need.
-             /// if -1 and is return info, means no need return.
-    bool isLS() const{return (flags & kPD_FLAG_LS) == kPD_FLAG_LS;}
-    bool isDS() const{return (flags & kPD_FLAG_DS) == kPD_FLAG_DS;}
-    bool isFloatLike() const{return (flags & kPD_FLAG_FLOAT) == kPD_FLAG_FLOAT;}
-    bool is64() const{return (flags & kPD_FLAG_64) == kPD_FLAG_64;}
-    bool isValidForReturn()const {return (flags & kPD_FLAG_RETURN) == 0;}
+    UShort type;      ///base param type
+    UShort flags {0}; /// ls or ds
+    Long index; /// index(DS/LS) of the param.
+              /// may be from super func. if need.
+              /// if -1 and is return info, means no need return.
+
+    bool isLS() const{return (flags & kPD_FLAG_LS) != 0;}
+    bool isDS() const{return (flags & kPD_FLAG_DS) != 0;}
+    bool isReturn()const {return (flags & kPD_FLAG_RETURN) != 0;}
+    bool isIMM()const{ return (flags & kPD_FLAG_IMM) != 0;}
+    bool isFloatLike() const{ TypeInfo ti(type); return ti.isFloatLikeType();}
+    bool is64() const{ TypeInfo ti(type); return ti.is64();}
+    bool isMinSize()const{(flags & kPD_FLAG_MIN_SIZE) != 0;}
+    bool isLessThanInt()const {TypeInfo ti(type); return ti.isLessInt();}
 };
 using ParamMap = std::map<int, ParameterInfo>;//k,v = ret+param_index,
 
@@ -73,30 +77,32 @@ enum SentFlags{
     kSENT_FLAG_VALID_RIGHT = 0x0004,
 };
 
-//local_var/func_param
-enum{
-    kOperand_FLAG_LOCAL      = 0x0001,
-    kOperand_FLAG_DATA_STACK = 0x0002,
-};
-
 struct OpExtraInfo{
     ParamMap funcParams;
     ParameterInfo funcRet;
+    String imm;
 };
 
-struct Operand{
-    UShort flags {0};/// the desc of data
-    UShort type;     /// base data-type
-    /// when flags has kOperand_FLAG_DATA_STACK, this is index of DataStack
-    /// when flags has kOperand_FLAG_LOCAL, this is index of local-stack.
-    /// 0 is return ,1+ is params.
-    ULong index;
+struct Operand: public ParameterInfo{
     std::unique_ptr<OpExtraInfo> extra;
 
-    bool isLocal()const{return (flags & kOperand_FLAG_LOCAL) != 0;}
-    bool isDataStack()const{return (flags & kOperand_FLAG_DATA_STACK) != 0;}
-    void makeLocal(){flags = kOperand_FLAG_LOCAL;}
-    void makeDataStack(){flags = kOperand_FLAG_DATA_STACK;}
+    void makeLS(){flags = kPD_FLAG_LS;}
+    void makeDS(){flags = kPD_FLAG_DS;}
+    void makeExtra(){extra = std::make_unique<OpExtraInfo>();}
+    ///imm: only for float-like/int-like
+    String getIMM()const{return extra ? extra->imm : "";}
+    void makeIMMInt(int val){
+        type = kType_int32;
+        flags = kPD_FLAG_IMM;
+        makeExtra();
+        extra->imm = std::to_string(val);
+    }
+    void makeIMMDouble(double val){
+        type = kType_double;
+        flags = kPD_FLAG_IMM;
+        makeExtra();
+        extra->imm = std::to_string(val);
+    }
 };
 
 struct Sentence{
@@ -114,6 +120,14 @@ struct Sentence{
     }
     void setValidFlagsAll(){
         flags = kSENT_FLAG_VALID_IP | kSENT_FLAG_VALID_LEFT | kSENT_FLAG_VALID_RIGHT;
+    }
+    void setValidFlags(int c){
+        switch (c) {
+        case 1: flags = kSENT_FLAG_VALID_IP; break;
+        case 2: flags = kSENT_FLAG_VALID_IP | kSENT_FLAG_VALID_LEFT; break;
+        case 3: flags = kSENT_FLAG_VALID_IP | kSENT_FLAG_VALID_LEFT
+                    | kSENT_FLAG_VALID_RIGHT; break;
+        }
     }
     //all data from ds
     void makeDSSimple3(int type, CULongArray3 indexArr);

@@ -2,43 +2,17 @@
 
 using namespace h7;
 
-static inline int _typeToSLJIT_MoveType(int type);
-static inline int _genSLJIT_op(int base, int targetType);
-
-int RegStack::nextReg(bool _float){
-    if(_float){
-        if(reg == REG_NONE){
-            reg = SLJIT_FR0;
-            return reg;
-        }
-        if(reg == SLJIT_NUMBER_OF_FLOAT_REGISTERS - 1){
-            H7_ASSERT_X(false, "wrong reg state");
-        }
-        reg ++;
-        return reg;
-    }else{
-        if(reg == REG_NONE){
-            reg = SLJIT_R0;
-            return reg;
-        }
-        if(reg == SLJIT_NUMBER_OF_REGISTERS - 1){
-            H7_ASSERT_X(false, "wrong reg state");
-        }
-        reg ++;
-        return reg;
-    }
-}
 int SLJITHelper::emitPrimitive(Operand& src, int targetType){
 //    if(src.isDataStack()){
 //        H7_ASSERT_X((int)src.index < pCount, "index param failed.");
 //    }
     //
-    int moveType = _typeToSLJIT_MoveType(src.type);
+    int moveType = getMoveType(src.type);
     if(moveType == SLJIT_MOV_F32){
         TypeInfo ti(targetType);
         H7_ASSERT(ti.isFloatLikeType());
         int reg = RS->nextReg(true);
-        loadF(moveType, reg, 0, src.index, src.isLocal());
+        loadF(moveType, reg, 0, src.index, src.isLS());
 
         if(targetType == kType_double){
             sljit_emit_fop1(C, SLJIT_CONV_F64_FROM_F32, reg, 0, reg, 0);
@@ -47,12 +21,12 @@ int SLJITHelper::emitPrimitive(Operand& src, int targetType){
     }else if(moveType == SLJIT_MOV_F64){
         H7_ASSERT(targetType == kType_double);
         int reg = RS->nextReg(true);
-        loadF(moveType, reg, 0, src.index, src.isLocal());
+        loadF(moveType, reg, 0, src.index, src.isLS());
         return reg;
     }
     else{
         int reg = RS->nextReg(false);
-        load(moveType, reg, 0, src.index, src.isLocal());
+        load(moveType, reg, 0, src.index, src.isLS());
         //convert if need.
         if(targetType == kType_float){
             TypeInfo ti(src.type);
@@ -91,47 +65,57 @@ RegDesc SLJITHelper::genRetRegDesc(Operand& op, int opBase, int targetType){
     }else{
         genRegDesc(op, &desc);
     }
-    desc.op = _genSLJIT_op(opBase, targetType);
+    desc.op = genSLJIT_op(opBase, targetType);
     return desc;
 }
-RegDesc SLJITHelper::genRetRegDesc(Operand& op){
+RegDesc SLJITHelper::genRegDesc(Operand& op){
     RegDesc desc;
     genRegDesc(op, &desc);
     return desc;
 }
-List<RegDesc> SLJITHelper::genFuncRegDesc(Operand& op){
+List<RegDesc> SLJITHelper::genFuncRegDesc(OpExtraInfo* extra){
     List<RegDesc> ret;
-    if(op.extra){
+    if(extra){
         //now just care out-func. latter care-about inner.
         //return
-        if(op.extra->funcRet.isValidForReturn()){
-            ret.push_back(genRegDesc(op.extra->funcRet));
+        if(extra->funcRet.isReturn()){
+            ret.push_back(genRegDesc(extra->funcRet, kOP_LOAD));
         }
         //params
-        auto& fpi = op.extra->funcParams;
+        auto& fpi = extra->funcParams;
         auto it = fpi.begin();
         for(; it != fpi.end() ; ++it){
-            ret.push_back(genRegDesc(it->second));
+            ret.push_back(genRegDesc(it->second, kOP_LOAD));
         }
     }else{
         H7_ASSERT(false);
     }
     return ret;
 }
-RegDesc SLJITHelper::genRegDesc(ParameterInfo& pi){
+RegDesc SLJITHelper::genRegDesc(ParameterInfo& pi, int baseOp){
     RegDesc rd;
     rd.fs = pi.isFloatLike();
-    if(pi.isLS()){
+    if(pi.isIMM()){
+        H7_ASSERT_X(!pi.isReturn(), "genRegDesc >> return-type can't be IMM.");
+        rd.r = SLJIT_IMM;
+        rd.rw = pi.index; //as value
+    }else if(pi.isLS()){
         rd.r = SLJIT_MEM1(SLJIT_SP);
-        rd.rw = RI->getLSOffset(pi.idx);
+        rd.rw = RI->getLSOffset(pi.index);
     }else{
         rd.r = SLJIT_MEM1(SLJIT_S0);
-        rd.rw = RI->getDSOffset(pi.idx);
+        rd.rw = RI->getDSOffset(pi.index);
     }
+    rd.op = genSLJIT_op(baseOp, pi.type);
+    rd.argType = getArgType(pi.type);
     return rd;
 }
 void SLJITHelper::genRegDesc(Operand& op, RegDesc* out){
-    if(op.isLocal()){
+    out->fs = op.isFloatLike();
+    if(op.isIMM()){
+        out->r = SLJIT_IMM;
+        out->rw = op.index;
+    }else if(op.isLS()){
         out->r = SLJIT_MEM1(SLJIT_SP);
         out->rw = RI->getLSOffset(op.index);
     }else{
@@ -139,6 +123,88 @@ void SLJITHelper::genRegDesc(Operand& op, RegDesc* out){
         out->rw = RI->getDSOffset(op.index);
     }
 }
+int SLJITHelper::loadToReg(Operand& op, int reg){
+    auto rd = genRegDesc(op);
+    //if reg not assigned. gen new.
+    if(reg < 0){
+        reg = RS->nextReg(op.isFloatLike());
+    }
+    if(op.isIMM()){
+        auto imm = op.getIMM();
+        if(op.isFloatLike()){
+            if(op.is64()){
+                sljit_emit_fset64(C, reg, std::stod(imm));
+            }else{
+                sljit_emit_fset32(C, reg, std::stof(imm));
+            }
+        }else{
+            auto lp = genSLJIT_op(kOP_LOAD, op.type);
+            if(op.type == kType_uint64){
+                sljit_emit_op1(C, lp, reg, 0, SLJIT_IMM, std::stoull(imm));
+            }else{
+                sljit_emit_op1(C, lp, reg, 0, SLJIT_IMM, std::stoll(imm));
+            }
+        }
+    }else{
+        auto lp = genSLJIT_op(kOP_LOAD, op.type);
+        if(op.isFloatLike()){
+            sljit_emit_fop1(C, lp, reg, 0, rd.r, rd.rw);
+        }else{
+            sljit_emit_op1(C, lp, reg, 0, rd.r, rd.rw);
+        }
+    }
+    return reg;
+}
+void SLJITHelper::castType(Operand& dst, Operand& src){
+    //src can be imm.
+    //but dst not.
+    H7_ASSERT(!dst.isIMM());
+    auto rd_dst = genRegDesc(dst);
+    if(src.isIMM()){
+        if(dst.isFloatLike()){
+            if(dst.is64()){
+                sljit_emit_fop1(C, SLJIT_MOV_F32, rd_dst.r, rd_dst.rw,
+                                SLJIT_IMM, std::stof(src.getIMM()));
+            }else{
+                sljit_emit_fop1(C, SLJIT_MOV_F64, rd_dst.r, rd_dst.rw,
+                                SLJIT_IMM, std::stod(src.getIMM()));
+            }
+        }else{
+            if(dst.type == kType_uint64){
+                sljit_emit_op1(C, SLJIT_MOV, rd_dst.r, rd_dst.rw,
+                               SLJIT_IMM, std::stoull(src.getIMM()));
+            }else{
+                sljit_emit_op1(C, SLJIT_MOV, rd_dst.r, rd_dst.rw,
+                               SLJIT_IMM, std::stoll(src.getIMM()));
+            }
+        }
+    }else{
+        //expand dst?
+        auto rd_src = genRegDesc(src);
+        if(src.isMinSize() && src.isLessThanInt()){
+            int reg = loadToReg(src, -1);
+            int convType = getConvType(kType_int32, dst.type);
+            if(dst.isFloatLike() || src.isFloatLike()){
+                sljit_emit_fop1(C, convType, rd_dst.r, rd_dst.rw,
+                                reg, 0);
+            }else{
+                sljit_emit_op1(C, convType, rd_dst.r, rd_dst.rw,
+                                reg, 0);
+            }
+            RS->backReg();
+        }else{
+            int convType = getConvType(src.type, dst.type);
+            if(dst.isFloatLike() || src.isFloatLike()){
+                sljit_emit_fop1(C, convType, rd_dst.r, rd_dst.rw,
+                                rd_src.r, rd_src.rw);
+            }else{
+                sljit_emit_op1(C, convType, rd_dst.r, rd_dst.rw,
+                                rd_src.r, rd_src.rw);
+            }
+        }
+    }
+}
+
 void SLJITHelper::emitAdd(SPSentence st, int targetType){
     auto ret = genRetRegDesc(st->ip, kOP_ADD, targetType);
     auto left = emitRegDesc(st->left, targetType);
@@ -157,130 +223,56 @@ void SLJITHelper::emitCall(SPSentence st){
     //ip is ret, left is func.
     //put param to reg
     RS->reset();
-    bool hasRet = st->ip.extra->funcRet.isValidForReturn();
-    auto list = genFuncRegDesc(st->ip);
-    int pidx = hasRet ? 1 : 0;
-    for(int i = pidx ; i < (int)list.size() ; ++i){
-        auto& rd = list[i];
-        int reg;
-        if(rd.fs){
-            reg = RS->nextReg(true);
-            //op =
-            //sljit_emit_fop1(C, op, reg, 0, rd.r, rd.rw);
-        }
-    }
-}
-
-int _typeToSLJIT_MoveType(int type){
-    int moveType;
-    switch (type) {
-    case kType_int8:
-        { moveType = SLJIT_MOV_S8; }break;
-    case kType_int16:
-        { moveType = SLJIT_MOV_S16; }break;
-    case kType_int32:
-        { moveType = SLJIT_MOV_S32; }break;
-    case kType_int64:
-        { moveType = SLJIT_MOV; }break;
-    case kType_float:
-        { moveType = SLJIT_MOV_F32; }break;
-    case kType_double:
-        { moveType = SLJIT_MOV_F64; }break;
-
-    case kType_bool:
-        { moveType = SLJIT_MOV_S8; }break;
-    case kType_uint8:
-        { moveType = SLJIT_MOV_U8; }break;
-    case kType_uint16:
-        { moveType = SLJIT_MOV_U16; }break;
-    case kType_uint32:
-        { moveType = SLJIT_MOV_U32; }break;
-    case kType_uint64:{
-        { moveType = SLJIT_MOV; }break;
-    }break;
-    default:
-        { moveType = SLJIT_MOV_P; }break;
-    }
-    return moveType;
-}
-int _genSLJIT_op(int base, int targetType){
-    TypeInfo ti(targetType);
-    if(ti.isFloatLikeType()){
-        if(ti.virtualSize() > (int)sizeof(Float)){
-            switch (base) {
-            case kOP_ADD:{return SLJIT_ADD_F64;}
-            case kOP_SUB:return SLJIT_SUB_F64;
-            case kOP_MUL:return SLJIT_MUL_F64;
-            case kOP_DIV:return SLJIT_DIV_F64;
-
-            case kOP_MOD:{
-                H7_ASSERT_X(false, "mod op for float/double is not support.");
-            }break;
-
-            case kOP_LOAD:{
-                return SLJIT_MOV_F64;
-            }break;
-
-            default:
-                H7_ASSERT(false);
+    bool hasRet = st->ip.extra->funcRet.isReturn();
+    auto list = genFuncRegDesc(st->ip.extra.get());
+    int argFlags = 0;
+    int argRet;
+    if(hasRet){
+        argRet = SLJIT_ARG_RETURN(list[0].argType);
+        for(int i = 1 ; i < (int)list.size() ; ++i){
+            auto& rd = list[i];
+            int reg;
+            if(rd.fs){
+                reg = RS->nextReg(true);
+                sljit_emit_fop1(C, rd.op, reg, 0, rd.r, rd.rw);
+            }else{
+                reg = RS->nextReg(false);
+                sljit_emit_op1(C, rd.op, reg, 0, rd.r, rd.rw);
             }
-        }else{
-            switch (base) {
-            case kOP_ADD:return SLJIT_ADD_F32;
-            case kOP_SUB:return SLJIT_SUB_F32;
-            case kOP_MUL:return SLJIT_MUL_F32;
-            case kOP_DIV:return SLJIT_DIV_F32;
-
-            case kOP_MOD:{
-                H7_ASSERT_X(false, "mod op for float/double is not support.");
-            }break;
-
-            case kOP_LOAD:{
-                return SLJIT_MOV_F32;
-            }break;
-
-            default:
-                H7_ASSERT(false);
-            }
+            argFlags |= SLJIT_ARG_VALUE(rd.argType, i);
         }
     }else{
-        if(ti.virtualSize() > (int)sizeof(Int)){
-            switch (base) {
-            case kOP_ADD: return SLJIT_ADD;
-            case kOP_SUB: return SLJIT_SUB;
-            case kOP_MUL: return SLJIT_MUL;
-            case kOP_DIV: return ti.isSigned() ? SLJIT_DIV_SW : SLJIT_DIV_UW; //no remainder.
-            case kOP_MOD: return ti.isSigned() ? SLJIT_DIVMOD_SW : SLJIT_DIVMOD_UW;
-            case kOP_LOAD:{
-                return SLJIT_MOV;
-            }break;
-
-            default:
-                H7_ASSERT(false);
+        argRet = SLJIT_ARGS0(VOID);
+        for(int i = 0 ; i < (int)list.size() ; ++i){
+            auto& rd = list[i];
+            int reg;
+            if(rd.fs){
+                reg = RS->nextReg(true);
+                sljit_emit_fop1(C, rd.op, reg, 0, rd.r, rd.rw);
+            }else{
+                reg = RS->nextReg(false);
+                sljit_emit_op1(C, rd.op, reg, 0, rd.r, rd.rw);
             }
-        }else{
-            switch (base) {
-            case kOP_ADD: return SLJIT_ADD32;
-            case kOP_SUB: return SLJIT_SUB32;
-            case kOP_MUL: return SLJIT_MUL32;
-            case kOP_DIV: return ti.isSigned() ? SLJIT_DIV_S32 : SLJIT_DIV_U32; //no remainder.
-            case kOP_MOD: return ti.isSigned() ? SLJIT_DIVMOD_S32 : SLJIT_DIVMOD_U32;
-            case kOP_LOAD:{
-                if(ti.virtualSize() == (int)sizeof(Int)){
-                    return ti.isSigned() ? SLJIT_MOV_S32 : SLJIT_MOV_U32;
-                }else if(ti.virtualSize() == (int)sizeof(Short)){
-                    return ti.isSigned() ? SLJIT_MOV_S16 : SLJIT_MOV_U16;
-                }else if(ti.virtualSize() == (int)sizeof(Char)){
-                    return ti.isSigned() ? SLJIT_MOV_S8 : SLJIT_MOV_U8;
-                }
-            }break;
-
-            default:
-                H7_ASSERT(false);
-            }
+            argFlags |= SLJIT_ARG_VALUE(rd.argType, i + 1);
         }
     }
-    //can't reach here
-    return 0;
+    //SLJIT_FAST_CALL
+    sljit_emit_icall(C, SLJIT_CALL, argRet | argFlags,
+                     SLJIT_IMM, SLJIT_FUNC_ADDR(st->ip.index));
+    //copy result to ret-reg
+    if(hasRet){
+        auto& rd = list[0];
+        if(rd.fs){
+            sljit_emit_fop1(C, rd.op, rd.r, rd.rw, SLJIT_FR0, 0);
+        }else{
+            //be careful. remainder in R1
+            sljit_emit_op1(C, rd.op, rd.r, rd.rw, SLJIT_R0, 0);
+        }
+    }
+}
+void SLJITHelper::emitAssign(SPSentence st){
+    //ip and left.
+
 }
 
+//---------------------------------------------

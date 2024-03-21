@@ -37,12 +37,19 @@ UInt Function::getDSOffset(UInt idx){
 UInt Function::getOffset(UInt idx, bool ls_or_ds){
     return ls_or_ds ? m_localRI->getLSOffset(idx) : m_localRI->getDSOffset(idx);
 }
-bool Function::allocLocal(){
+int Function::allocLocal(){
     if(!m_localRI){
         m_localRI = RegisterIndexer::New(localSize);
     }
-    return m_localRI->allocLocal();
+    if(m_localRI->allocLocal()){
+        return m_localRI->getCurrentIdx();
+    }
+    return -1;
 }
+int Function::getCurrentLocalIndex(){
+    return m_localRI ? m_localRI->getCurrentIdx() : -1;
+}
+
 //input: data-arr. all element offset is 8*N. return in S1
 String Function::compile(CodeDesc* out){
     struct sljit_compiler *C;
@@ -105,6 +112,11 @@ String Function::genEasy(void* c,SPStatement _st){
     //st->sent_
     auto& st = est->sent_;
     switch (st->op) {
+
+    case OpCode::ASSIGN:{
+
+    }break;
+
     case OpCode::ADD:{
         emitAdd(C, st);
     }break;
@@ -140,6 +152,10 @@ void Function::emitCall(void *compiler, SPSentence st){
     SLJITHelper sh(C, &m_regStack, getRegisterIndexer());
     sh.emitCall(st);
 }
+void emitAssign(void *compiler, SPSentence st){
+
+}
+//TODO to resolve inline functions.(be careful of nested func.)
 void Function::updateParamIndex(){
     const int size = (int)body.size();
     for(int i = 0; i < size ; ++i){

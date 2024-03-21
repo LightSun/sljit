@@ -107,6 +107,8 @@ struct TypeInfo{
     inline bool isFloatLikeType()const;
     inline static int computePrimitiveType(bool _float, bool _signed, int ret_size);
     inline static int computeAdvanceType(int type1, int type2);
+    inline bool is64(){return isAlignSize(sizeof(Long));}
+    inline bool isLessInt()const{ return virtualSize() < sizeof(int);}
 };
 
 typedef union Value{
