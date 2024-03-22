@@ -35,7 +35,7 @@ static inline void _updateIndex(Operand& ip,IFunction* owner){
 }
 
 //all data from ds
-void Sentence::makeDSSimple3(int type, CULongArray3 indexArr){
+void Sentence::makeSimple3DS(int type, CULongArray3 indexArr){
     flags = kSENT_FLAG_VALID_IP | kSENT_FLAG_VALID_LEFT | kSENT_FLAG_VALID_RIGHT;
     ip.makeDS();
     left.makeDS();
@@ -46,6 +46,18 @@ void Sentence::makeDSSimple3(int type, CULongArray3 indexArr){
     ip.type = (UShort)type;
     left.type = (UShort)type;
     right.type = (UShort)type;
+}
+void Sentence::makeSimple1LS2DS(CIntArray3 types, CULongArray3 indexArr){
+    flags = kSENT_FLAG_VALID_IP | kSENT_FLAG_VALID_LEFT | kSENT_FLAG_VALID_RIGHT;
+    ip.makeLS();
+    left.makeDS();
+    right.makeDS();
+    ip.index = indexArr[0];
+    left.index = indexArr[1];
+    right.index = indexArr[2];
+    ip.type = (UShort)types[0];
+    left.type = (UShort)types[1];
+    right.type = (UShort)types[2];
 }
 
 //need alloc LS.

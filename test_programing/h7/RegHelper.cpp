@@ -179,29 +179,47 @@ void SLJITHelper::castType(Operand& dst, Operand& src){
             }
         }
     }else{
-        //expand dst?
+        auto key_save = RS->save();
         auto rd_src = genRegDesc(src);
-        if(src.isMinSize() && src.isLessThanInt()){
-            int reg = loadToReg(src, -1);
-            int convType = getConvType(kType_int32, dst.type);
-            if(dst.isFloatLike() || src.isFloatLike()){
-                sljit_emit_fop1(C, convType, rd_dst.r, rd_dst.rw,
-                                reg, 0);
-            }else{
-                sljit_emit_op1(C, convType, rd_dst.r, rd_dst.rw,
-                                reg, 0);
-            }
-            RS->backReg();
+        bool srcIsLessInt = src.isMinSize() && src.isLessThanInt();
+        bool dstIsLessInt = dst.isMinSize() && dst.isLessThanInt();
+        int s_r, s_rw;
+        int d_r, d_rw;
+        int src_tt, dst_tt;
+        if(srcIsLessInt){
+            s_r = loadToReg(src, -1);
+            s_rw = 0;
+            src_tt = kType_int32;
         }else{
-            int convType = getConvType(src.type, dst.type);
-            if(dst.isFloatLike() || src.isFloatLike()){
-                sljit_emit_fop1(C, convType, rd_dst.r, rd_dst.rw,
-                                rd_src.r, rd_src.rw);
+            s_r = rd_src.r;
+            s_rw = rd_src.rw;
+            src_tt = src.type;
+        }
+        if(dstIsLessInt){
+            d_r = RS->nextReg(src.isFloatLike());
+            d_rw = 0;
+            dst_tt = kType_int32;
+        }else{
+            d_r = rd_dst.r;
+            d_rw = rd_dst.rw;
+            dst_tt = dst.type;
+        }
+        int convType = getConvType(src_tt, dst_tt);
+        if(dst.isFloatLike() || src.isFloatLike()){
+            sljit_emit_fop1(C, convType, d_r, d_rw, s_r, s_rw);
+        }else{
+            sljit_emit_op1(C, convType, d_r, d_rw, s_r, s_rw);
+        }
+        if(dstIsLessInt){
+            //copy data to dst.
+            auto loadT = genSLJIT_op(kOP_LOAD, dst.type);
+            if(dst.isFloatLike()){
+                sljit_emit_fop1(C, loadT, rd_dst.r, rd_dst.rw, d_r, d_rw);
             }else{
-                sljit_emit_op1(C, convType, rd_dst.r, rd_dst.rw,
-                                rd_src.r, rd_src.rw);
+                sljit_emit_op1(C, loadT, rd_dst.r, rd_dst.rw, d_r, d_rw);
             }
         }
+        RS->restore(key_save);
     }
 }
 
@@ -221,7 +239,7 @@ void SLJITHelper::emitCall(SPSentence st){
     //add(a,b,c) -> [ret,a,b,c]
     //H7_ASSERT(RI->allocLocal());
     //ip is ret, left is func.
-    //put param to reg
+    //1, put param to reg
     RS->reset();
     bool hasRet = st->ip.extra->funcRet.isReturn();
     auto list = genFuncRegDesc(st->ip.extra.get());
@@ -272,7 +290,15 @@ void SLJITHelper::emitCall(SPSentence st){
 }
 void SLJITHelper::emitAssign(SPSentence st){
     //ip and left.
-
+    //int a = b , int a = 1.
+    H7_ASSERT_X(st->isFlags2(), "for assign: must have ip and left.");
+    castType(st->ip, st->left);
+}
+void SLJITHelper::emitCast(SPSentence st){
+    //ip and left.
+    //int a = (int)b + c , int a = (int)1.2 + c.
+    H7_ASSERT_X(st->isFlags2(), "for assign: must have ip and left.");
+    castType(st->ip, st->left);
 }
 
 //---------------------------------------------

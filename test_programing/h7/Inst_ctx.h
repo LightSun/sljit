@@ -17,16 +17,19 @@ struct ParameterInfo{
     UShort type;      ///base param type
     UShort flags {0}; /// ls or ds
     Long index; /// index(DS/LS) of the param.
-              /// may be from super func. if need.
+              /// may function addr for func
               /// if -1 and is return info, means no need return.
-
+    static ParameterInfo make(UShort type, UShort flags, Long index){
+        return {type, flags, index};
+    }
     bool isLS() const{return (flags & kPD_FLAG_LS) != 0;}
     bool isDS() const{return (flags & kPD_FLAG_DS) != 0;}
     bool isReturn()const {return (flags & kPD_FLAG_RETURN) != 0;}
     bool isIMM()const{ return (flags & kPD_FLAG_IMM) != 0;}
     bool isFloatLike() const{ TypeInfo ti(type); return ti.isFloatLikeType();}
     bool is64() const{ TypeInfo ti(type); return ti.is64();}
-    bool isMinSize()const{(flags & kPD_FLAG_MIN_SIZE) != 0;}
+    bool isSigned()const {TypeInfo ti(type); return ti.isSigned();}
+    bool isMinSize()const { return (flags & kPD_FLAG_MIN_SIZE) != 0;}
     bool isLessThanInt()const {TypeInfo ti(type); return ti.isLessInt();}
 };
 using ParamMap = std::map<int, ParameterInfo>;//k,v = ret+param_index,
@@ -111,9 +114,24 @@ struct Sentence{
     Operand ip;    ///current var
     Operand left;
     Operand right;
+    using Type = std::shared_ptr<Sentence>;
 
     static std::shared_ptr<Sentence> New(){
         return std::make_shared<Sentence>();
+    }
+    static std::shared_ptr<Sentence> NewCall(const void* func_ptr){
+        auto sent = Sentence::New();
+        sent->op = OpCode::CALL;
+        sent->setValidFlags(1);
+        sent->ip.index = (Long)func_ptr;
+        sent->ip.extra = std::make_unique<OpExtraInfo>();
+        return sent;
+    }
+    void addFunctionParameter(const ParameterInfo& pi){
+        ip.extra->funcParams[ip.extra->funcParams.size()] = std::move(pi);
+    }
+    void setFunctionReturn(const ParameterInfo& pi){
+        ip.extra->funcRet = pi;
     }
     bool hasFlag(int flag){
         return (flags & flag) == flag;
@@ -121,6 +139,8 @@ struct Sentence{
     void setValidFlagsAll(){
         flags = kSENT_FLAG_VALID_IP | kSENT_FLAG_VALID_LEFT | kSENT_FLAG_VALID_RIGHT;
     }
+    bool isFlags2()const{return flags == (kSENT_FLAG_VALID_IP
+                                    | kSENT_FLAG_VALID_LEFT);}
     void setValidFlags(int c){
         switch (c) {
         case 1: flags = kSENT_FLAG_VALID_IP; break;
@@ -130,7 +150,9 @@ struct Sentence{
         }
     }
     //all data from ds
-    void makeDSSimple3(int type, CULongArray3 indexArr);
+    void makeSimple3DS(int type, CULongArray3 indexArr);
+    //1 LS and 2 DS
+    void makeSimple1LS2DS(CIntArray3 types, CULongArray3 indexArr);
     /// return LS change count
     void updateForParamIndex(IFunction* owner);
 };
@@ -201,7 +223,7 @@ struct ForStatement: public Statement{
 struct Function;
 
 struct FuncStatement: public Statement{
-    std::unique_ptr<Function> func;
+    std::shared_ptr<Function> func;
 
     FuncStatement():Statement(kSTAT_FUNC_INLINE){}
 };

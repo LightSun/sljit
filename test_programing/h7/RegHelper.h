@@ -19,21 +19,20 @@ namespace h7 {
         kOP_MOD,
         kOP_LOAD
     };
+    typedef struct _RegStack_ctx _RegStack_ctx;
     class RegStack{
     private:
-        enum{
-            kLRS_UNKNOWN,
-            kLRS_R,
-            kLRS_FR,
-        };
-        int reg {REG_NONE};
-        int freg {REG_NONE};
-        int lastRegState {kLRS_UNKNOWN};
+        _RegStack_ctx* m_ptr;
     public:
+        RegStack();
+        ~RegStack();
+
+        int save();
+        void restore(int);
         int nextReg(bool _float);
         void backReg();
         void backReg(int c, bool _float);
-        void reset(){ reg = REG_NONE; freg = REG_NONE;}
+        void reset();
     };
 
     struct RegDesc{
@@ -62,6 +61,7 @@ namespace h7 {
         void emitAdd(SPSentence s, int targetType);
         void emitCall(SPSentence st);
         void emitAssign(SPSentence st);
+        void emitCast(SPSentence st);
 
     private:
         int emitPrimitive(Operand& src, int targetType);

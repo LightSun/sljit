@@ -114,7 +114,11 @@ String Function::genEasy(void* c,SPStatement _st){
     switch (st->op) {
 
     case OpCode::ASSIGN:{
+        emitAssign(C, st);
+    }break;
 
+    case OpCode::CAST:{
+        emitAssign(C, st);
     }break;
 
     case OpCode::ADD:{
@@ -152,8 +156,15 @@ void Function::emitCall(void *compiler, SPSentence st){
     SLJITHelper sh(C, &m_regStack, getRegisterIndexer());
     sh.emitCall(st);
 }
-void emitAssign(void *compiler, SPSentence st){
-
+void Function::emitAssign(void *compiler, SPSentence st){
+    struct sljit_compiler *C = (sljit_compiler*)compiler;
+    SLJITHelper sh(C, &m_regStack, getRegisterIndexer());
+    sh.emitAssign(st);
+}
+void Function::emitCast(void *compiler, SPSentence st){
+    struct sljit_compiler *C = (sljit_compiler*)compiler;
+    SLJITHelper sh(C, &m_regStack, getRegisterIndexer());
+    sh.emitAssign(st);
 }
 //TODO to resolve inline functions.(be careful of nested func.)
 void Function::updateParamIndex(){

@@ -2,42 +2,113 @@
 
 using namespace h7;
 
-int RegStack::nextReg(bool _float){
-    if(_float){
-        if(freg == SLJIT_NUMBER_OF_FLOAT_REGISTERS - 1){
-            H7_ASSERT_X(false, "wrong reg state");
-        }
-        freg ++;
-        lastRegState = kLRS_FR;
-        return freg;
-    }else{
-        if(reg == SLJIT_NUMBER_OF_REGISTERS - 1){
-            H7_ASSERT_X(false, "wrong reg state");
-        }
-        reg ++;
-        lastRegState = kLRS_R;
-        return reg;
+namespace h7 {
+struct RegStackState{
+    int reg;
+    int freg;
+    int lastRegState;
+};
+enum{
+    kLRS_UNKNOWN,
+    kLRS_R,
+    kLRS_FR,
+};
+struct _RegStack_ctx{
+    std::map<int,RegStackState> stateMap;
+
+    int reg {REG_NONE};
+    int freg {REG_NONE};
+    int lastRegState {kLRS_UNKNOWN};
+
+    int save(){
+        RegStackState s;
+        s.reg = reg;
+        s.freg = freg;
+        s.lastRegState = lastRegState;
+        int c = stateMap.size();
+        stateMap[c] = std::move(s);
+        return c;
     }
+    void restore(int key){
+        auto it = stateMap.find(key);
+        if(it != stateMap.end()){
+            reg = it->second.reg;
+            freg = it->second.freg;
+            lastRegState = it->second.lastRegState;
+            stateMap.erase(it);
+        }
+    }
+    int nextReg(bool _float){
+        if(_float){
+            if(freg == SLJIT_NUMBER_OF_FLOAT_REGISTERS - 1){
+                H7_ASSERT_X(false, "wrong reg state");
+            }
+            freg ++;
+            lastRegState = kLRS_FR;
+            return freg;
+        }else{
+            if(reg == SLJIT_NUMBER_OF_REGISTERS - 1){
+                H7_ASSERT_X(false, "wrong reg state");
+            }
+            reg ++;
+            lastRegState = kLRS_R;
+            return reg;
+        }
+    }
+    void backReg(){
+        switch (lastRegState) {
+        case kLRS_R: {reg -- ; lastRegState = kLRS_UNKNOWN; }break;
+        case kLRS_FR: {freg -- ; lastRegState = kLRS_UNKNOWN; }break;
+        case kLRS_UNKNOWN:
+        default:
+            H7_ASSERT_X(false, "RegStack >> unknown 'lastRegState'");
+        }
+    }
+    void backReg(int c, bool _float){
+        if(_float){
+            H7_ASSERT(freg >= c);
+            freg -= c;
+            lastRegState = kLRS_UNKNOWN;
+        }else{
+            H7_ASSERT(reg >= c);
+            reg -= c;
+            lastRegState = kLRS_UNKNOWN;
+        }
+    }
+     void reset(){
+         reg = REG_NONE;
+         freg = REG_NONE;
+         lastRegState = kLRS_UNKNOWN;
+     }
+};
+}
+
+RegStack::RegStack(){
+    m_ptr = new _RegStack_ctx();
+}
+RegStack::~RegStack(){
+    if(m_ptr){
+        delete m_ptr;
+        m_ptr = nullptr;
+    }
+}
+int RegStack::save(){
+    return m_ptr->save();
+}
+void RegStack::restore(int key){
+    m_ptr->restore(key);
+}
+int RegStack::nextReg(bool _float){
+    return m_ptr->nextReg(_float);
 }
 void RegStack::backReg(){
-    switch (lastRegState) {
-    case kLRS_R: {reg -- ; lastRegState = kLRS_UNKNOWN; }break;
-    case kLRS_FR: {freg -- ; lastRegState = kLRS_UNKNOWN; }break;
-    case kLRS_UNKNOWN:
-    default:
-        H7_ASSERT_X(false, "RegStack >> unknown 'lastRegState'");
-    }
+    m_ptr->backReg();
 }
 void RegStack::backReg(int c, bool _float){
-    if(_float){
-        H7_ASSERT(freg >= c);
-        freg -= c;
-        lastRegState = kLRS_UNKNOWN;
-    }else{
-        H7_ASSERT(reg >= c);
-        reg -= c;
-        lastRegState = kLRS_UNKNOWN;
-    }
+    m_ptr->backReg(c, _float);
+}
+void RegStack::reset(){
+    m_ptr->reset();
 }
 
 int SLJITHelper::getArgType(int type){
@@ -62,42 +133,116 @@ int SLJITHelper::getConvType(int srcType, int dstType){
     if(ti_dst.isFloatLikeType()){
         if(ti_dst.is64()){
             switch (srcType) {
-            case kType_bool:
-            case kType_int8:
-            case kType_uint8:
-            case kType_int16:
-            case kType_uint16:
             case kType_int32:
                 return SLJIT_CONV_F64_FROM_S32;
             case kType_uint32:
                 return SLJIT_CONV_F64_FROM_U32;
             case kType_int64:
                 return SLJIT_CONV_F64_FROM_SW;
+            case kType_float:
+                return SLJIT_CONV_F64_FROM_F32;
+            case kType_double:
+                return SLJIT_MOV_F64;
             case kType_uint64:
             default:
                 return SLJIT_CONV_F64_FROM_UW;
             }
         }else{
             switch (srcType) {
-            case kType_bool:
-            case kType_int8:
-            case kType_uint8:
-            case kType_int16:
-            case kType_uint16:
             case kType_int32:
                 return SLJIT_CONV_F32_FROM_S32;
             case kType_uint32:
                 return SLJIT_CONV_F32_FROM_U32;
             case kType_int64:
                 return SLJIT_CONV_F32_FROM_SW;
+            case kType_float:
+                return SLJIT_MOV_F32;
+            case kType_double:
+                return SLJIT_CONV_F32_FROM_F64;
             case kType_uint64:
             default:
                 return SLJIT_CONV_F32_FROM_UW;
             }
         }
     }else{
+        switch (dstType) {
+        case kType_int32:{
+            //dst-> int32
+            switch (srcType) {
+            case kType_float:
+                return SLJIT_CONV_S32_FROM_F32;
+            case kType_double:
+                return SLJIT_CONV_S32_FROM_F64;
+            case kType_int32:
+                return SLJIT_MOV_S32;
+            case kType_uint32:
+                return SLJIT_MOV_U32;
+            case kType_int64:
+            case kType_uint64:
+            default:
+                return SLJIT_MOV;
+            }
+        }break;
+        case kType_uint32:{
+            //dst-> uint32
+            switch (srcType) {
+            case kType_float:
+                return SLJIT_CONV_SW_FROM_F32;
+            case kType_double:
+                return SLJIT_CONV_SW_FROM_F64;
+            case kType_int32:
+                return SLJIT_MOV_U32;
+            case kType_uint32:
+                return SLJIT_MOV_U32;
+            case kType_int64:
+            case kType_uint64:
+            default:
+                return SLJIT_MOV;
+            }
+        }break;
 
+        case kType_int64:{
+            //dst-> int64
+            switch (srcType) {
+            case kType_float:
+                return SLJIT_CONV_SW_FROM_F32;
+            case kType_double:
+                return SLJIT_CONV_SW_FROM_F64;
+            case kType_int32:
+                return SLJIT_MOV_U32;
+            case kType_uint32:
+                return SLJIT_MOV_U32;
+            case kType_int64:
+            case kType_uint64:
+            default:
+                return SLJIT_MOV;
+            }
+        }break;
+
+        default:
+        case kType_uint64:{
+            //dst-> uint64
+            switch (srcType) {
+            case kType_float:
+                return SLJIT_CONV_SW_FROM_F32;
+            case kType_double:
+                return SLJIT_CONV_SW_FROM_F64;
+            case kType_int32:
+                return SLJIT_MOV_U32;
+            case kType_uint32:
+                return SLJIT_MOV_U32;
+            case kType_int64:
+            case kType_uint64:
+            default:
+                return SLJIT_MOV;
+            }
+        }break;
+        }
     }
+    char buf[128];
+    snprintf(buf, 128, "src_t, dst_t = (%d, %d)", srcType, dstType);
+    auto str = String(buf);
+    H7_ASSERT_X(false, str);
 }
 
 //--------------------------------------

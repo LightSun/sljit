@@ -76,6 +76,7 @@ private:
     void emitAdd(void *compiler, SPSentence st);
     void emitCall(void *compiler, SPSentence st);
     void emitAssign(void *compiler, SPSentence st);
+    void emitCast(void *compiler, SPSentence st);
     void updateParamIndex();
 
 private:
