@@ -71,6 +71,10 @@ struct _ClassScope_ctx{
         auto fi = getFieldInfo(clsName, fn);
         return fi ? fi->offset : -1;
     }
+    int getFieldOffset(CString clsName, UInt k){
+        auto fi = getFieldInfo(clsName, k);
+        return fi ? fi->offset : -1;
+    }
     FieldInfo* getFieldInfo(CString clsName, CString fn){
         ClassInfo* info = nullptr;
         {
@@ -81,10 +85,21 @@ struct _ClassScope_ctx{
             }
         }
         if(info != nullptr){
-            auto it = info->fieldMap->find(fn);
-            if(it != info->fieldMap->end()){
-                return &it->second;
+            return info->getField(fn);
+        }
+        return nullptr;
+    }
+    FieldInfo* getFieldInfo(CString clsName, UInt k){
+        ClassInfo* info = nullptr;
+        {
+            MutexLockHolder lck(clsLock);
+            auto it = clsMap.find(clsName);
+            if(it != clsMap.end()){
+                info = it->second;
             }
+        }
+        if(info != nullptr){
+            return info->getField(k);
         }
         return nullptr;
     }
@@ -139,7 +154,7 @@ ClassInfo* ClassScope::newArrayClassInfo(const TypeInfo& info){
         int size = info.virtualSize() * info.getTotalArraySize();
         auto ptr_info = H7_NEW_OBJ(ClassInfo);
         ptr_info->name = info.getTypeDesc();
-        ptr_info->scope = ClassScope::getGlobal();
+        ptr_info->scope = ClassScope::getCurrent();
         ptr_info->structSize = size;
         //set sub-arr, like: a[2][3]
         return ptr_info;
@@ -149,6 +164,12 @@ ClassInfo* ClassScope::newArrayClassInfo(const TypeInfo& info){
 int ClassScope::getFieldOffset(CString clsName, CString fn){
     return m_ctx->getFieldOffset(clsName, fn);
 }
+int ClassScope::getFieldOffset(CString clsName, UInt key){
+    return m_ctx->getFieldOffset(clsName, key);
+}
 FieldInfo* ClassScope::getFieldInfo(CString clsName, CString fn){
     return m_ctx->getFieldInfo(clsName, fn);
+}
+FieldInfo* ClassScope::getFieldInfo(CString clsName, UInt key){
+    return m_ctx->getFieldInfo(clsName, key);
 }

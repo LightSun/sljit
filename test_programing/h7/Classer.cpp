@@ -45,3 +45,12 @@ ObjectPtr Classer::create(ClassHandle handle, ObjectPtr parent){
     obj->parent = parent;
     return obj;
 }
+
+void* h7::gObject_getDataAddr(ObjectPtr obj, UInt fieldIdx){
+    ObjectDelegate ob(obj);
+    auto offset = ob.getFieldOffset(fieldIdx);
+    if(offset >= 0){
+        return ob.getFieldAddress(offset);
+    }
+    return nullptr;
+}

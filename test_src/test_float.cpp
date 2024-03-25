@@ -23,6 +23,12 @@ static long SLJIT_FUNC print_double(double a)
     return 0;
 }
 
+static long SLJIT_FUNC print_doublePtr(double* a)
+{
+    printf("print_doublePtr >> a = %.3f\n", *a);
+    return 0;
+}
+
 void test_float(){
     void *code;
     unsigned long len;

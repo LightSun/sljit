@@ -138,18 +138,8 @@ String Function::genEasy(void* c,SPStatement _st){
 
 void Function::emitAdd(void *compiler, SPSentence st){
     struct sljit_compiler *C = (sljit_compiler*)compiler;
-    //dst: ADD_OP and reg.
-    TypeInfo t_left(st->left.type);
-    TypeInfo t_right(st->right.type);
-    TypeInfo t_ret(st->ip.type);
-    H7_ASSERT_X(t_left.isPrimitiveType(), "left must be primitive.");
-    H7_ASSERT_X(t_right.isPrimitiveType(), "right must be primitive.");
-    H7_ASSERT_X(t_ret.isPrimitiveType(), "ip must be primitive.");
-    int targetType = TypeInfo::computeAdvanceType(st->left.type, st->right.type);
-    //
-    H7_ASSERT_X(targetType == (int)t_ret.type, "advance type must = ret type.");
     SLJITHelper sh(C, &m_regStack, getRegisterIndexer());
-    sh.emitAdd(st, targetType);
+    sh.emitAdd(st);
 }
 void Function::emitCall(void *compiler, SPSentence st){
     struct sljit_compiler *C = (sljit_compiler*)compiler;

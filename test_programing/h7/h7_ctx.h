@@ -111,7 +111,7 @@ struct TypeInfo{
     inline static int computePrimitiveType(bool _float, bool _signed, int ret_size);
     inline static int computeAdvanceType(int type1, int type2);
     inline bool is64(){return isAlignSize(sizeof(Long));}
-    inline bool isLessInt()const{ return virtualSize() < sizeof(int);}
+    inline bool isLessInt()const{ return virtualSize() < (int)sizeof(int);}
 };
 
 typedef union Value{
@@ -147,13 +147,17 @@ struct ClassInfo{
     UInt structSize;
 
     std::unique_ptr<ArrayClassDesc> arrayDesc;
-    std::unique_ptr<HashMap<String, FieldInfo>> fieldMap;
+    std::unique_ptr<HashMap<UInt, FieldInfo>> fieldMap;
 
     //array or normal object
     inline ClassInfo(const TypeInfo* arr = nullptr);
     inline bool isArray()const {return arrayDesc != nullptr;}
     ///-1 for no found.
     inline int getFieldOffset(CString name);
+    inline int getFieldOffset(UInt key);
+    inline void putField(CString key, const FieldInfo&);
+    inline FieldInfo* getField(CString key);
+    inline FieldInfo* getField(UInt key);
 };
 
 using ListTypeInfo = List<TypeInfo>;

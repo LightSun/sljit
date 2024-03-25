@@ -4,8 +4,11 @@
 #include "h7/h7_alloc.h"
 #include "h7/common/common.h"
 #include "h7/common/c_common.h"
+#include "h7/utils/hash.h"
 
-namespace h7 {
+using namespace h7;
+#define HASH_SEED 13
+
 
 inline MemoryBlock MemoryBlock::makeUnchecked(UInt size){
     MemoryBlock b;
@@ -202,17 +205,34 @@ ClassInfo::ClassInfo(const TypeInfo* arr){
         arrayDesc->arrayDesc = *arr->arrayDesc;
         arrayDesc->type = arr->type;
     }else{
-        fieldMap = std::make_unique<HashMap<String, FieldInfo>>();
+        fieldMap = std::make_unique<HashMap<UInt, FieldInfo>>();
     }
 }
 int ClassInfo::getFieldOffset(CString name){
+    auto f = getField(name);
+    return f ? f->offset :-1;
+}
+int ClassInfo::getFieldOffset(UInt key){
+    auto f = getField(key);
+    return f ? f->offset :-1;
+}
+void ClassInfo::putField(CString key, const FieldInfo& f){
+    auto k = fasthash32(key.data(), key.length(), HASH_SEED);
+    (*fieldMap)[k] = std::move(f);
+}
+FieldInfo* ClassInfo::getField(CString key){
     if(fieldMap){
-        auto it = fieldMap->find(name);
-        if(it != fieldMap->end()){
-            return it->second.offset;
-        }
+        auto k = fasthash32(key.data(), key.length(), HASH_SEED);
+        auto it = fieldMap->find(k);
+        return it != fieldMap->end() ? &it->second : nullptr;
     }
-    return -1;
+    return nullptr;
+}
+FieldInfo* ClassInfo::getField(UInt k){
+    if(fieldMap){
+        auto it = fieldMap->find(k);
+        return it != fieldMap->end() ? &it->second : nullptr;
+    }
+    return nullptr;
 }
 
-}

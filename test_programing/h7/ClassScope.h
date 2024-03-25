@@ -22,8 +22,10 @@ struct ClassScope{
     ClassInfo* defineArray(const TypeInfo& info);
     //-1 means not found
     int getFieldOffset(CString clsName, CString fn);
+    int getFieldOffset(CString clsName, UInt key);
     //null means not found
     FieldInfo* getFieldInfo(CString clsName, CString fn);
+    FieldInfo* getFieldInfo(CString clsName, UInt key);
 
 private:
     _ClassScope_ctx* m_ctx;

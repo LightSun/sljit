@@ -140,7 +140,8 @@ Long h7::alignStructSize(CListTypeInfo fieldTypes, CListString fns, ClassInfo* o
                 info.name = fns[idx];
                 info.offset = offset;
                 info.typeInfo = ft;
-                (*out->fieldMap)[info.name] = std::move(info);
+                out->putField(info.name, info);
+                //(*out->fieldMap)[info.name] = std::move(info);
                 //
                 offset += vsize;
             }

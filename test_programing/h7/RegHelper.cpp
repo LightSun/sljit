@@ -1,73 +1,8 @@
 #include "RegHelper.h"
+#include "h7_ctx_impl.h"
 
 using namespace h7;
 
-int SLJITHelper::emitPrimitive(Operand& src, int targetType){
-//    if(src.isDataStack()){
-//        H7_ASSERT_X((int)src.index < pCount, "index param failed.");
-//    }
-    //
-    int moveType = getMoveType(src.type);
-    if(moveType == SLJIT_MOV_F32){
-        TypeInfo ti(targetType);
-        H7_ASSERT(ti.isFloatLikeType());
-        int reg = RS->nextReg(true);
-        loadF(moveType, reg, 0, src.index, src.isLS());
-
-        if(targetType == kType_double){
-            sljit_emit_fop1(C, SLJIT_CONV_F64_FROM_F32, reg, 0, reg, 0);
-        }
-        return reg;
-    }else if(moveType == SLJIT_MOV_F64){
-        H7_ASSERT(targetType == kType_double);
-        int reg = RS->nextReg(true);
-        loadF(moveType, reg, 0, src.index, src.isLS());
-        return reg;
-    }
-    else{
-        int reg = RS->nextReg(false);
-        load(moveType, reg, 0, src.index, src.isLS());
-        //convert if need.
-        if(targetType == kType_float){
-            TypeInfo ti(src.type);
-            int op = ti.isSigned() ? SLJIT_CONV_F32_FROM_S32 : SLJIT_CONV_F32_FROM_U32;
-            int reg2 = RS->nextReg(true);
-            sljit_emit_fop1(C, op, reg2, 0, reg, 0);
-            reg = reg2;
-        }else if(targetType == kType_double){
-            TypeInfo ti(src.type);
-            int op = ti.isSigned() ? SLJIT_CONV_F64_FROM_SW : SLJIT_CONV_F64_FROM_UW;
-            int reg2 = RS->nextReg(true);
-            sljit_emit_fop1(C, op, reg2, 0, reg, 0);
-            reg = reg2;
-        }
-        return reg;
-    }
-}
-RegDesc SLJITHelper::emitRegDesc(Operand& op, int targetType){
-    RegDesc desc;
-    if(op.type != targetType){
-        desc.r = emitPrimitive(op, targetType);
-        desc.rw = 0;
-    }else{
-        genRegDesc(op, &desc);
-    }
-    return desc;
-}
-RegDesc SLJITHelper::genRetRegDesc(Operand& op, int opBase, int targetType){
-    RegDesc desc;
-    desc.fs = false;
-    if(op.type != targetType){
-        TypeInfo ti(targetType);
-        desc.fs = ti.isFloatLikeType();
-        desc.r = RS->nextReg(desc.fs);
-        desc.rw = 0;
-    }else{
-        genRegDesc(op, &desc);
-    }
-    desc.op = genSLJIT_op(opBase, targetType);
-    return desc;
-}
 RegDesc SLJITHelper::genRegDesc(Operand& op){
     RegDesc desc;
     genRegDesc(op, &desc);
@@ -96,7 +31,7 @@ RegDesc SLJITHelper::genRegDesc(ParameterInfo& pi, int baseOp){
     RegDesc rd;
     rd.fs = pi.isFloatLike();
     if(pi.isIMM()){
-        H7_ASSERT_X(!pi.isReturn(), "genRegDesc >> return-type can't be IMM.");
+        //H7_ASSERT_X(!pi.isReturn(), "genRegDesc >> return-type can't be IMM.");
         rd.r = SLJIT_IMM;
         rd.rw = pi.index; //as value
     }else if(pi.isLS()){
@@ -154,6 +89,17 @@ int SLJITHelper::loadToReg(Operand& op, int reg){
         }
     }
     return reg;
+}
+Operand SLJITHelper::castType(int dt, Operand& src){
+    if(src.type != dt){
+        Operand dstOP;
+        dstOP.makeLS();
+        dstOP.type = dt;
+        dstOP.index = RI->allocLocal();
+        castType(dstOP, src);
+        return dstOP;
+    }
+    return src;
 }
 void SLJITHelper::castType(Operand& dst, Operand& src){
     //src can be imm.
@@ -222,18 +168,62 @@ void SLJITHelper::castType(Operand& dst, Operand& src){
         RS->restore(key_save);
     }
 }
+//-------------------------------------
 
-void SLJITHelper::emitAdd(SPSentence st, int targetType){
-    auto ret = genRetRegDesc(st->ip, kOP_ADD, targetType);
-    auto left = emitRegDesc(st->left, targetType);
-    auto right = emitRegDesc(st->right, targetType);
+void SLJITHelper::emitAdd(SPSentence st){
+    //dst: ADD_OP and reg.
+    //TypeInfo t_left(st->left.type);
+   // TypeInfo t_right(st->right.type);
+    //TypeInfo t_ret(st->ip.type);
+    //check primitive?
+    //same type
+    if(st->left.type == st->right.type
+            && st->right.type == st->ip.type){
+        auto op = genSLJIT_op(kOP_ADD, st->ip.type);
+        auto ret = genRegDesc(st->ip);
+        auto left = genRegDesc(st->left);
+        auto right = genRegDesc(st->right);
+        if(ret.fs){
+            sljit_emit_fop2(C, op, ret.r, ret.rw,
+                           left.r, left.rw, right.r, right.rw);
+        }else{
+            sljit_emit_op2(C, op, ret.r, ret.rw,
+                           left.r, left.rw, right.r, right.rw);
+        }
+        return;
+    }
+    auto ri_key = RI->save();
+    int targetType = TypeInfo::computeAdvanceType(st->left.type, st->right.type);
+    List<Operand> opList;
+    if(targetType != (int)st->ip.type){
+        targetType = TypeInfo::computeAdvanceType(targetType, st->ip.type);
+    }
+    //ip, left, right
+    opList.push_back(castType(targetType, st->ip));
+    opList.push_back(castType(targetType, st->left));
+    opList.push_back(castType(targetType, st->right));
+    auto op = genSLJIT_op(kOP_ADD, targetType);
+    //do add
+    auto ret = genRegDesc(opList[0]);
+    auto left = genRegDesc(opList[1]);
+    auto right = genRegDesc(opList[2]);
     if(ret.fs){
-        sljit_emit_fop2(C, ret.op, ret.r, ret.rw,
+        sljit_emit_fop2(C, op, ret.r, ret.rw,
                        left.r, left.rw, right.r, right.rw);
     }else{
-        sljit_emit_op2(C, ret.op, ret.r, ret.rw,
+        sljit_emit_op2(C, op, ret.r, ret.rw,
                        left.r, left.rw, right.r, right.rw);
     }
+    //copy to ret.
+    if(targetType != (int)st->ip.type){
+        op = genSLJIT_op(kOP_LOAD, targetType);
+        if(ret.fs){
+            sljit_emit_fop1(C, op, ret.r, ret.rw, SLJIT_FR0, 0);
+        }else{
+            sljit_emit_op1(C, op, ret.r, ret.rw, SLJIT_R0, 0);
+        }
+    }
+    RI->restore(ri_key);
 }
 void SLJITHelper::emitCall(SPSentence st){
     //add(a,b,c) -> [ret,a,b,c]
@@ -274,7 +264,7 @@ void SLJITHelper::emitCall(SPSentence st){
             argFlags |= SLJIT_ARG_VALUE(rd.argType, i + 1);
         }
     }
-    //SLJIT_FAST_CALL
+    //SLJIT_FAST_CALL?
     sljit_emit_icall(C, SLJIT_CALL, argRet | argFlags,
                      SLJIT_IMM, SLJIT_FUNC_ADDR(st->ip.index));
     //copy result to ret-reg

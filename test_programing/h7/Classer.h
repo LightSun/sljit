@@ -7,10 +7,10 @@ namespace h7 {
 
 //TODO auto ref/unref for parent-child.
 typedef struct Object{
-    volatile int refCount {1};
+    MemoryBlock block;
     Object* parent {nullptr};
     ClassInfo* clsInfo;
-    MemoryBlock block;
+    volatile int refCount {1};
 
     void* getDataAddress()const{return block.data;}
 
@@ -28,8 +28,14 @@ public:
     FieldInfo* getFieldInfo(CString fn){
         return m_ptr->clsInfo->scope->getFieldInfo(m_ptr->clsInfo->name, fn);
     }
+    FieldInfo* getFieldInfo(UInt key){
+        return m_ptr->clsInfo->scope->getFieldInfo(m_ptr->clsInfo->name, key);
+    }
     int getFieldOffset(CString fn){
         return m_ptr->clsInfo->scope->getFieldOffset(m_ptr->clsInfo->name, fn);
+    }
+    int getFieldOffset(UInt key){
+        return m_ptr->clsInfo->scope->getFieldOffset(m_ptr->clsInfo->name, key);
     }
     void* getFieldAddress(CString fn){
         int offset = getFieldOffset(fn);
@@ -102,5 +108,5 @@ private:
     ClassScope* m_scope;
 };
 
+extern void* gObject_getDataAddr(ObjectPtr obj, UInt fieldIdx);
 }
-

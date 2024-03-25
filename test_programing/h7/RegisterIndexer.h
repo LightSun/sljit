@@ -28,7 +28,7 @@ public:
         return m_maxCount;
     }
     UInt getCurrentSize(){
-        return m_nextIdx * sizeof (void*);
+        return m_nextIdx * (UInt)sizeof (void*);
     }
     int getCurrentIdx(){
         return m_nextIdx - 1;
@@ -39,11 +39,17 @@ public:
     }
     //local stack offset
     UInt getLSOffset(UInt index){
-        return index * sizeof (void*);
+        return index * (UInt)sizeof (void*);
     }
     //data stack offset
     UInt getDSOffset(UInt index){
-        return index * sizeof (void*);
+        return index * (UInt)sizeof (void*);
+    }
+    int save(){
+        return m_nextIdx;
+    }
+    void restore(int id){
+        m_nextIdx = id;
     }
 private:
     UInt m_maxCount;

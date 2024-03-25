@@ -6,18 +6,21 @@
 namespace h7 {
 
 enum ParamterDescFlag{
-    kPD_FLAG_LS         = 0x0001,   /// local stack. every is sizeof(void*)
-    kPD_FLAG_DS         = 0x0002,   /// data-stack. every is sizeof(void*)
-    kPD_FLAG_RETURN     = 0x0004,   /// only for function return desc
-    kPD_FLAG_IMM        = 0x0008,
-    kPD_FLAG_MIN_SIZE   = 0x0010,  /// means. char.size = sizeof(char)...etc
+    kPD_FLAG_LS             = 0x0001,   /// local stack. every is sizeof(void*)
+    kPD_FLAG_DS             = 0x0002,   /// data-stack. every is sizeof(void*)
+    kPD_FLAG_RETURN         = 0x0004,   /// only for function return desc
+    kPD_FLAG_IMM            = 0x0008,
+    kPD_FLAG_MIN_SIZE       = 0x0010,  /// means. from object. char.size = sizeof(char)...etc
+    kPD_FLAG_OBJECT_FIELD   = 0x0020,  /// indicate it is runtime come from object. like Person p = ...; p.age=18...
 };
 
 struct ParameterInfo{
-    UShort type;      ///base param type
-    UShort flags {0}; /// ls or ds
+    UShort type;        ///base param type
+    UShort flags {0};   /// ls or ds
+    UInt fieldKey {0}; /// field key(often is hash) from object.
     Long index; /// index(DS/LS) of the param.
               /// may function addr for func
+              /// may be object addr.
               /// if -1 and is return info, means no need return.
     static ParameterInfo make(UShort type, UShort flags, Long index){
         return {type, flags, index};
@@ -31,9 +34,11 @@ struct ParameterInfo{
     bool isSigned()const {TypeInfo ti(type); return ti.isSigned();}
     bool isMinSize()const { return (flags & kPD_FLAG_MIN_SIZE) != 0;}
     bool isLessThanInt()const {TypeInfo ti(type); return ti.isLessInt();}
+    bool isObjectField()const {return (flags & kPD_FLAG_OBJECT_FIELD) != 0;}
 };
 using ParamMap = std::map<int, ParameterInfo>;//k,v = ret+param_index,
 
+//deprecated
 class IFunction{
 public:
     virtual ParamMap* getParamInfo() = 0;
@@ -106,6 +111,26 @@ struct Operand: public ParameterInfo{
         makeExtra();
         extra->imm = std::to_string(val);
     }
+    //
+    Operand(){}
+    Operand(Operand& src){
+        this->type = src.type;
+        this->flags = src.flags;
+        this->index = src.index;
+        if(src.extra){
+            extra = std::make_unique<OpExtraInfo>();
+            *extra = *src.extra;
+        }
+    }
+    Operand(const Operand& src){
+        this->type = src.type;
+        this->flags = src.flags;
+        this->index = src.index;
+        if(src.extra){
+            extra = std::make_unique<OpExtraInfo>();
+            *extra = *src.extra;
+        }
+    }
 };
 
 struct Sentence{
@@ -116,7 +141,7 @@ struct Sentence{
     Operand right;
     using Type = std::shared_ptr<Sentence>;
 
-    static std::shared_ptr<Sentence> New(){
+    static Type New(){
         return std::make_shared<Sentence>();
     }
     static std::shared_ptr<Sentence> NewCall(const void* func_ptr){
@@ -128,7 +153,7 @@ struct Sentence{
         return sent;
     }
     void addFunctionParameter(const ParameterInfo& pi){
-        ip.extra->funcParams[ip.extra->funcParams.size()] = std::move(pi);
+        ip.extra->funcParams[(int)ip.extra->funcParams.size()] = std::move(pi);
     }
     void setFunctionReturn(const ParameterInfo& pi){
         ip.extra->funcRet = pi;

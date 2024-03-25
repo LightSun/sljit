@@ -25,7 +25,7 @@ struct _RegStack_ctx{
         s.reg = reg;
         s.freg = freg;
         s.lastRegState = lastRegState;
-        int c = stateMap.size();
+        int c = (int)stateMap.size();
         stateMap[c] = std::move(s);
         return c;
     }
@@ -243,6 +243,7 @@ int SLJITHelper::getConvType(int srcType, int dstType){
     snprintf(buf, 128, "src_t, dst_t = (%d, %d)", srcType, dstType);
     auto str = String(buf);
     H7_ASSERT_X(false, str);
+    return SLJIT_MOV;
 }
 
 //--------------------------------------

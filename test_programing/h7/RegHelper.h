@@ -58,22 +58,19 @@ namespace h7 {
             sljit_emit_op1(C, moveType, dstR, dstw, srcR, offset);
         }
 
-        void emitAdd(SPSentence s, int targetType);
+        void emitAdd(SPSentence s);
         void emitCall(SPSentence st);
         void emitAssign(SPSentence st);
         void emitCast(SPSentence st);
 
     private:
-        int emitPrimitive(Operand& src, int targetType);
-
-        RegDesc emitRegDesc(Operand& op, int targetType);
-        RegDesc genRetRegDesc(Operand& op, int opBase, int targetType);
         RegDesc genRegDesc(Operand& op);
         //
         void genRegDesc(Operand& op, RegDesc* out);
         ///reg: -1 means gen new reg.
         int loadToReg(Operand& op, int reg);
         void castType(Operand& dst, Operand& src);
+        Operand castType(int dstType, Operand& src);
         List<RegDesc> genFuncRegDesc(OpExtraInfo* extra);
         RegDesc genRegDesc(ParameterInfo& pi, int baseOp);
         //
@@ -84,7 +81,7 @@ namespace h7 {
 
     private:
         struct sljit_compiler *C;
-        RegisterIndexer* RI;
         RegStack* RS;
+        RegisterIndexer* RI;
     };
 }

@@ -55,7 +55,7 @@ public:
 
     template<typename T>
     T getAt(int index){
-        T* data = (T*)(m_data + index * sizeof (void*));
+        T* data = (T*)(m_data + index * (int)sizeof (void*));
         return data[0];
     }
 
