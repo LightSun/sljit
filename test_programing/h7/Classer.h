@@ -8,8 +8,9 @@ namespace h7 {
 //TODO auto ref/unref for parent-child.
 typedef struct Object{
     MemoryBlock block;
-    Object* parent {nullptr};
     ClassInfo* clsInfo;
+    Object* parent {nullptr};
+    void* offsets {nullptr};
     volatile int refCount {1};
 
     void* getDataAddress()const{return block.data;}
@@ -108,5 +109,4 @@ private:
     ClassScope* m_scope;
 };
 
-extern void* gObject_getDataAddr(ObjectPtr obj, UInt fieldIdx);
 }

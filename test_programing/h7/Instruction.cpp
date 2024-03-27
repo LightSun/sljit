@@ -41,10 +41,7 @@ int Function::allocLocal(){
     if(!m_localRI){
         m_localRI = RegisterIndexer::New(localSize);
     }
-    if(m_localRI->allocLocal()){
-        return m_localRI->getCurrentIdx();
-    }
-    return -1;
+    return m_localRI->allocLocalIdx();
 }
 int Function::getCurrentLocalIndex(){
     return m_localRI ? m_localRI->getCurrentIdx() : -1;
@@ -109,24 +106,42 @@ String Function::genInline(void* c,SPStatement st){
 String Function::genEasy(void* c,SPStatement _st){
     struct sljit_compiler *C = (sljit_compiler*)c;
     EasyStatement* est = (EasyStatement*)_st.get();
+    //
+    SLJITHelper sh(C, &m_regStack, getRegisterIndexer());
     //st->sent_
     auto& st = est->sent_;
     switch (st->op) {
 
     case OpCode::ASSIGN:{
-        emitAssign(C, st);
+        sh.emitAssign(st);
     }break;
 
     case OpCode::CAST:{
-        emitAssign(C, st);
+        sh.emitAssign(st);
     }break;
 
     case OpCode::ADD:{
-        emitAdd(C, st);
+        sh.emitAdd(st);
     }break;
 
     case OpCode::CALL:{
-        emitCall(C, st);
+        sh.emitCall(st);
+    }break;
+
+    case OpCode::LOAD_OBJ:{
+        sh.emitLoadObject(st);
+    }break;
+
+    case OpCode::STORE_OBJ:{
+        sh.emitStoreObject(st);
+    }break;
+
+    case OpCode::LOAD_OBJ_F:{
+        sh.emitLoadField(st);
+    }break;
+
+    case OpCode::STORE_OBJ_F:{
+        sh.emitStoreField(st);
     }break;
 
     default:
@@ -136,26 +151,6 @@ String Function::genEasy(void* c,SPStatement _st){
     return "";
 }
 
-void Function::emitAdd(void *compiler, SPSentence st){
-    struct sljit_compiler *C = (sljit_compiler*)compiler;
-    SLJITHelper sh(C, &m_regStack, getRegisterIndexer());
-    sh.emitAdd(st);
-}
-void Function::emitCall(void *compiler, SPSentence st){
-    struct sljit_compiler *C = (sljit_compiler*)compiler;
-    SLJITHelper sh(C, &m_regStack, getRegisterIndexer());
-    sh.emitCall(st);
-}
-void Function::emitAssign(void *compiler, SPSentence st){
-    struct sljit_compiler *C = (sljit_compiler*)compiler;
-    SLJITHelper sh(C, &m_regStack, getRegisterIndexer());
-    sh.emitAssign(st);
-}
-void Function::emitCast(void *compiler, SPSentence st){
-    struct sljit_compiler *C = (sljit_compiler*)compiler;
-    SLJITHelper sh(C, &m_regStack, getRegisterIndexer());
-    sh.emitAssign(st);
-}
 //TODO to resolve inline functions.(be careful of nested func.)
 void Function::updateParamIndex(){
     const int size = (int)body.size();

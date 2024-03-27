@@ -205,7 +205,7 @@ ClassInfo::ClassInfo(const TypeInfo* arr){
         arrayDesc->arrayDesc = *arr->arrayDesc;
         arrayDesc->type = arr->type;
     }else{
-        fieldMap = std::make_unique<HashMap<UInt, FieldInfo>>();
+        objDesc = std::make_unique<_ObjClassDesc>();
     }
 }
 int ClassInfo::getFieldOffset(CString name){
@@ -218,20 +218,21 @@ int ClassInfo::getFieldOffset(UInt key){
 }
 void ClassInfo::putField(CString key, const FieldInfo& f){
     auto k = fasthash32(key.data(), key.length(), HASH_SEED);
-    (*fieldMap)[k] = std::move(f);
+    objDesc->offsets.push_back(f.offset);
+    (objDesc->fieldMap)[k] = std::move(f);
 }
 FieldInfo* ClassInfo::getField(CString key){
-    if(fieldMap){
+    if(objDesc){
         auto k = fasthash32(key.data(), key.length(), HASH_SEED);
-        auto it = fieldMap->find(k);
-        return it != fieldMap->end() ? &it->second : nullptr;
+        auto it = objDesc->fieldMap.find(k);
+        return it != objDesc->fieldMap.end() ? &it->second : nullptr;
     }
     return nullptr;
 }
 FieldInfo* ClassInfo::getField(UInt k){
-    if(fieldMap){
-        auto it = fieldMap->find(k);
-        return it != fieldMap->end() ? &it->second : nullptr;
+    if(objDesc){
+        auto it = objDesc->fieldMap.find(k);
+        return it != objDesc->fieldMap.end() ? &it->second : nullptr;
     }
     return nullptr;
 }

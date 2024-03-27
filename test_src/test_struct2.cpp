@@ -15,7 +15,7 @@ struct Pt2{
     Pt1* pt;
 };
 
-typedef long (SLJIT_FUNC *Func_Pt)(struct Pt2 *point);;
+typedef long (SLJIT_FUNC *Func_Pt)(struct Pt2 *point);
 
 static long SLJIT_FUNC print_num(long a)
 {

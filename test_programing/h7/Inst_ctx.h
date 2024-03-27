@@ -15,15 +15,16 @@ enum ParamterDescFlag{
 };
 
 struct ParameterInfo{
-    UShort type;        ///base param type
+    UShort type;        /// base param type
     UShort flags {0};   /// ls or ds
-    UInt fieldKey {0}; /// field key(often is hash) from object.
-    Long index; /// index(DS/LS) of the param.
+    UInt fieldIdx {0};    /// field idx from object.
+    Long index;         /// index(DS/LS) of the param.
               /// may function addr for func
               /// may be object addr.
               /// if -1 and is return info, means no need return.
+              /// compose index: object-data-addr + ((offset-addr) << 24)
     static ParameterInfo make(UShort type, UShort flags, Long index){
-        return {type, flags, index};
+        return {type, flags, 0, index};
     }
     bool isLS() const{return (flags & kPD_FLAG_LS) != 0;}
     bool isDS() const{return (flags & kPD_FLAG_DS) != 0;}
@@ -35,6 +36,9 @@ struct ParameterInfo{
     bool isMinSize()const { return (flags & kPD_FLAG_MIN_SIZE) != 0;}
     bool isLessThanInt()const {TypeInfo ti(type); return ti.isLessInt();}
     bool isObjectField()const {return (flags & kPD_FLAG_OBJECT_FIELD) != 0;}
+    void setComposeIndex(int id1, int id2){ index = id1 | (id2 << 24);}
+    void getComposeIndex(int* id1, int* id2){
+        *id1 = (index & 0xffffff); *id2 = ((index >> 24) & 0xffffff); }
 };
 using ParamMap = std::map<int, ParameterInfo>;//k,v = ret+param_index,
 
@@ -63,8 +67,10 @@ enum OpCode{
     NEW,
     ASSIGN, //=
     CALL,   // add(a,b,c)
-    LOAD,
-    STORE,
+    LOAD_OBJ,
+    STORE_OBJ,
+    LOAD_OBJ_F,
+    STORE_OBJ_F,
     //++, --
     INC, DEC,
     //
@@ -166,6 +172,7 @@ struct Sentence{
     }
     bool isFlags2()const{return flags == (kSENT_FLAG_VALID_IP
                                     | kSENT_FLAG_VALID_LEFT);}
+    bool isFlags1()const{return flags == kSENT_FLAG_VALID_IP;}
     void setValidFlags(int c){
         switch (c) {
         case 1: flags = kSENT_FLAG_VALID_IP; break;

@@ -16,8 +16,15 @@ public:
     static std::unique_ptr<RegisterIndexer> New(UInt local_size){
         return std::make_unique<RegisterIndexer>(local_size);
     }
-
+    // -1, means alloc failed
+    int allocLocalIdx(){
+        if(allocLocal()){
+            return getCurrentIdx();
+        }
+        return -1;
+    }
     bool allocLocal(){
+        H7_ASSERT_X(m_nextIdx < m_maxCount, "allocLocal failed.");
         m_nextIdx ++;
         return true;
     }

@@ -1,11 +1,12 @@
 #include "RegHelper.h"
 #include "h7_ctx_impl.h"
+#include "Classer.h"
 
 using namespace h7;
 
 RegDesc SLJITHelper::genRegDesc(Operand& op){
     RegDesc desc;
-    genRegDesc(op, &desc);
+    genRegDesc(&op, &desc);
     return desc;
 }
 List<RegDesc> SLJITHelper::genFuncRegDesc(OpExtraInfo* extra){
@@ -29,33 +30,24 @@ List<RegDesc> SLJITHelper::genFuncRegDesc(OpExtraInfo* extra){
 }
 RegDesc SLJITHelper::genRegDesc(ParameterInfo& pi, int baseOp){
     RegDesc rd;
-    rd.fs = pi.isFloatLike();
-    if(pi.isIMM()){
-        //H7_ASSERT_X(!pi.isReturn(), "genRegDesc >> return-type can't be IMM.");
-        rd.r = SLJIT_IMM;
-        rd.rw = pi.index; //as value
-    }else if(pi.isLS()){
-        rd.r = SLJIT_MEM1(SLJIT_SP);
-        rd.rw = RI->getLSOffset(pi.index);
-    }else{
-        rd.r = SLJIT_MEM1(SLJIT_S0);
-        rd.rw = RI->getDSOffset(pi.index);
-    }
+    genRegDesc(&pi, &rd);
+    //
     rd.op = genSLJIT_op(baseOp, pi.type);
     rd.argType = getArgType(pi.type);
     return rd;
 }
-void SLJITHelper::genRegDesc(Operand& op, RegDesc* out){
-    out->fs = op.isFloatLike();
-    if(op.isIMM()){
+void SLJITHelper::genRegDesc(ParameterInfo* op, RegDesc* out){
+    out->fs = op->isFloatLike();
+    if(op->isIMM()){
         out->r = SLJIT_IMM;
-        out->rw = op.index;
-    }else if(op.isLS()){
+        out->rw = op->index;
+    }else if(op->isLS()){
         out->r = SLJIT_MEM1(SLJIT_SP);
-        out->rw = RI->getLSOffset(op.index);
+        out->rw = RI->getLSOffset(op->index);
     }else{
         out->r = SLJIT_MEM1(SLJIT_S0);
-        out->rw = RI->getDSOffset(op.index);
+        out->rw = RI->getDSOffset(op->index);
+
     }
 }
 int SLJITHelper::loadToReg(Operand& op, int reg){
@@ -172,11 +164,6 @@ void SLJITHelper::castType(Operand& dst, Operand& src){
 
 void SLJITHelper::emitAdd(SPSentence st){
     //dst: ADD_OP and reg.
-    //TypeInfo t_left(st->left.type);
-   // TypeInfo t_right(st->right.type);
-    //TypeInfo t_ret(st->ip.type);
-    //check primitive?
-    //same type
     if(st->left.type == st->right.type
             && st->right.type == st->ip.type){
         auto op = genSLJIT_op(kOP_ADD, st->ip.type);
@@ -290,5 +277,78 @@ void SLJITHelper::emitCast(SPSentence st){
     H7_ASSERT_X(st->isFlags2(), "for assign: must have ip and left.");
     castType(st->ip, st->left);
 }
+void SLJITHelper::emitLoadObject(SPSentence st){
+    H7_ASSERT_X(st->isFlags1(), "ip must be valid");
+    auto& ip = st->ip;
+    auto reg_obj = RI->allocLocalIdx();
+    auto reg_offsets = RI->allocLocalIdx();
+    //load ptr, offset, real_data addr
+    if(ip.isLS()){
+        sljit_emit_op1(C, SLJIT_MOV, reg_obj, 0,
+                       SLJIT_MEM1(SLJIT_SP), RI->getLSOffset(ip.index));
+    }else{
+        sljit_emit_op1(C, SLJIT_MOV, reg_obj, 0,
+                       SLJIT_MEM1(SLJIT_S0), RI->getDSOffset(ip.index));
+    }
+    //load offsets
+    sljit_emit_op1(C, SLJIT_MOV, reg_offsets, 0,
+                   SLJIT_MEM1(reg_obj), SLJIT_OFFSETOF(Object, offsets));
+    //load real offset
+    //sljit_emit_op1(C, SLJIT_MOV_S32, reg_offsets, 0,
+    //               SLJIT_MEM1(reg_offsets), left.fieldIdx * sizeof(UInt));
+    //load datas
+    sljit_emit_op1(C, SLJIT_MOV, reg_obj, 0,
+                   SLJIT_MEM1(reg_obj), SLJIT_OFFSETOF(Object, block));
+    //ip as return.
+    st->ip.makeLS();
+    st->ip.setComposeIndex(reg_obj, reg_offsets);
+}
+void SLJITHelper::emitStoreObject(SPSentence st){
+    //TODO
+    H7_ASSERT_X(false, "latter impl");
+}
+void SLJITHelper::emitLoadField(SPSentence st){
+    //ip: to store on. left is object
+    H7_ASSERT_X(st->isFlags2(), "ip and left must be valid");
+    H7_ASSERT_X(st->left.isObjectField(), "load field must from Object");
+    auto rd_ip = genRegDesc(st->ip);
+    auto& field_op = st->left;
+    int id_obj;
+    int id_offsets;
+    field_op.getComposeIndex(&id_obj, &id_offsets);
+    //
+    int ri_key = RI->save();
+    //load offset
+    auto reg_f = RI->allocLocalIdx();
+    sljit_emit_op1(C, SLJIT_MOV_S32, reg_f, 0,
+                       SLJIT_MEM1(id_offsets), field_op.fieldIdx * sizeof(UInt));
+    //load real_data
+    auto op_load = genSLJIT_op(kOP_LOAD, field_op.type);
+    sljit_emit_op1(C, op_load, rd_ip.r, rd_ip.rw,
+                   SLJIT_MEM2(id_obj, reg_f), 0);
+    RI->restore(ri_key);
+}
+void SLJITHelper::emitStoreField(SPSentence st){
+    //ip: object field to store, left is emitter
+    H7_ASSERT_X(st->isFlags2(), "ip and left must be valid");
+    H7_ASSERT_X(st->ip.isObjectField(), "load field must from Object");
+    auto rd_left = genRegDesc(st->left);
+    auto& field_op = st->ip;
 
-//---------------------------------------------
+    int id_obj;
+    int id_offsets;
+    field_op.getComposeIndex(&id_obj, &id_offsets);
+    //
+    int ri_key = RI->save();
+
+    //load offset
+    auto reg_f = RI->allocLocalIdx();
+    sljit_emit_op1(C, SLJIT_MOV_S32, reg_f, 0,
+                       SLJIT_MEM1(id_offsets), field_op.fieldIdx * sizeof(UInt));
+    //load real_data
+    auto op_load = genSLJIT_op(kOP_LOAD, field_op.type);
+    sljit_emit_op1(C, op_load, SLJIT_MEM2(id_obj, reg_f), 0,
+                   rd_left.r, rd_left.rw);
+    RI->restore(ri_key);
+
+}

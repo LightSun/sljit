@@ -142,12 +142,16 @@ struct ArrayClassDesc{
 struct ClassScope;
 
 struct ClassInfo{
+    struct _ObjClassDesc{
+         HashMap<UInt, FieldInfo> fieldMap;
+         List<UInt> offsets;
+    };
     ClassScope* scope {nullptr};
     String name; //full name
     UInt structSize;
 
     std::unique_ptr<ArrayClassDesc> arrayDesc;
-    std::unique_ptr<HashMap<UInt, FieldInfo>> fieldMap;
+    std::unique_ptr<_ObjClassDesc> objDesc;
 
     //array or normal object
     inline ClassInfo(const TypeInfo* arr = nullptr);

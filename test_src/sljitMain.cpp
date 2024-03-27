@@ -40,6 +40,8 @@ extern "C"{
  void test_jit_middle_all();
 }
 extern void test_struct2();
+extern void test_struct3();
+extern void test_struct4();
 extern void test_shift();
 extern void test_float();
 
@@ -107,7 +109,9 @@ int main(int argc, char* argv[])
 
     //test_struct2();
     //test_shift();
-    test_float();
+    //test_float();
+    //test_struct3();
+    test_struct4();
 
     return 0;
 }

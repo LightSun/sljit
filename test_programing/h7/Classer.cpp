@@ -43,14 +43,8 @@ ObjectPtr Classer::create(ClassHandle handle, ObjectPtr parent){
     obj->block = MemoryBlock::makeUnchecked(ci->structSize);
     obj->clsInfo = (ClassInfo*)handle;
     obj->parent = parent;
-    return obj;
-}
-
-void* h7::gObject_getDataAddr(ObjectPtr obj, UInt fieldIdx){
-    ObjectDelegate ob(obj);
-    auto offset = ob.getFieldOffset(fieldIdx);
-    if(offset >= 0){
-        return ob.getFieldAddress(offset);
+    if(ci->objDesc){
+        obj->offsets = ci->objDesc->offsets.data();
     }
-    return nullptr;
+    return obj;
 }

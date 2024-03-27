@@ -47,26 +47,19 @@ namespace h7 {
         SLJITHelper(struct sljit_compiler * c, RegStack* rs,RegisterIndexer* ri):
             C(c), RS(rs), RI(ri){}
 
-        void loadF(int moveType, int dstR, ULong dstw, UInt index, bool ls_or_ds){
-            int srcR = ls_or_ds ? SLJIT_MEM1(SLJIT_SP) : SLJIT_MEM1(SLJIT_S0);
-            UInt offset = ls_or_ds ? RI->getLSOffset(index) : RI->getDSOffset(index);
-            sljit_emit_fop1(C, moveType, dstR, dstw, srcR, offset);
-        }
-        void load(int moveType, int dstR, ULong dstw, UInt index, bool ls_or_ds){
-            int srcR = ls_or_ds ? SLJIT_MEM1(SLJIT_SP) : SLJIT_MEM1(SLJIT_S0);
-            UInt offset = ls_or_ds ? RI->getLSOffset(index) : RI->getDSOffset(index);
-            sljit_emit_op1(C, moveType, dstR, dstw, srcR, offset);
-        }
-
         void emitAdd(SPSentence s);
         void emitCall(SPSentence st);
         void emitAssign(SPSentence st);
         void emitCast(SPSentence st);
+        void emitLoadObject(SPSentence st);
+        void emitStoreObject(SPSentence st);
+        void emitLoadField(SPSentence st);
+        void emitStoreField(SPSentence st);
 
     private:
         RegDesc genRegDesc(Operand& op);
         //
-        void genRegDesc(Operand& op, RegDesc* out);
+        void genRegDesc(ParameterInfo* op, RegDesc* out);
         ///reg: -1 means gen new reg.
         int loadToReg(Operand& op, int reg);
         void castType(Operand& dst, Operand& src);
