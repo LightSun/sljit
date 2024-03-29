@@ -54,6 +54,7 @@ template<typename T>
 //-------------------------------------
 
 using ClassHandle = Long;
+using RawStringHandle = Long;
 using ObjectHandle = Long;
 
 enum{
@@ -81,7 +82,6 @@ struct MemoryBlock{
     void* data;
     UInt size;
     UInt allocSize;
-
     static inline MemoryBlock makeUnchecked(UInt size);
 };
 
@@ -97,6 +97,9 @@ struct TypeInfo{
     inline ~TypeInfo();
 
     static inline TypeInfo makeSimple(int type){return TypeInfo(type);}
+
+    template<typename... _Args>
+    static std::vector<TypeInfo> makeListSimple(_Args&&... __args);
 
     inline String getTypeDesc()const;
     inline int getTotalArraySize()const;

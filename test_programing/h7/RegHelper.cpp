@@ -281,6 +281,7 @@ void SLJITHelper::emitLoadObject(SPSentence st){
     H7_ASSERT_X(st->isFlags1(), "ip must be valid");
     auto& ip = st->ip;
     auto reg_obj = RI->allocLocalIdx();
+    auto reg_data = RI->allocLocalIdx();
     auto reg_offsets = RI->allocLocalIdx();
     //load ptr, offset, real_data addr
     if(ip.isLS()){
@@ -297,11 +298,12 @@ void SLJITHelper::emitLoadObject(SPSentence st){
     //sljit_emit_op1(C, SLJIT_MOV_S32, reg_offsets, 0,
     //               SLJIT_MEM1(reg_offsets), left.fieldIdx * sizeof(UInt));
     //load datas
-    sljit_emit_op1(C, SLJIT_MOV, reg_obj, 0,
+    sljit_emit_op1(C, SLJIT_MOV, reg_data, 0,
                    SLJIT_MEM1(reg_obj), SLJIT_OFFSETOF(Object, block));
-    //ip as return.
-    st->ip.makeLS();
-    st->ip.setComposeIndex(reg_obj, reg_offsets);
+    //left as wanted return.
+    st->left.makeLS();
+    st->left.setComposeIndex(reg_data, reg_offsets);
+    st->left.setLSObjectIndex(reg_obj);
 }
 void SLJITHelper::emitStoreObject(SPSentence st){
     //TODO
@@ -313,19 +315,19 @@ void SLJITHelper::emitLoadField(SPSentence st){
     H7_ASSERT_X(st->left.isObjectField(), "load field must from Object");
     auto rd_ip = genRegDesc(st->ip);
     auto& field_op = st->left;
-    int id_obj;
+    int id_data;
     int id_offsets;
-    field_op.getComposeIndex(&id_obj, &id_offsets);
+    field_op.getComposeIndex(&id_data, &id_offsets);
     //
     int ri_key = RI->save();
     //load offset
     auto reg_f = RI->allocLocalIdx();
     sljit_emit_op1(C, SLJIT_MOV_S32, reg_f, 0,
-                       SLJIT_MEM1(id_offsets), field_op.fieldIdx * sizeof(UInt));
+                       SLJIT_MEM1(id_offsets), field_op.getFieldIndex() * sizeof(UInt));
     //load real_data
     auto op_load = genSLJIT_op(kOP_LOAD, field_op.type);
     sljit_emit_op1(C, op_load, rd_ip.r, rd_ip.rw,
-                   SLJIT_MEM2(id_obj, reg_f), 0);
+                   SLJIT_MEM2(id_data, reg_f), 0);
     RI->restore(ri_key);
 }
 void SLJITHelper::emitStoreField(SPSentence st){
@@ -335,19 +337,19 @@ void SLJITHelper::emitStoreField(SPSentence st){
     auto rd_left = genRegDesc(st->left);
     auto& field_op = st->ip;
 
-    int id_obj;
+    int id_data;
     int id_offsets;
-    field_op.getComposeIndex(&id_obj, &id_offsets);
+    field_op.getComposeIndex(&id_data, &id_offsets);
     //
     int ri_key = RI->save();
 
     //load offset
     auto reg_f = RI->allocLocalIdx();
     sljit_emit_op1(C, SLJIT_MOV_S32, reg_f, 0,
-                       SLJIT_MEM1(id_offsets), field_op.fieldIdx * sizeof(UInt));
+                       SLJIT_MEM1(id_offsets), field_op.getFieldIndex() * sizeof(UInt));
     //load real_data
     auto op_load = genSLJIT_op(kOP_LOAD, field_op.type);
-    sljit_emit_op1(C, op_load, SLJIT_MEM2(id_obj, reg_f), 0,
+    sljit_emit_op1(C, op_load, SLJIT_MEM2(id_data, reg_f), 0,
                    rd_left.r, rd_left.rw);
     RI->restore(ri_key);
 

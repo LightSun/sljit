@@ -36,6 +36,7 @@ typedef signed long long sint64;
 typedef uint64_t uint64;
 #endif
 
+
 #ifdef _WIN32
 #define NEW_LINE "\r\n"
 #else

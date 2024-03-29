@@ -155,6 +155,15 @@ int TypeInfo::computeAdvanceType(int type1, int type2){
     return computePrimitiveType(hasFT, hasSigned, maxSize);
 }
 
+template<typename... _Args>
+std::vector<TypeInfo> TypeInfo::makeListSimple(_Args&&... __args){
+    std::vector<int> vec = {std::forward<_Args>(__args)...};
+    std::vector<TypeInfo> list;
+    for(auto& v : vec){
+        list.emplace_back(v);
+    }
+    return list;
+}
 String TypeInfo::getTypeDesc()const{
     String str;
     if(clsName){

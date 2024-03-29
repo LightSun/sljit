@@ -19,8 +19,8 @@ static ClassScope* s_cur_clsScope {nullptr};
 namespace h7 {
 struct _ClassScope_ctx{
     HashMap<String, ClassInfo*> clsMap;
+    HashMap<String, String> rstrMap;
     MutexLock clsLock;
-
 
     ~_ClassScope_ctx(){
         MutexLockHolder lck(clsLock);
@@ -67,6 +67,10 @@ struct _ClassScope_ctx{
         //set sub-arr, like: a[2][3]
         return ptr_info;
     }
+    RawStringHandle defineRawString(CString name, CString initVal){
+
+    }
+
     int getFieldOffset(CString clsName, CString fn){
         auto fi = getFieldInfo(clsName, fn);
         return fi ? fi->offset : -1;
@@ -106,10 +110,12 @@ struct _ClassScope_ctx{
 };
 }
 
-ClassScope* ClassScope::createGlobal(){
-    auto scope = new ClassScope();
-    s_global_clsScope = scope;
-    return scope;
+ClassScope* ClassScope::enterGlobal(){
+    if(!s_global_clsScope){
+        s_global_clsScope = new ClassScope();
+    }
+    enter(s_global_clsScope);
+    return s_global_clsScope;
 }
 ClassScope* ClassScope::getGlobal(){
     return s_global_clsScope;
@@ -125,11 +131,19 @@ void ClassScope::enter(ClassScope* t){
 }
 void ClassScope::exit(){
     if(s_cur_clsScope){
-        auto back = s_cur_clsScope->m_parent->m_children.back();
-        H7_ASSERT_X(back == s_cur_clsScope, "scope state wrong.");
-        s_cur_clsScope->m_parent->m_children.pop_back();
+        if(s_cur_clsScope->m_parent){
+            auto back = s_cur_clsScope->m_parent->m_children.back();
+            H7_ASSERT_X(back == s_cur_clsScope, "scope state wrong.");
+            s_cur_clsScope->m_parent->m_children.pop_back();
+            delete back;
+            s_cur_clsScope = s_cur_clsScope->m_parent;
+        }else{
+            delete s_cur_clsScope;
+            s_cur_clsScope = nullptr;
+        }
+    }else{
+        LOGE("ClassScope::exit >> s_cur_clsScope is null.\n");
     }
-    s_cur_clsScope = s_cur_clsScope->m_parent;
 }
 
 ClassScope::ClassScope(){

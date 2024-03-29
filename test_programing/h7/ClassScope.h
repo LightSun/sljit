@@ -10,7 +10,7 @@ struct ClassScope{
     ClassScope();
     ~ClassScope();
 
-    static ClassScope* createGlobal();
+    static ClassScope* enterGlobal();
     static ClassScope* getGlobal();
     static ClassScope* getCurrent();
 

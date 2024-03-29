@@ -5,12 +5,12 @@
 
 namespace h7 {
 
-//TODO auto ref/unref for parent-child.
+//TODO auto ref/unref for parent-child .
 typedef struct Object{
-    MemoryBlock block;
+    MemoryBlock block;       ///data block
     ClassInfo* clsInfo;
     Object* parent {nullptr};
-    void* offsets {nullptr};
+    void* offsets {nullptr}; ///just hold. not create in here
     volatile int refCount {1};
 
     void* getDataAddress()const{return block.data;}
@@ -96,7 +96,8 @@ public:
     Classer(ClassScope* scope){m_scope = scope;}
     ~Classer(){};
 
-    ClassHandle defineClass(CString name,CListTypeInfo fieldTypes,CListString fns);
+    ClassHandle defineClass(CString name, CListTypeInfo fieldTypes,CListString fns);
+    RawStringHandle defineRawString(CString name, CString initVal);
     ObjectPtr create(ClassHandle handle, ObjectPtr parent);
 
 private:

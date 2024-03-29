@@ -17,7 +17,7 @@ enum ParamterDescFlag{
 struct ParameterInfo{
     UShort type;        /// base param type
     UShort flags {0};   /// ls or ds
-    UInt fieldIdx {0};    /// field idx from object.
+    UInt extIdx {0};    /// field idx from object / LS-index of object.
     Long index;         /// index(DS/LS) of the param.
               /// may function addr for func
               /// may be object addr.
@@ -39,6 +39,9 @@ struct ParameterInfo{
     void setComposeIndex(int id1, int id2){ index = id1 | (id2 << 24);}
     void getComposeIndex(int* id1, int* id2){
         *id1 = (index & 0xffffff); *id2 = ((index >> 24) & 0xffffff); }
+    UInt getLSObjectIndex()const{return extIdx;}
+    UInt getFieldIndex()const{return extIdx;}
+    void setLSObjectIndex(int ls_idx){extIdx = ls_idx;}
 };
 using ParamMap = std::map<int, ParameterInfo>;//k,v = ret+param_index,
 
