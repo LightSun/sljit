@@ -25,17 +25,17 @@ struct array_map_n{
 array_map_n_p array_map_n_new(uint32 init_key_bytes, uint32 init_val_bytes);
 void array_map_n_put(array_map_n_p ptr, const void* key, uint16 key_size,
                      const void* val, uint16 val_size,
-                     struct MemoryBlock* out);
+                     struct _MemoryBlock* out);
 
 void array_map_n_get(array_map_n_p ptr, const void* key, uint16 key_size,
-                     struct MemoryBlock* out);
+                     struct _MemoryBlock* out);
 
 //raw get without copy data.
 void array_map_n_rawget(array_map_n_p ptr, const void* key, uint16 key_size,
-                     struct MemoryBlock* out);
+                     struct _MemoryBlock* out);
 
 int array_map_n_remove(array_map_n_p ptr, const void* key, uint16 key_size,
-                     struct MemoryBlock* out);
+                     struct _MemoryBlock* out);
 
 array_map_n_p array_map_n_copy(array_map_n_p ptr);
 

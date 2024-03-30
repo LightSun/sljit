@@ -96,6 +96,7 @@ public:
     Classer(ClassScope* scope){m_scope = scope;}
     ~Classer(){};
 
+    ClassScope* getScope(){return m_scope;}
     ClassHandle defineClass(CString name, CListTypeInfo fieldTypes,CListString fns);
     RawStringHandle defineRawString(CString name, CString initVal);
     ObjectPtr create(ClassHandle handle, ObjectPtr parent);

@@ -15,7 +15,7 @@
 
 #define H7_REALLOC(ptr, oldS, newS) realloc(ptr, newS)
 
-struct MemoryBlock{
+struct _MemoryBlock{
     void* data;
     uint32 size;
     uint32 allocSize;

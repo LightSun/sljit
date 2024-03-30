@@ -51,6 +51,9 @@ template<typename T>
     using CULongArray3 = const std::array<ULong,3>&;
     using IntArray3 = std::array<int,3>;
     using CIntArray3 = const IntArray3&;
+    using CListUInt = const List<UInt>&;
+    using UIntArray3 = std::array<UInt,3>;
+    using CUIntArray3 = const UIntArray3&;
 //-------------------------------------
 
 using ClassHandle = Long;
@@ -70,10 +73,9 @@ enum{
     kType_bool,
     kType_float,
     kType_double,
+
     kType_object,
-    kType_array,
-    //kType_map,
-    //kType_list,
+    kType_raw_str,
 
     kType_MAX,
 };

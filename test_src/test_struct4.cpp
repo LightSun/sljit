@@ -49,7 +49,7 @@ void test_struct4(){
                      0);
     //---------------------------------
     //(char*)pt2->data + offset(4)
-    printf("data offset = %ld\n", SLJIT_OFFSETOF(struct Pt1, data));
+    printf("data offset = %lld\n", SLJIT_OFFSETOF(struct Pt1, data));
     sljit_emit_op1(C, SLJIT_MOV, SLJIT_R1, 0,
                    SLJIT_MEM1(SLJIT_S0), SLJIT_OFFSETOF(struct Pt1, data));
     sljit_emit_op1(C, SLJIT_MOV_S32, SLJIT_R0, 0,

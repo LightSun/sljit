@@ -48,6 +48,7 @@ public:
     UInt getOffset(UInt idx, bool ls_or_ds);
     /// int,long,char ...etc bases.
     int allocLocal();
+    UIntArray3 allocLocal3();
     /// if not alloc return-1
     int getCurrentLocalIndex();
 

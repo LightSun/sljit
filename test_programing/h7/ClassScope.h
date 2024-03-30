@@ -1,11 +1,20 @@
 #pragma once
 
 #include "h7/h7_ctx.h"
+#include "h7/ConstPool.h"
 
 namespace h7 {
 
-typedef  struct _ClassScope_ctx _ClassScope_ctx;
+typedef struct _ClassScope_ctx _ClassScope_ctx;
 struct ClassScope{
+
+private:
+    _ClassScope_ctx* m_ctx;
+    ClassScope* m_parent {nullptr};
+    LinkList<ClassScope*> m_children;
+
+public:
+    ConstPool pool;
 
     ClassScope();
     ~ClassScope();
@@ -20,6 +29,8 @@ struct ClassScope{
 
     ClassInfo* defineClass(CString name,CListTypeInfo fieldTypes, CListString fns);
     ClassInfo* defineArray(const TypeInfo& info);
+    ///return string index.
+    UInt defineConstString(CString str){return pool.defineConstString(str);}
     //-1 means not found
     int getFieldOffset(CString clsName, CString fn);
     int getFieldOffset(CString clsName, UInt key);
@@ -27,10 +38,6 @@ struct ClassScope{
     FieldInfo* getFieldInfo(CString clsName, CString fn);
     FieldInfo* getFieldInfo(CString clsName, UInt key);
 
-private:
-    _ClassScope_ctx* m_ctx;
-    ClassScope* m_parent {nullptr};
-    LinkList<ClassScope*> m_children;
 };
 
 }

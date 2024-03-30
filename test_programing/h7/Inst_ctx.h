@@ -10,7 +10,7 @@ enum ParamterDescFlag{
     kPD_FLAG_DS             = 0x0002,   /// data-stack. every is sizeof(void*)
     kPD_FLAG_RETURN         = 0x0004,   /// only for function return desc
     kPD_FLAG_IMM            = 0x0008,
-    kPD_FLAG_MIN_SIZE       = 0x0010,  /// means. from object. char.size = sizeof(char)...etc
+    //kPD_FLAG_MIN_SIZE       = 0x0010,  /// means. from object. char.size = sizeof(char)...etc
     kPD_FLAG_OBJECT_FIELD   = 0x0020,  /// indicate it is runtime come from object. like Person p = ...; p.age=18...
 };
 
@@ -33,7 +33,7 @@ struct ParameterInfo{
     bool isFloatLike() const{ TypeInfo ti(type); return ti.isFloatLikeType();}
     bool is64() const{ TypeInfo ti(type); return ti.is64();}
     bool isSigned()const {TypeInfo ti(type); return ti.isSigned();}
-    bool isMinSize()const { return (flags & kPD_FLAG_MIN_SIZE) != 0;}
+    bool isMinSize()const { return (flags & kPD_FLAG_OBJECT_FIELD) != 0;}
     bool isLessThanInt()const {TypeInfo ti(type); return ti.isLessInt();}
     bool isObjectField()const {return (flags & kPD_FLAG_OBJECT_FIELD) != 0;}
     void setComposeIndex(int id1, int id2){ index = id1 | (id2 << 24);}
@@ -41,7 +41,7 @@ struct ParameterInfo{
         *id1 = (index & 0xffffff); *id2 = ((index >> 24) & 0xffffff); }
     UInt getLSObjectIndex()const{return extIdx;}
     UInt getFieldIndex()const{return extIdx;}
-    void setLSObjectIndex(int ls_idx){extIdx = ls_idx;}
+    void setExtIndex(int ls_idx){extIdx = ls_idx;}
 };
 using ParamMap = std::map<int, ParameterInfo>;//k,v = ret+param_index,
 
@@ -74,6 +74,7 @@ enum OpCode{
     STORE_OBJ,
     LOAD_OBJ_F,
     STORE_OBJ_F,
+    LOAD_C_STR,
     //++, --
     INC, DEC,
     //
@@ -98,6 +99,7 @@ struct OpExtraInfo{
     ParamMap funcParams;
     ParameterInfo funcRet;
     String imm;
+    UIntArray3 objIdxes; //obj, data, offsets
 };
 
 struct Operand: public ParameterInfo{
@@ -123,15 +125,12 @@ struct Operand: public ParameterInfo{
     //
     Operand(){}
     Operand(Operand& src){
-        this->type = src.type;
-        this->flags = src.flags;
-        this->index = src.index;
-        if(src.extra){
-            extra = std::make_unique<OpExtraInfo>();
-            *extra = *src.extra;
-        }
+        operator=(src);
     }
     Operand(const Operand& src){
+        operator=(src);
+    }
+    Operand& operator=(const Operand& src){
         this->type = src.type;
         this->flags = src.flags;
         this->index = src.index;
@@ -139,6 +138,17 @@ struct Operand: public ParameterInfo{
             extra = std::make_unique<OpExtraInfo>();
             *extra = *src.extra;
         }
+        return *this;
+    }
+    Operand& operator=(Operand& src){
+        this->type = src.type;
+        this->flags = src.flags;
+        this->index = src.index;
+        if(src.extra){
+            extra = std::make_unique<OpExtraInfo>();
+            *extra = *src.extra;
+        }
+        return *this;
     }
 };
 
@@ -188,6 +198,9 @@ struct Sentence{
     void makeSimple3DS(int type, CULongArray3 indexArr);
     //1 LS and 2 DS
     void makeSimple1LS2DS(CIntArray3 types, CULongArray3 indexArr);
+    //load object
+    void makeLoadObjectDS(Long index, CUIntArray3 objIdxes);
+    void makeLoadObjectField(CUIntArray3 regs_obj, int ipType, int lsIdx, int fieldType, int fieldIdx);
     /// return LS change count
     void updateForParamIndex(IFunction* owner);
 };

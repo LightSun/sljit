@@ -43,6 +43,15 @@ int Function::allocLocal(){
     }
     return m_localRI->allocLocalIdx();
 }
+UIntArray3 Function::allocLocal3(){
+    if(!m_localRI){
+        m_localRI = RegisterIndexer::New(localSize);
+    }
+    UIntArray3 ret = {(UInt)m_localRI->allocLocalIdx(true),
+                      (UInt)m_localRI->allocLocalIdx(true),
+                      (UInt)m_localRI->allocLocalIdx(true)};
+    return ret;
+}
 int Function::getCurrentLocalIndex(){
     return m_localRI ? m_localRI->getCurrentIdx() : -1;
 }
@@ -55,7 +64,7 @@ String Function::compile(CodeDesc* out){
     }else{
         C = sljit_create_compiler(NULL, NULL);
         sljit_emit_enter(C, 0, SLJIT_ARGS2(VOID, P, P),
-                         4, 2, 4, 0, localSize);
+                         6, 2, 4, 0, localSize);
     }
     //
     const int size = (int)body.size();
@@ -142,6 +151,10 @@ String Function::genEasy(void* c,SPStatement _st){
 
     case OpCode::STORE_OBJ_F:{
         sh.emitStoreField(st);
+    }break;
+
+    case OpCode::LOAD_C_STR:{
+        sh.emitLoadCStr(st);
     }break;
 
     default:

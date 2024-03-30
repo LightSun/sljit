@@ -17,9 +17,12 @@ public:
         return std::make_unique<RegisterIndexer>(local_size);
     }
     // -1, means alloc failed
-    int allocLocalIdx(){
+    int allocLocalIdx(bool required = false){
         if(allocLocal()){
             return getCurrentIdx();
+        }
+        if(required){
+            H7_ASSERT_X(false, "allocLocalIdx failed.");
         }
         return -1;
     }

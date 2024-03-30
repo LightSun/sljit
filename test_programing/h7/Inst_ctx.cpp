@@ -60,6 +60,29 @@ void Sentence::makeSimple1LS2DS(CIntArray3 types, CULongArray3 indexArr){
     right.type = (UShort)types[2];
 }
 
+void Sentence::makeLoadObjectDS(Long index, CUIntArray3 objIdxes){
+    flags = kSENT_FLAG_VALID_IP;
+    ip.makeDS();
+    ip.index = index;
+    ip.type = kType_object;
+    ip.makeExtra();
+    ip.extra->objIdxes = objIdxes;
+    op = OpCode::LOAD_OBJ;
+}
+
+void Sentence::makeLoadObjectField(CUIntArray3 regs_obj, int ipType, int lsIdx,
+                                   int fieldType, int fieldIdx){
+    flags = kSENT_FLAG_VALID_IP | kSENT_FLAG_VALID_LEFT;
+    ip.makeLS();
+    ip.type = ipType;
+    ip.index = lsIdx;
+    left.setComposeIndex(regs_obj[1], regs_obj[2]);
+    left.flags = kPD_FLAG_LS | kPD_FLAG_OBJECT_FIELD;
+    left.type = fieldType;
+    left.setExtIndex(fieldIdx);
+    op = OpCode::LOAD_OBJ_F;
+}
+
 //need alloc LS.
 //dsIdxOffset: super function's DS idx count
 void Sentence::updateForParamIndex(IFunction* owner){

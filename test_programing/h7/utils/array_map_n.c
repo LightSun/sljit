@@ -34,7 +34,7 @@ array_map_n_p array_map_n_new(uint32 init_key_bytes, uint32 init_val_bytes){
 
 void array_map_n_put(array_map_n_p ptr, const void* key, uint16 key_size,
                      const void* val, uint16 val_size,
-                     struct MemoryBlock* out){
+                     struct _MemoryBlock* out){
     if(out){
         out->data = NULL;
     }
@@ -118,7 +118,7 @@ void array_map_n_put(array_map_n_p ptr, const void* key, uint16 key_size,
 }
 
 void array_map_n_get(array_map_n_p ptr, const void* key, uint16 key_size,
-                     struct MemoryBlock* out){
+                     struct _MemoryBlock* out){
     ASSERT(out != NULL);
     out->data = NULL;
     uint32 hash = fasthash32(key, (uint32)key_size, 0);
@@ -138,7 +138,7 @@ void array_map_n_get(array_map_n_p ptr, const void* key, uint16 key_size,
 
 
 void array_map_n_rawget(array_map_n_p ptr, const void* key, uint16 key_size,
-                        struct MemoryBlock* out){
+                        struct _MemoryBlock* out){
     ASSERT(out != NULL);
     out->data = NULL;
     uint32 hash = fasthash32(key, (uint32)key_size, 0);
@@ -156,7 +156,7 @@ void array_map_n_rawget(array_map_n_p ptr, const void* key, uint16 key_size,
 }
 
 int array_map_n_remove(array_map_n_p ptr, const void* key, uint16 key_size,
-                        struct MemoryBlock* out){
+                        struct _MemoryBlock* out){
     if(out){
         out->data = NULL;
     }

@@ -55,6 +55,7 @@ namespace h7 {
         void emitStoreObject(SPSentence st);
         void emitLoadField(SPSentence st);
         void emitStoreField(SPSentence st);
+        void emitLoadCStr(SPSentence st);
 
     private:
         RegDesc genRegDesc(Operand& op);

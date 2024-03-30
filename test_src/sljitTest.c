@@ -2120,6 +2120,7 @@ static void test23(void)
 	ibuf[3] = 43579;
 	ibuf[4] = 658923;
 
+	//SLJIT_S1:  is ibuf
 	sljit_emit_enter(compiler, 0, SLJIT_ARGS2(W, P, P), 3, 3, 0, 0, 0);
 	/* ibuf[0] */
 	sljit_emit_op1(compiler, SLJIT_MOV_U32, SLJIT_MEM1(SLJIT_S1), 0, SLJIT_IMM, 34567);
@@ -9261,6 +9262,7 @@ static void test77(void)
 	compiler = sljit_create_compiler(NULL, NULL);
 	FAILED(!compiler, "cannot create compiler\n");
 
+//S0 wbuf.  S1 bbuf
 	sljit_emit_enter(compiler, 0, SLJIT_ARGS2(VOID, P, P), 2, 2, 0, 0, 0);
 
 	sljit_emit_mem(compiler, SLJIT_MOV_S8 | SLJIT_MEM_UNALIGNED, SLJIT_R0, SLJIT_MEM0(), (sljit_sw)bbuf);

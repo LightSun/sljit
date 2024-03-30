@@ -19,7 +19,6 @@ static ClassScope* s_cur_clsScope {nullptr};
 namespace h7 {
 struct _ClassScope_ctx{
     HashMap<String, ClassInfo*> clsMap;
-    HashMap<String, String> rstrMap;
     MutexLock clsLock;
 
     ~_ClassScope_ctx(){
@@ -67,10 +66,6 @@ struct _ClassScope_ctx{
         //set sub-arr, like: a[2][3]
         return ptr_info;
     }
-    RawStringHandle defineRawString(CString name, CString initVal){
-
-    }
-
     int getFieldOffset(CString clsName, CString fn){
         auto fi = getFieldInfo(clsName, fn);
         return fi ? fi->offset : -1;

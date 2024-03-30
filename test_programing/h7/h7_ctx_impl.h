@@ -9,7 +9,6 @@
 using namespace h7;
 #define HASH_SEED 13
 
-
 inline MemoryBlock MemoryBlock::makeUnchecked(UInt size){
     MemoryBlock b;
     b.data = H7_NEW(size);
@@ -184,6 +183,9 @@ String TypeInfo::getTypeDesc()const{
 
         case kType_float: {str = "F";}break;
         case kType_double: {str = "D";}break;
+
+        case kType_raw_str: {str = "c_str";}break;
+        case kType_object: {str = "Object";}break;
 
         default:
             H7_ASSERT_X(false, "TypeInfo::getTypeDesc >> wrong type");

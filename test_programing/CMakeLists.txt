@@ -17,6 +17,7 @@ add_library(h7
 # h7 test
 
 add_executable(h7_test_all
+    tests/test_common.h
     tests/main.cpp
     tests/test_align_struct.cpp
     tests/test_inst.cpp
