@@ -353,6 +353,7 @@ void SLJITHelper::emitLoadField(SPSentence st){
         sljit_emit_op1(C, op_load, rd_ip.r, rd_ip.rw, reg_ip_tmp, 0);
     }
     RS->restore(rs_key);
+
 }
 void SLJITHelper::emitStoreField(SPSentence st){
     //ip: object field to store, left is emitter
