@@ -6,6 +6,10 @@ using namespace h7;
 
 #define LS_R SLJIT_MEM1(SLJIT_SP)
 
+static void printInt(int val){
+    printf("SLJITHelper >> printInt: val = %d\n", val);
+}
+
 RegDesc SLJITHelper::genRegDesc(Operand& op){
     RegDesc desc;
     genRegDesc(&op, &desc);
@@ -124,8 +128,8 @@ void SLJITHelper::castType(Operand& dst, Operand& src){
         auto rd_src = genRegDesc(src);
         bool srcIsLessInt = src.isMinSize() && src.isLessThanInt();
         bool dstIsLessInt = dst.isMinSize() && dst.isLessThanInt();
-        int s_r, s_rw;
-        int d_r, d_rw;
+        int s_r; ULong s_rw;
+        int d_r; ULong d_rw;
         int src_tt, dst_tt;
         if(srcIsLessInt){
             s_r = loadToReg(src, -1);
@@ -146,6 +150,7 @@ void SLJITHelper::castType(Operand& dst, Operand& src){
             dst_tt = dst.type;
         }
         int convType = getConvType(src_tt, dst_tt);
+        //printf("convType = %d\n", convType);
         if(dst.isFloatLike() || src.isFloatLike()){
             sljit_emit_fop1(C, convType, d_r, d_rw, s_r, s_rw);
         }else{
@@ -229,12 +234,10 @@ void SLJITHelper::emitCall(SPSentence st){
         argRet = SLJIT_ARG_RETURN(list[0].argType);
         for(int i = 1 ; i < (int)list.size() ; ++i){
             auto& rd = list[i];
-            int reg;
+            int reg = RS->nextReg(rd.fs);
             if(rd.fs){
-                reg = RS->nextReg(true);
                 sljit_emit_fop1(C, rd.op, reg, 0, rd.r, rd.rw);
             }else{
-                reg = RS->nextReg(false);
                 sljit_emit_op1(C, rd.op, reg, 0, rd.r, rd.rw);
             }
             argFlags |= SLJIT_ARG_VALUE(rd.argType, i);
@@ -243,18 +246,18 @@ void SLJITHelper::emitCall(SPSentence st){
         argRet = SLJIT_ARGS0(VOID);
         for(int i = 0 ; i < (int)list.size() ; ++i){
             auto& rd = list[i];
-            int reg;
+            int reg = RS->nextReg(rd.fs);
             if(rd.fs){
-                reg = RS->nextReg(true);
                 sljit_emit_fop1(C, rd.op, reg, 0, rd.r, rd.rw);
             }else{
-                reg = RS->nextReg(false);
                 sljit_emit_op1(C, rd.op, reg, 0, rd.r, rd.rw);
             }
             argFlags |= SLJIT_ARG_VALUE(rd.argType, i + 1);
         }
     }
     //SLJIT_FAST_CALL?
+    //printf("emitCall >> (argRet | argFlags) = %d\n", argRet | argFlags);
+    //printf("emitCall >> expect = %d\n", SLJIT_ARGS1(VOID, 32));
     sljit_emit_icall(C, SLJIT_CALL, argRet | argFlags,
                      SLJIT_IMM, SLJIT_FUNC_ADDR(st->ip.index));
     //copy result to ret-reg
@@ -267,6 +270,7 @@ void SLJITHelper::emitCall(SPSentence st){
             sljit_emit_op1(C, rd.op, rd.r, rd.rw, SLJIT_R0, 0);
         }
     }
+    RS->reset();
 }
 void SLJITHelper::emitAssign(SPSentence st){
     //ip and left.
@@ -340,6 +344,7 @@ void SLJITHelper::emitLoadField(SPSentence st){
     //sljit_emit_op1(C, SLJIT_MOV_U8, SLJIT_R0, 0, SLJIT_MEM2(CELLS, SP), 0);		/* R0 = CELLS[SP] */
     //load real_data. 'data + offset'
     auto op_load = genSLJIT_op(kOP_LOAD, field_op.type);
+
     //how to move a 'data+ offset', offset from runtime
     int reg_ip_tmp = RS->nextReg(rd_ip.fs);
     if(rd_ip.fs){
@@ -350,6 +355,12 @@ void SLJITHelper::emitLoadField(SPSentence st){
         //Shift as size(0 for bytes, 1 for shorts, 2 for 4bytes, 3 for 8bytes)
         sljit_emit_mem(C, op_load | SLJIT_MEM_UNALIGNED, reg_ip_tmp,
                        SLJIT_MEM2(reg_data, reg_f), 0);
+
+        //debug
+//        sljit_emit_op1(C, op_load, SLJIT_R0, 0 , reg_ip_tmp, 0);
+//        sljit_emit_icall(C, SLJIT_CALL, SLJIT_ARGS1(VOID, 32),
+//                             SLJIT_IMM, SLJIT_FUNC_ADDR(printInt));
+
         sljit_emit_op1(C, op_load, rd_ip.r, rd_ip.rw, reg_ip_tmp, 0);
     }
     RS->restore(rs_key);
@@ -366,17 +377,32 @@ void SLJITHelper::emitStoreField(SPSentence st){
     int id_offsets;
     field_op.getComposeIndex(&id_data, &id_offsets);
     //
-    int ri_key = RI->save();
-
+    int rs_key = RS->save();
+    int reg_data = RS->nextReg(false);
+    int reg_offsets = RS->nextReg(false);
+    sljit_emit_op1(C, SLJIT_MOV, reg_data, 0, LS_R, RI->getLSOffset(id_data));
+    sljit_emit_op1(C, SLJIT_MOV, reg_offsets, 0, LS_R, RI->getLSOffset(id_offsets));
+    //---------------------------
     //load offset
-    auto reg_f = RI->allocLocalIdx();
-    sljit_emit_op1(C, SLJIT_MOV_S32, reg_f, 0,
-                       SLJIT_MEM1(id_offsets), field_op.getFieldIndex() * sizeof(UInt));
-    //load real_data
+    int reg_f = RS->nextReg(false);
+    sljit_emit_op1(C, SLJIT_MOV_U32, reg_f, 0,
+                       SLJIT_MEM1(reg_offsets), field_op.getFieldIndex() * sizeof(UInt));
+    //load real_data. 'data + offset'
     auto op_load = genSLJIT_op(kOP_LOAD, field_op.type);
-    sljit_emit_op1(C, op_load, SLJIT_MEM2(id_data, reg_f), 0,
-                   rd_left.r, rd_left.rw);
-    RI->restore(ri_key);
+
+    //how to move a 'data+ offset', offset from runtime
+    int reg_ip_tmp = RS->nextReg(rd_left.fs);
+    if(rd_left.fs){
+        sljit_emit_fop1(C, op_load, reg_ip_tmp, 0, rd_left.r, rd_left.rw);
+        sljit_emit_fmem(C, op_load | SLJIT_MEM_STORE | SLJIT_MEM_UNALIGNED, reg_ip_tmp,
+                       SLJIT_MEM2(reg_data, reg_f), 0);
+    }else{
+        //Shift as size(0 for bytes, 1 for shorts, 2 for 4bytes, 3 for 8bytes)
+        sljit_emit_op1(C, op_load, reg_ip_tmp, 0, rd_left.r, rd_left.rw);
+        sljit_emit_mem(C, op_load | SLJIT_MEM_STORE |SLJIT_MEM_UNALIGNED, reg_ip_tmp,
+                       SLJIT_MEM2(reg_data, reg_f), 0);
+    }
+    RS->restore(rs_key);
 }
 
 void SLJITHelper::emitLoadCStr(SPSentence st){

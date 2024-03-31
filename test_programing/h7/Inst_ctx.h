@@ -93,6 +93,7 @@ enum SentFlags{
     kSENT_FLAG_VALID_IP    = 0x0001,
     kSENT_FLAG_VALID_LEFT  = 0x0002,
     kSENT_FLAG_VALID_RIGHT = 0x0004,
+    kSENT_FLAG_DEBUG       = 0x0008,
 };
 
 struct OpExtraInfo{
@@ -111,18 +112,18 @@ struct Operand: public ParameterInfo{
     ///imm: only for float-like/int-like
     String getIMM()const{return extra ? extra->imm : "";}
     void makeIMMInt(int val){
-        type = kType_int32;
-        flags = kPD_FLAG_IMM;
-        makeExtra();
-        extra->imm = std::to_string(val);
+        makeIMM(kType_int32, std::to_string(val));
     }
     void makeIMMDouble(double val){
-        type = kType_double;
+        makeIMM(kType_double, std::to_string(val));
+    }
+    void makeIMM(int _type, CString val){
+        type = _type;
         flags = kPD_FLAG_IMM;
         makeExtra();
-        extra->imm = std::to_string(val);
+        extra->imm = val;
     }
-    //
+    //-----------------------
     Operand(){}
     Operand(Operand& src){
         operator=(src);
@@ -177,9 +178,8 @@ struct Sentence{
     void setFunctionReturn(const ParameterInfo& pi){
         ip.extra->funcRet = pi;
     }
-    bool hasFlag(int flag){
-        return (flags & flag) == flag;
-    }
+    bool isDebug()const {return hasFlag(kSENT_FLAG_DEBUG);}
+    bool hasFlag(int flag)const {return (flags & flag) == flag;}
     void setValidFlagsAll(){
         flags = kSENT_FLAG_VALID_IP | kSENT_FLAG_VALID_LEFT | kSENT_FLAG_VALID_RIGHT;
     }
@@ -200,7 +200,14 @@ struct Sentence{
     void makeSimple1LS2DS(CIntArray3 types, CULongArray3 indexArr);
     //load object
     void makeLoadObjectDS(Long index, CUIntArray3 objIdxes);
-    void makeLoadObjectField(CUIntArray3 regs_obj, int ipType, int lsIdx, int fieldType, int fieldIdx);
+    //load object field
+    void makeLoadObjectField(CUIntArray3 regs_obj, int type, int lsIdx, int fieldIdx);
+    ///store object field:: type: field and LS type. lsIdx: LS-idx. fieldIdx: field idx of object
+    void makeStoreObjectField(CUIntArray3 regs_obj, int type, int lsIdx, int fieldIdx);
+    //cast type
+    void makeTypeCast2LS(int srcType, Long srcIdx, int dstType, Long dstIdx);
+    //assign
+    void makeAssignByIMM(int dstType, Long dstIdx, int immType,CString imm);
     /// return LS change count
     void updateForParamIndex(IFunction* owner);
 };

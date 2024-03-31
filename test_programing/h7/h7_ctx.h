@@ -42,6 +42,7 @@ template<typename T>
 template<typename T>
     using CList = const std::vector<T>&;
     using ListI = List<int>;
+    using ListUI = List<UInt>;
     using ListS = List<String>;
 
 template<typename T>

@@ -49,6 +49,7 @@ public:
     /// int,long,char ...etc bases.
     int allocLocal();
     UIntArray3 allocLocal3();
+    ListUI allocLocalN(int n);
     /// if not alloc return-1
     int getCurrentLocalIndex();
 

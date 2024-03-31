@@ -1,7 +1,7 @@
 #pragma once
 
-#include "h7_ctx.h"
-#include "h7_alloc.h"
+#include "h7/h7_ctx.h"
+#include "h7/h7_alloc.h"
 #include "h7/common/common.h"
 #include <memory.h>
 

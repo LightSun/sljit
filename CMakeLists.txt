@@ -63,6 +63,7 @@ SET(SRC_TEST
     test_src/test_struct4.cpp
     )
 add_executable(sljit_test ${SRC_TEST})
+target_compile_definitions(sljit_test PUBLIC SLJIT_HAVE_CONFIG_PRE)
 target_link_libraries(sljit_test sljit_core)
 
 

@@ -7,6 +7,9 @@
 
 using namespace h7;
 
+static void test_for_h7(ObjectPtr op);
+static void test_for_direct_sljit(ObjectPtr op);
+
 class ObjectTester{
 public:
     ObjectTester(){
@@ -31,9 +34,51 @@ void test_load_object_f(){
     ObjectTester otest;
     auto pObj = otest.createPerson1();
 
+    test_for_direct_sljit(pObj);
+    test_for_h7(pObj);
+    //
+    pObj->unref();
+    printf(" test_load_object_f >> end...\n");
+}
+#define LS_R SLJIT_MEM1(SLJIT_SP)
+#define LS_RW(i) (sizeof(void*) * i)
+void test_for_direct_sljit(ObjectPtr pObj){
+     printf(" test_for_direct_sljit >> start...\n");
     ObjectDelegate od(pObj);
     void* ag1 = od.getFieldAddress("ag1");
-    *(char*)ag1 = 0;
+    *(char*)ag1 = 123;
+    //
+    char* addr = (char*)od.getDataAddress();
+    auto offset = od.getFieldOffset("ag1");
+    H7_ASSERT(offset == 0);
+    H7_ASSERT(od.getFieldOffset("ag2") == sizeof(char));
+    //
+    SljitFunc func;
+    func.ds.setAt(0, pObj);
+    func.enter();
+    //---------
+    sljit_emit_op1(func.C, SLJIT_MOV, SLJIT_R1, 0, SLJIT_IMM, (ULong)&addr[0]);
+    sljit_emit_op1(func.C, SLJIT_MOV, SLJIT_R2, 0, SLJIT_IMM, offset);
+
+    sljit_emit_mem(func.C, SLJIT_MOV_S8 | SLJIT_MEM_UNALIGNED, SLJIT_R0,
+                   SLJIT_MEM2(SLJIT_R1, SLJIT_R2), 0); //byte shift
+
+    sljit_emit_op1(func.C, SLJIT_MOV_S8, LS_R, LS_RW(0), SLJIT_R0, 0);
+    sljit_emit_op1(func.C, SLJIT_MOV_S8, LS_R, LS_RW(1), LS_R, LS_RW(0));
+    sljit_emit_op1(func.C, SLJIT_MOV_S8, SLJIT_R0, 0, LS_R, LS_RW(1));
+
+    sljit_emit_icall(func.C, SLJIT_CALL, SLJIT_ARGS1(VOID, 32),
+                     SLJIT_IMM, SLJIT_FUNC_ADDR(printInt));
+    //---------
+    func.exit();
+    func.run();
+}
+
+void test_for_h7(ObjectPtr pObj){
+    printf(" test_for_h7 >> start...\n");
+    ObjectDelegate od(pObj);
+    void* ag1 = od.getFieldAddress("ag1");
+    *(char*)ag1 = 123;
     //
     Function func(3);
     //p.ag1=v, ...p.ag5=v
@@ -45,12 +90,36 @@ void test_load_object_f(){
         func.addEasyStatment(sent_obj);
     }
     {
+        int ls_f = func.allocLocal();
+        int ls_f2 = func.allocLocal();
         //load field
         auto sent = Sentence::New();
-        int ls_f = func.allocLocal();
-        sent->makeLoadObjectField(reg_obj_arr, kType_int8, ls_f, kType_int8, 0);
+        sent->makeLoadObjectField(reg_obj_arr, kType_int8, ls_f, 0);
         func.addEasyStatment(sent);
-        func.addEasyStatment(addStat_printLSInt(kType_int32, ls_f));
+        //cast
+        sent = Sentence::New();
+        sent->makeTypeCast2LS(kType_int8, ls_f, kType_int32, ls_f2);
+        func.addEasyStatment(sent);
+        //print
+        func.addEasyStatment(addStat_printLSInt(kType_int32, ls_f2));
+        //assign
+        sent = Sentence::New();
+        sent->makeAssignByIMM(kType_int8, ls_f2, kType_int32, "99");
+        func.addEasyStatment(sent);
+        //store
+        sent = Sentence::New();
+        sent->makeStoreObjectField(reg_obj_arr, kType_int8, ls_f2, 0);
+        func.addEasyStatment(sent);
+        //load field
+        sent = Sentence::New();
+        sent->makeLoadObjectField(reg_obj_arr, kType_int8, ls_f, 0);
+        func.addEasyStatment(sent);
+        //cast
+        sent = Sentence::New();
+        sent->makeTypeCast2LS(kType_int8, ls_f, kType_int32, ls_f2);
+        func.addEasyStatment(sent);
+        //print
+        func.addEasyStatment(addStat_printLSInt(kType_int32, ls_f2));
     }
     //
     auto codeDesc = CodeDesc::New();
@@ -64,7 +133,4 @@ void test_load_object_f(){
 
     msg = codeDesc->run(&ds);
     H7_ASSERT(msg.empty());
-    //
-    pObj->unref();
-    printf(" test_load_object_f >> end...\n");
 }

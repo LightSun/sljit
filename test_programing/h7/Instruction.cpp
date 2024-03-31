@@ -52,6 +52,16 @@ UIntArray3 Function::allocLocal3(){
                       (UInt)m_localRI->allocLocalIdx(true)};
     return ret;
 }
+ListUI Function::allocLocalN(int n){
+    if(!m_localRI){
+        m_localRI = RegisterIndexer::New(localSize);
+    }
+    ListUI ret;
+    for(int i = 0 ; i < n ; ++i){
+        ret.push_back(m_localRI->allocLocalIdx(true));
+    }
+    return ret;
+}
 int Function::getCurrentLocalIndex(){
     return m_localRI ? m_localRI->getCurrentIdx() : -1;
 }
@@ -126,7 +136,7 @@ String Function::genEasy(void* c,SPStatement _st){
     }break;
 
     case OpCode::CAST:{
-        sh.emitAssign(st);
+        sh.emitCast(st);
     }break;
 
     case OpCode::ADD:{

@@ -165,6 +165,7 @@ int SLJITHelper::getConvType(int srcType, int dstType){
             }
         }
     }else{
+        //printf("srcType, dstType = %d, %d\n", srcType, dstType);
         switch (dstType) {
         case kType_int32:{
             //dst-> int32
@@ -173,6 +174,16 @@ int SLJITHelper::getConvType(int srcType, int dstType){
                 return SLJIT_CONV_S32_FROM_F32;
             case kType_double:
                 return SLJIT_CONV_S32_FROM_F64;
+
+            case kType_int8:
+                return SLJIT_MOV_S8;
+            case kType_uint8:
+                return SLJIT_MOV_U8;
+            case kType_int16:
+                return SLJIT_MOV_S16;
+            case kType_uint16:
+                return SLJIT_MOV_U16;
+
             case kType_int32:
                 return SLJIT_MOV_S32;
             case kType_uint32:
@@ -183,6 +194,7 @@ int SLJITHelper::getConvType(int srcType, int dstType){
                 return SLJIT_MOV;
             }
         }break;
+
         case kType_uint32:{
             //dst-> uint32
             switch (srcType) {
@@ -190,6 +202,16 @@ int SLJITHelper::getConvType(int srcType, int dstType){
                 return SLJIT_CONV_SW_FROM_F32;
             case kType_double:
                 return SLJIT_CONV_SW_FROM_F64;
+
+            case kType_int8:
+                return SLJIT_MOV_S8;
+            case kType_uint8:
+                return SLJIT_MOV_U8;
+            case kType_int16:
+                return SLJIT_MOV_S16;
+            case kType_uint16:
+                return SLJIT_MOV_U16;
+
             case kType_int32:
                 return SLJIT_MOV_U32;
             case kType_uint32:
@@ -208,6 +230,16 @@ int SLJITHelper::getConvType(int srcType, int dstType){
                 return SLJIT_CONV_SW_FROM_F32;
             case kType_double:
                 return SLJIT_CONV_SW_FROM_F64;
+
+            case kType_int8:
+                return SLJIT_MOV_S8;
+            case kType_uint8:
+                return SLJIT_MOV_U8;
+            case kType_int16:
+                return SLJIT_MOV_S16;
+            case kType_uint16:
+                return SLJIT_MOV_U16;
+
             case kType_int32:
                 return SLJIT_MOV_U32;
             case kType_uint32:
@@ -227,6 +259,16 @@ int SLJITHelper::getConvType(int srcType, int dstType){
                 return SLJIT_CONV_SW_FROM_F32;
             case kType_double:
                 return SLJIT_CONV_SW_FROM_F64;
+
+            case kType_int8:
+                return SLJIT_MOV_S8;
+            case kType_uint8:
+                return SLJIT_MOV_U8;
+            case kType_int16:
+                return SLJIT_MOV_S16;
+            case kType_uint16:
+                return SLJIT_MOV_U16;
+
             case kType_int32:
                 return SLJIT_MOV_U32;
             case kType_uint32:

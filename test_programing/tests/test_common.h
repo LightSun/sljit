@@ -35,4 +35,35 @@ Sentence::Type addStat_printLSChar(int type, int idx){
     return sent;
 }
 
+typedef void (SLJIT_FUNC *Func_Pt)(void* ptr);;
+class SljitFunc{
+public:
+    void enter(){
+        C = sljit_create_compiler(NULL, NULL);
+
+        //as Pt1: has a float . we need a temp float register.
+        sljit_emit_enter(C, 0, SLJIT_ARGS1(VOID, P),
+                         6, 4,
+                         4, 0,
+                         1024);
+    }
+    void exit(){
+        sljit_emit_return_void(C);
+        code = sljit_generate_code(C);
+        codeSize = sljit_get_generated_code_size(C);
+        sljit_free_compiler(C);
+    }
+    void run(){
+        void* ptr = ds.getDataPtr();
+        auto func = (Func_Pt)code;
+        func(ptr);
+    }
+public:
+    DataStack ds{3};
+    struct sljit_compiler *C;
+    size_t codeSize;
+    void* code;
+};
+
+
 }

@@ -70,17 +70,49 @@ void Sentence::makeLoadObjectDS(Long index, CUIntArray3 objIdxes){
     op = OpCode::LOAD_OBJ;
 }
 
-void Sentence::makeLoadObjectField(CUIntArray3 regs_obj, int ipType, int lsIdx,
-                                   int fieldType, int fieldIdx){
+void Sentence::makeLoadObjectField(CUIntArray3 regs_obj, int type, int lsIdx, int fieldIdx){
     flags = kSENT_FLAG_VALID_IP | kSENT_FLAG_VALID_LEFT;
     ip.makeLS();
-    ip.type = ipType;
+    ip.type = type;
     ip.index = lsIdx;
     left.setComposeIndex(regs_obj[1], regs_obj[2]);
     left.flags = kPD_FLAG_LS | kPD_FLAG_OBJECT_FIELD;
-    left.type = fieldType;
+    left.type = type;
     left.setExtIndex(fieldIdx);
     op = OpCode::LOAD_OBJ_F;
+}
+
+void Sentence::makeStoreObjectField(CUIntArray3 regs_obj, int type, int lsIdx, int fieldIdx){
+    //ip is field.
+    flags = kSENT_FLAG_VALID_IP | kSENT_FLAG_VALID_LEFT;
+    left.makeLS();
+    left.type = type;
+    left.index = lsIdx;
+    ip.setComposeIndex(regs_obj[1], regs_obj[2]);
+    ip.flags = kPD_FLAG_LS | kPD_FLAG_OBJECT_FIELD;
+    ip.type = type;
+    ip.setExtIndex(fieldIdx);
+    op = OpCode::STORE_OBJ_F;
+}
+
+void Sentence::makeTypeCast2LS(int srcType, Long srcIdx, int dstType, Long dstIdx){
+    flags = kSENT_FLAG_VALID_IP | kSENT_FLAG_VALID_LEFT;
+    ip.makeLS();
+    ip.type = dstType;
+    ip.index = dstIdx;
+    left.makeLS();
+    left.type = srcType;
+    left.index = srcIdx;
+    op = OpCode::CAST;
+}
+
+void Sentence::makeAssignByIMM(int dstType, Long dstIdx, int immType, CString imm){
+    flags = kSENT_FLAG_VALID_IP | kSENT_FLAG_VALID_LEFT;
+    ip.makeLS();
+    ip.type = dstType;
+    ip.index = dstIdx;
+    left.makeIMM(immType, imm);
+    op = OpCode::ASSIGN;
 }
 
 //need alloc LS.
