@@ -295,29 +295,29 @@ void h7::gValue_set(const void* data, UInt type, Value* v){
         }break;
     case kType_int16:
     {
-          (*(Char*)data) = v->i16;
+          (*(Short*)data) = v->i16;
         }break;
     case kType_uint16:
     {
-            (*(Char*)data) = v->u16;
+            (*(UShort*)data) = v->u16;
         }break;
 
     case kType_int32:
     {
-            (*(Char*)data) = v->i32;
+            (*(int*)data) = v->i32;
         }break;
     case kType_uint32:
     {
-            (*(Char*)data) = v->u32;
+            (*(UInt*)data) = v->u32;
         }break;
 
     case kType_int64:
     {
-            (*(Char*)data) = v->i64;
+            (*(Long*)data) = v->i64;
         }break;
     case kType_uint64:
     {
-            (*(Char*)data) = v->u64;
+            (*(ULong*)data) = v->u64;
         }break;
 
     case kType_float:

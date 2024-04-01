@@ -62,7 +62,7 @@ struct _ClassScope_ctx{
         int size = info.virtualSize() * info.getTotalArraySize();
         ptr_info->name = tyepStr;
         ptr_info->scope = scope;
-        ptr_info->structSize = size;
+        ptr_info->structSize = k8N(size);
         //set sub-arr, like: a[2][3]
         return ptr_info;
     }

@@ -75,6 +75,8 @@ enum OpCode{
     LOAD_OBJ_F,
     STORE_OBJ_F,
     LOAD_C_STR,
+    LOAD_ARR,
+    LOAD_ARR_F,
     //++, --
     INC, DEC,
     //

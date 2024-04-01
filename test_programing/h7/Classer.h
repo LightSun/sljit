@@ -5,6 +5,10 @@
 
 namespace h7 {
 
+enum ObjectFlag{
+    kFlag_ARRAY = 0x0001,
+};
+
 //TODO auto ref/unref for parent-child .
 typedef struct Object{
     MemoryBlock block;       ///data block
@@ -12,6 +16,7 @@ typedef struct Object{
     Object* parent {nullptr};
     void* offsets {nullptr}; ///just hold. not create in here
     volatile int refCount {1};
+    int flags {0};
 
     void* getDataAddress()const{return block.data;}
 
@@ -110,5 +115,6 @@ private:
 private:
     ClassScope* m_scope;
 };
-
 }
+//
+extern h7::UInt gObject_get_element_size(h7::ObjectPtr ptr, int arrLevel);

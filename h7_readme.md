@@ -5,6 +5,12 @@
 - SLJIT_S0，SLJIT_S1... : save register. 一般函数参数存于此
 - SLJIT_R0，SLJIT_R1... : temp/Scratch register 临时寄存器
 
+## TODO1
+- array. string
+- if,else if ...else
+- for/switch/while.
+- self-method.
+
 ## TODO
 - 实现常用指令
 - 可变参数实现

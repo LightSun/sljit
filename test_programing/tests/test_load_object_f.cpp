@@ -9,6 +9,7 @@ using namespace h7;
 
 static void test_for_h7(ObjectPtr op);
 static void test_for_direct_sljit(ObjectPtr op);
+static void test_align();
 
 class ObjectTester{
 public:
@@ -40,6 +41,14 @@ void test_load_object_f(){
     pObj->unref();
     printf(" test_load_object_f >> end...\n");
 }
+
+void test_align(){
+    int a = 47;
+    auto old = a;
+    a = calc_align_up_bit(a, 8);
+    printf(" test_align >> calc_align_up_num-8(%d) = %d...\n", old, a);
+}
+
 #define LS_R SLJIT_MEM1(SLJIT_SP)
 #define LS_RW(i) (sizeof(void*) * i)
 void test_for_direct_sljit(ObjectPtr pObj){
@@ -104,22 +113,16 @@ void test_for_h7(ObjectPtr pObj){
         func.addEasyStatment(addStat_printLSInt(kType_int32, ls_f2));
         //assign
         sent = Sentence::New();
-        sent->makeAssignByIMM(kType_int8, ls_f2, kType_int32, "99");
+        sent->makeAssignByIMM(kType_int32, ls_f2, kType_int32, "99");
+        func.addEasyStatment(sent);
+        //cast: ls_f2->ls_f
+        sent = Sentence::New();
+        sent->makeTypeCast2LS(kType_int32, ls_f2, kType_int8, ls_f);
         func.addEasyStatment(sent);
         //store
         sent = Sentence::New();
-        sent->makeStoreObjectField(reg_obj_arr, kType_int8, ls_f2, 0);
+        sent->makeStoreObjectField(reg_obj_arr, kType_int8, ls_f, 0);
         func.addEasyStatment(sent);
-        //load field
-        sent = Sentence::New();
-        sent->makeLoadObjectField(reg_obj_arr, kType_int8, ls_f, 0);
-        func.addEasyStatment(sent);
-        //cast
-        sent = Sentence::New();
-        sent->makeTypeCast2LS(kType_int8, ls_f, kType_int32, ls_f2);
-        func.addEasyStatment(sent);
-        //print
-        func.addEasyStatment(addStat_printLSInt(kType_int32, ls_f2));
     }
     //
     auto codeDesc = CodeDesc::New();
@@ -133,4 +136,6 @@ void test_for_h7(ObjectPtr pObj){
 
     msg = codeDesc->run(&ds);
     H7_ASSERT(msg.empty());
+    auto finalVal = *(char*)ag1;
+    printf(" test_for_h7 >> finalVal: ag1 = %d\n", finalVal);
 }

@@ -17,12 +17,6 @@ inline MemoryBlock MemoryBlock::makeUnchecked(UInt size){
     return b;
 }
 
-TypeInfo::~TypeInfo(){
-    if(clsName){
-        delete clsName;
-        clsName = nullptr;
-    }
-}
 bool TypeInfo::isPrimitiveType()const{
     return baseIsPrimitiveType() && !isArrayType();
 }
@@ -154,6 +148,48 @@ int TypeInfo::computeAdvanceType(int type1, int type2){
     return computePrimitiveType(hasFT, hasSigned, maxSize);
 }
 
+TypeInfo::TypeInfo(UInt type, CString clsN):type(type){
+    clsName = std::make_unique<String>();
+    *clsName = clsN;
+}
+TypeInfo::TypeInfo(const TypeInfo& ti){
+    operator=(ti);
+}
+TypeInfo::TypeInfo(TypeInfo& ti){
+    operator=(ti);
+}
+TypeInfo& TypeInfo::operator=(const TypeInfo& ti){
+    this->type = ti.type;
+    if(ti.clsName){
+        this->clsName = std::make_unique<String>();
+        *clsName = *ti.clsName;
+    }
+    if(ti.arrayDesc){
+        this->arrayDesc = std::make_unique<List<UInt>>();
+        *arrayDesc = *ti.arrayDesc;
+    }
+    if(ti.subDesc){
+        this->subDesc = std::make_unique<List<TypeInfo>>();
+        *subDesc = *ti.subDesc;
+    }
+    return *this;
+}
+TypeInfo& TypeInfo::operator=(TypeInfo& ti){
+    this->type = ti.type;
+    if(ti.clsName){
+        this->clsName = std::make_unique<String>();
+        *clsName = *ti.clsName;
+    }
+    if(ti.arrayDesc){
+        this->arrayDesc = std::make_unique<List<UInt>>();
+        *arrayDesc = *ti.arrayDesc;
+    }
+    if(ti.subDesc){
+        this->subDesc = std::make_unique<List<TypeInfo>>();
+        *subDesc = *ti.subDesc;
+    }
+    return *this;
+}
 template<typename... _Args>
 std::vector<TypeInfo> TypeInfo::makeListSimple(_Args&&... __args){
     std::vector<int> vec = {std::forward<_Args>(__args)...};
@@ -178,7 +214,7 @@ String TypeInfo::getTypeDesc()const{
         case kType_int32: {str = "I32";}break;
         case kType_uint32: {str = "U32";}break;
 
-        case kType_int64:   {str = "U32";}break;
+        case kType_int64:   {str = "I64";}break;
         case kType_uint64:  {str = "U64";}break;
 
         case kType_float: {str = "F";}break;
@@ -209,12 +245,41 @@ String TypeInfo::getTypeDesc()const{
     }
     return str;
 }
+UInt TypeInfo::elementSize(int arrLevel){
+    int size = arrayDesc->size();
+    if(arrLevel < 0){
+        H7_ASSERT_X(arrLevel + size >= 0, "wrong arrLevel");
+        arrLevel = size + arrLevel;
+    }
+    UInt eleC = 1;
+    for(int i = arrLevel + 1 ; i < size ; ++i){
+        eleC *= (*arrayDesc)[i];
+    }
+    return eleC * virtualSize();
+}
+UInt ArrayClassDesc::elementSize(int arrLevel){
+    int size = arrayDesc.size();
+    if(arrLevel < 0){
+        H7_ASSERT_X(arrLevel + size >= 0, "wrong arrLevel");
+        arrLevel = size + arrLevel;
+    }
+    TypeInfo ti(type, *clsName);
+    UInt eleC = 1;
+    for(int i = arrLevel + 1 ; i < size ; ++i){
+        eleC *= arrayDesc[i];
+    }
+    return eleC * ti.virtualSize();
+}
 
 ClassInfo::ClassInfo(const TypeInfo* arr){
     if(arr){
         arrayDesc = std::make_unique<ArrayClassDesc>();
         arrayDesc->arrayDesc = *arr->arrayDesc;
         arrayDesc->type = arr->type;
+        if(arr->clsName){
+            arrayDesc->clsName = std::make_unique<String>();
+            *arrayDesc->clsName = *arr->clsName;
+        }
     }else{
         objDesc = std::make_unique<_ObjClassDesc>();
     }
@@ -227,14 +292,16 @@ int ClassInfo::getFieldOffset(UInt key){
     auto f = getField(key);
     return f ? f->offset :-1;
 }
-void ClassInfo::putField(CString key, const FieldInfo& f){
-    auto k = fasthash32(key.data(), key.length(), HASH_SEED);
+void ClassInfo::putField(CString key, const FieldInfo& _f){
+    FieldInfo& f = (FieldInfo&)_f;
+    auto k = fasthash32(key.data(), (UInt)key.length(), HASH_SEED);
+    f.index = objDesc->fieldMap.size();
     objDesc->offsets.push_back(f.offset);
     (objDesc->fieldMap)[k] = std::move(f);
 }
 FieldInfo* ClassInfo::getField(CString key){
     if(objDesc){
-        auto k = fasthash32(key.data(), key.length(), HASH_SEED);
+        auto k = fasthash32(key.data(), (UInt)key.length(), HASH_SEED);
         auto it = objDesc->fieldMap.find(k);
         return it != objDesc->fieldMap.end() ? &it->second : nullptr;
     }

@@ -90,19 +90,26 @@ struct MemoryBlock{
 
 struct TypeInfo{
     UInt type {kType_NONE};
-    String* clsName {nullptr};
+    std::unique_ptr<String> clsName;
 
-    std::shared_ptr<List<UInt>> arrayDesc;// like p[2][3] -> arrayDesc =[2,3]
-    std::shared_ptr<List<TypeInfo>> subDesc;
+    std::unique_ptr<List<UInt>> arrayDesc;   // like p[2][3] -> arrayDesc =[2,3]
+    std::unique_ptr<List<TypeInfo>> subDesc; // like map<String,string>
 
     TypeInfo(){}
     TypeInfo(UInt type):type(type){}
-    inline ~TypeInfo();
+    inline TypeInfo(UInt type, CString clsN);
+    inline TypeInfo(const TypeInfo&);
+    inline TypeInfo(TypeInfo&);
+    inline TypeInfo& operator=(const TypeInfo&);
+    inline TypeInfo& operator=(TypeInfo&);
 
     static inline TypeInfo makeSimple(int type){return TypeInfo(type);}
 
     template<typename... _Args>
     static std::vector<TypeInfo> makeListSimple(_Args&&... __args);
+
+    inline static int computePrimitiveType(bool _float, bool _signed, int ret_size);
+    inline static int computeAdvanceType(int type1, int type2);
 
     inline String getTypeDesc()const;
     inline int getTotalArraySize()const;
@@ -114,10 +121,10 @@ struct TypeInfo{
     inline int virtualSize()const;
     inline bool isSigned()const;
     inline bool isFloatLikeType()const;
-    inline static int computePrimitiveType(bool _float, bool _signed, int ret_size);
-    inline static int computeAdvanceType(int type1, int type2);
     inline bool is64(){return isAlignSize(sizeof(Long));}
     inline bool isLessInt()const{ return virtualSize() < (int)sizeof(int);}
+    /// arrLevel: [0,arrayDesc.size-1]
+    inline UInt elementSize(int arrLevel);
 };
 
 typedef union Value{
@@ -137,12 +144,17 @@ typedef union Value{
 struct FieldInfo{
     String name;
     TypeInfo typeInfo;
+    UInt index;
     UInt offset; //offset of object data
 };
 
 struct ArrayClassDesc{
     List<UInt> arrayDesc;
-    UInt type; //base type
+    UInt type;                       //primitive-type.
+    std::unique_ptr<String> clsName; //class name for non-primitive
+
+    /// arrLevel: [0,arrayDesc.size-1]
+    inline UInt elementSize(int arrLevel);
 };
 
 struct ClassScope;
@@ -153,7 +165,7 @@ struct ClassInfo{
          List<UInt> offsets;
     };
     ClassScope* scope {nullptr};
-    String name; //full name
+    String name;        //full name
     UInt structSize;
 
     std::unique_ptr<ArrayClassDesc> arrayDesc;

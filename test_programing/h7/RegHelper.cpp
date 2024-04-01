@@ -5,6 +5,7 @@
 using namespace h7;
 
 #define LS_R SLJIT_MEM1(SLJIT_SP)
+#define DS_R SLJIT_MEM1(SLJIT_S0)
 
 static void printInt(int val){
     printf("SLJITHelper >> printInt: val = %d\n", val);
@@ -256,8 +257,6 @@ void SLJITHelper::emitCall(SPSentence st){
         }
     }
     //SLJIT_FAST_CALL?
-    //printf("emitCall >> (argRet | argFlags) = %d\n", argRet | argFlags);
-    //printf("emitCall >> expect = %d\n", SLJIT_ARGS1(VOID, 32));
     sljit_emit_icall(C, SLJIT_CALL, argRet | argFlags,
                      SLJIT_IMM, SLJIT_FUNC_ADDR(st->ip.index));
     //copy result to ret-reg
@@ -298,7 +297,7 @@ void SLJITHelper::emitLoadObject(SPSentence st){
                        LS_R, RI->getLSOffset(ip.index));
     }else{
         sljit_emit_op1(C, SLJIT_MOV, LS_R, RI->getLSOffset(ls_obj),
-                       SLJIT_MEM1(SLJIT_S0), RI->getDSOffset(ip.index));
+                       DS_R, RI->getDSOffset(ip.index));
     }
     //
     int skey = RS->save();
@@ -399,10 +398,28 @@ void SLJITHelper::emitStoreField(SPSentence st){
     }else{
         //Shift as size(0 for bytes, 1 for shorts, 2 for 4bytes, 3 for 8bytes)
         sljit_emit_op1(C, op_load, reg_ip_tmp, 0, rd_left.r, rd_left.rw);
-        sljit_emit_mem(C, op_load | SLJIT_MEM_STORE |SLJIT_MEM_UNALIGNED, reg_ip_tmp,
+        sljit_emit_mem(C, op_load | SLJIT_MEM_STORE | SLJIT_MEM_UNALIGNED, reg_ip_tmp,
                        SLJIT_MEM2(reg_data, reg_f), 0);
     }
     RS->restore(rs_key);
+}
+
+void SLJITHelper::emitLoadArray(SPSentence st){
+    //
+    auto& ip = st->ip;
+    //all is local index
+    auto ls_obj = ip.extra->objIdxes[0];
+    auto ls_data = ip.extra->objIdxes[1];
+    auto ls_eleSize = ip.extra->objIdxes[2];
+    //load ptr, offset, real_data addr
+    //SP for LS
+    if(ip.isLS()){
+        sljit_emit_op1(C, SLJIT_MOV, LS_R, RI->getLSOffset(ls_obj),
+                       LS_R, RI->getLSOffset(ip.index));
+    }else{
+        sljit_emit_op1(C, SLJIT_MOV, LS_R, RI->getLSOffset(ls_obj),
+                       DS_R, RI->getDSOffset(ip.index));
+    }
 }
 
 void SLJITHelper::emitLoadCStr(SPSentence st){

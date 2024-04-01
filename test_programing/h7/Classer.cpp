@@ -43,6 +43,9 @@ RawStringHandle Classer::defineRawString(CString name, CString initVal){
 ObjectPtr Classer::create(ClassHandle handle, ObjectPtr parent){
     ClassInfo* ci = (ClassInfo*)handle;
     Object* obj = H7_NEW_TYPE(Object);
+    if(ci->isArray()){
+        obj->flags = kFlag_ARRAY;
+    }
     obj->block = MemoryBlock::makeUnchecked(ci->structSize);
     obj->clsInfo = ci;
     obj->parent = parent;
@@ -50,4 +53,8 @@ ObjectPtr Classer::create(ClassHandle handle, ObjectPtr parent){
         obj->offsets = ci->objDesc->offsets.data();
     }
     return obj;
+}
+
+h7::UInt gObject_get_element_size(h7::ObjectPtr ptr, int arrLevel){
+    return ptr->clsInfo->arrayDesc->elementSize(arrLevel);
 }

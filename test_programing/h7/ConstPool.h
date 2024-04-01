@@ -1,6 +1,7 @@
 #pragma once
 
 #include "h7/h7_ctx.h"
+#include <memory.h>
 
 namespace h7 {
 
@@ -10,8 +11,8 @@ struct ConstPool{
     int rstrDataLen {0};
 
     UInt defineConstString(CString str){
-        UInt nextIdx = rstr_offsets.size();
-        UInt oldDataSize = rstrs.size();
+        UInt nextIdx = (UInt)rstr_offsets.size();
+        UInt oldDataSize = (UInt)rstrs.size();
         rstrs.resize(oldDataSize + str.length() + 1);
         memcpy(rstrs.data() + oldDataSize, str.data(), str.length());
         rstrs.data()[oldDataSize + str.length()] = '\0';
