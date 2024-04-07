@@ -51,11 +51,14 @@ namespace h7 {
         void emitCall(SPSentence st);
         void emitAssign(SPSentence st);
         void emitCast(SPSentence st);
+
         void emitLoadObject(SPSentence st);
         void emitStoreObject(SPSentence st);
         void emitLoadField(SPSentence st);
         void emitStoreField(SPSentence st);
+
         void emitLoadArray(SPSentence st);
+        void emitLoadArrayElement(SPSentence st);
 
         void emitLoadCStr(SPSentence st);
 

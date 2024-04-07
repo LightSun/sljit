@@ -6,6 +6,8 @@ using namespace h7;
 
 #define LS_R SLJIT_MEM1(SLJIT_SP)
 #define DS_R SLJIT_MEM1(SLJIT_S0)
+#define LS_OFFSET(i) RI->getLSOffset(i)
+#define DS_OFFSET(i) RI->getDSOffset(i)
 
 static void printInt(int val){
     printf("SLJITHelper >> printInt: val = %d\n", val);
@@ -344,7 +346,7 @@ void SLJITHelper::emitLoadField(SPSentence st){
     //load real_data. 'data + offset'
     auto op_load = genSLJIT_op(kOP_LOAD, field_op.type);
 
-    //how to move a 'data+ offset', offset from runtime
+    // move a 'data+ offset', offset from runtime
     int reg_ip_tmp = RS->nextReg(rd_ip.fs);
     if(rd_ip.fs){
         sljit_emit_fmem(C, op_load | SLJIT_MEM_UNALIGNED, reg_ip_tmp,
@@ -368,7 +370,7 @@ void SLJITHelper::emitLoadField(SPSentence st){
 void SLJITHelper::emitStoreField(SPSentence st){
     //ip: object field to store, left is emitter
     H7_ASSERT_X(st->isFlags2(), "ip and left must be valid");
-    H7_ASSERT_X(st->ip.isObjectField(), "load field must from Object");
+    H7_ASSERT_X(st->ip.isObjectField(), "store field must from Object");
     auto rd_left = genRegDesc(st->left);
     auto& field_op = st->ip;
 
@@ -414,12 +416,69 @@ void SLJITHelper::emitLoadArray(SPSentence st){
     //load ptr, offset, real_data addr
     //SP for LS
     if(ip.isLS()){
-        sljit_emit_op1(C, SLJIT_MOV, LS_R, RI->getLSOffset(ls_obj),
-                       LS_R, RI->getLSOffset(ip.index));
+        sljit_emit_op1(C, SLJIT_MOV, LS_R, LS_OFFSET(ls_obj), LS_R, LS_OFFSET(ip.index));
     }else{
-        sljit_emit_op1(C, SLJIT_MOV, LS_R, RI->getLSOffset(ls_obj),
-                       DS_R, RI->getDSOffset(ip.index));
+        sljit_emit_op1(C, SLJIT_MOV, LS_R, LS_OFFSET(ls_obj), DS_R, DS_OFFSET(ip.index));
     }
+
+    int skey = RS->save();
+    int reg_p1 = RS->nextReg(false);
+    int reg_p2 = RS->nextReg(false);
+    H7_ASSERT(reg_p1 == SLJIT_R0);
+    //load ele size. h7::UInt gObject_get_element_size(h7::ObjectPtr ptr, int arrLevel);
+    sljit_emit_op1(C, SLJIT_MOV, reg_p1, 0, LS_R, LS_OFFSET(ls_obj));
+    sljit_emit_op1(C, SLJIT_MOV, reg_p2, 0, SLJIT_IMM, -1);
+    //
+    //load datas
+    sljit_emit_op1(C, SLJIT_MOV, LS_R, LS_OFFSET(ls_data),
+                   SLJIT_MEM1(reg_p1), SLJIT_OFFSETOF(Object, block));
+    //load eleSize
+    sljit_emit_icall(C, SLJIT_CALL, SLJIT_ARGS2(W, P, 32), SLJIT_IMM, SLJIT_FUNC_ADDR(gObject_get_element_size));
+    sljit_emit_op1(C, SLJIT_MOV, LS_R, LS_OFFSET(ls_eleSize), SLJIT_R0, 0);
+
+    RS->restore(skey);
+}
+
+void SLJITHelper::emitLoadArrayElement(SPSentence st){
+    //ip is the array element to store, left is parent array.
+    H7_ASSERT_X(st->isFlags2(), "ip and left must be valid");
+    auto rd_ip = genRegDesc(st->ip);
+    //
+    auto& ele_op = st->ip;
+    auto& arr_op = st->left;
+    int id_data;
+    int id_eleSize;
+    arr_op.getComposeIndex(&id_data, &id_eleSize);
+
+    int rs_key = RS->save();
+    // load data and eleSize
+    int reg_data = RS->nextReg(false);
+    sljit_emit_op1(C, SLJIT_MOV, reg_data, 0, LS_R, LS_OFFSET(id_data));
+    //---------------------------
+    //compute real-offset
+    int reg_f = RS->nextReg(false);
+    if(ele_op.isArrayIndexDynamic()){
+        sljit_emit_op2(C, SLJIT_MUL, reg_f, 0, LS_R, LS_OFFSET(id_eleSize),
+                           LS_R, LS_OFFSET(arr_op.getFieldIndex()));
+    }else{
+        sljit_emit_op2(C, SLJIT_MUL, reg_f, 0, LS_R, LS_OFFSET(id_eleSize),
+                           SLJIT_IMM, arr_op.getFieldIndex());
+    }
+    //load real_data. 'data + offset'
+    auto op_load = genSLJIT_op(kOP_LOAD, arr_op.type);
+    // move a 'data+ offset', offset from runtime
+    int reg_ip_tmp = RS->nextReg(rd_ip.fs);
+    if(rd_ip.fs){
+        sljit_emit_fmem(C, op_load | SLJIT_MEM_UNALIGNED, reg_ip_tmp,
+                       SLJIT_MEM2(reg_data, reg_f), 0);
+        sljit_emit_fop1(C, op_load, rd_ip.r, rd_ip.rw, reg_ip_tmp, 0);
+    }else{
+        //Shift as size(0 for bytes, 1 for shorts, 2 for 4bytes, 3 for 8bytes)
+        sljit_emit_mem(C, op_load | SLJIT_MEM_UNALIGNED, reg_ip_tmp,
+                       SLJIT_MEM2(reg_data, reg_f), 0);
+        sljit_emit_op1(C, op_load, rd_ip.r, rd_ip.rw, reg_ip_tmp, 0);
+    }
+    RS->restore(rs_key);
 }
 
 void SLJITHelper::emitLoadCStr(SPSentence st){

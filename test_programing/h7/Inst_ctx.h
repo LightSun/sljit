@@ -10,8 +10,8 @@ enum ParamterDescFlag{
     kPD_FLAG_DS             = 0x0002,   /// data-stack. every is sizeof(void*)
     kPD_FLAG_RETURN         = 0x0004,   /// only for function return desc
     kPD_FLAG_IMM            = 0x0008,
-    //kPD_FLAG_MIN_SIZE       = 0x0010,  /// means. from object. char.size = sizeof(char)...etc
-    kPD_FLAG_OBJECT_FIELD   = 0x0020,  /// indicate it is runtime come from object. like Person p = ...; p.age=18...
+    kPD_FLAG_OBJECT_FIELD        = 0x0010,  /// indicate it is runtime come from object. like Person p = ...; p.age=18...
+    kPD_FLAG_ARRAY_INDEX_DYNAMIC = 0x0020,  /// indcate the array index is not imm. it comes from runtime.
 };
 
 struct ParameterInfo{
@@ -36,6 +36,8 @@ struct ParameterInfo{
     bool isMinSize()const { return (flags & kPD_FLAG_OBJECT_FIELD) != 0;}
     bool isLessThanInt()const {TypeInfo ti(type); return ti.isLessInt();}
     bool isObjectField()const {return (flags & kPD_FLAG_OBJECT_FIELD) != 0;}
+    bool isArrayIndexDynamic()const {return (flags & kPD_FLAG_ARRAY_INDEX_DYNAMIC) != 0;}
+
     void setComposeIndex(int id1, int id2){ index = id1 | (id2 << 24);}
     void getComposeIndex(int* id1, int* id2){
         *id1 = (index & 0xffffff); *id2 = ((index >> 24) & 0xffffff); }
@@ -76,7 +78,7 @@ enum OpCode{
     STORE_OBJ_F,
     LOAD_C_STR,
     LOAD_ARR,
-    LOAD_ARR_F,
+    LOAD_ARR_E,
     //++, --
     INC, DEC,
     //

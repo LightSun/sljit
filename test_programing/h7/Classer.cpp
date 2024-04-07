@@ -55,6 +55,6 @@ ObjectPtr Classer::create(ClassHandle handle, ObjectPtr parent){
     return obj;
 }
 
-h7::UInt gObject_get_element_size(h7::ObjectPtr ptr, int arrLevel){
+h7::Long gObject_get_element_size(h7::ObjectPtr ptr, int arrLevel){
     return ptr->clsInfo->arrayDesc->elementSize(arrLevel);
 }

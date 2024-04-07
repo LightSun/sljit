@@ -167,6 +167,10 @@ String Function::genEasy(void* c,SPStatement _st){
         sh.emitLoadArray(st);
     }break;
 
+    case OpCode::LOAD_ARR_E:{
+        sh.emitLoadArrayElement(st);
+    }break;
+
     case OpCode::LOAD_C_STR:{
         sh.emitLoadCStr(st);
     }break;

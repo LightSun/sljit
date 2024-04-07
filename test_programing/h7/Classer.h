@@ -117,4 +117,4 @@ private:
 };
 }
 //
-extern h7::UInt gObject_get_element_size(h7::ObjectPtr ptr, int arrLevel);
+h7::Long gObject_get_element_size(h7::ObjectPtr ptr, int arrLevel);
