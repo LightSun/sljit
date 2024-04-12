@@ -6,8 +6,8 @@ using namespace h7;
 
 #define LS_R SLJIT_MEM1(SLJIT_SP)
 #define DS_R SLJIT_MEM1(SLJIT_S0)
-#define LS_OFFSET(i) RI->getLSOffset(i)
-#define DS_OFFSET(i) RI->getDSOffset(i)
+#define LS_OFFSET(i) RI->getLSOffset((UInt)i)
+#define DS_OFFSET(i) RI->getDSOffset((UInt)i)
 
 static void printInt(int val){
     printf("SLJITHelper >> printInt: val = %d\n", val);
@@ -433,7 +433,8 @@ void SLJITHelper::emitLoadArray(SPSentence st){
     sljit_emit_op1(C, SLJIT_MOV, LS_R, LS_OFFSET(ls_data),
                    SLJIT_MEM1(reg_p1), SLJIT_OFFSETOF(Object, block));
     //load eleSize
-    sljit_emit_icall(C, SLJIT_CALL, SLJIT_ARGS2(W, P, 32), SLJIT_IMM, SLJIT_FUNC_ADDR(gObject_get_element_size));
+    sljit_emit_icall(C, SLJIT_CALL, SLJIT_ARGS2(W, P, 32),
+                     SLJIT_IMM, SLJIT_FUNC_ADDR(gObject_get_element_size));
     sljit_emit_op1(C, SLJIT_MOV, LS_R, LS_OFFSET(ls_eleSize), SLJIT_R0, 0);
 
     RS->restore(skey);
@@ -449,6 +450,7 @@ void SLJITHelper::emitLoadArrayElement(SPSentence st){
     int id_data;
     int id_eleSize;
     arr_op.getComposeIndex(&id_data, &id_eleSize);
+    //ext index as field index.
 
     int rs_key = RS->save();
     // load data and eleSize

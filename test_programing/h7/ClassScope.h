@@ -31,6 +31,8 @@ public:
     ClassInfo* defineArray(const TypeInfo& info);
     ///return string index.
     UInt defineConstString(CString str){return pool.defineConstString(str);}
+    //get class info.
+    ClassInfo* getClassInfo(CString clsName);
     //-1 means not found
     int getFieldOffset(CString clsName, CString fn);
     int getFieldOffset(CString clsName, UInt key);

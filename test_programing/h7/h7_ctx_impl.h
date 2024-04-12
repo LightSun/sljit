@@ -6,8 +6,9 @@
 #include "h7/common/c_common.h"
 #include "h7/utils/hash.h"
 
-using namespace h7;
-#define HASH_SEED 13
+#define DEF_HASH_SEED 11
+
+namespace h7 {
 
 inline MemoryBlock MemoryBlock::makeUnchecked(UInt size){
     MemoryBlock b;
@@ -21,24 +22,22 @@ bool TypeInfo::isPrimitiveType()const{
     return baseIsPrimitiveType() && !isArrayType();
 }
 bool TypeInfo::baseIsPrimitiveType()const{
-    if(clsName == nullptr){
-        switch (type) {
-        case kType_bool:
-        case kType_int8:
-        case kType_uint8:
-        case kType_int16:
-        case kType_uint16:
+    switch (type) {
+    case kType_bool:
+    case kType_int8:
+    case kType_uint8:
+    case kType_int16:
+    case kType_uint16:
 
-        case kType_int32:
-        case kType_uint32:
+    case kType_int32:
+    case kType_uint32:
 
-        case kType_int64:
-        case kType_uint64:
+    case kType_int64:
+    case kType_uint64:
 
-        case kType_float:
-        case kType_double:
-            return true;
-        }
+    case kType_float:
+    case kType_double:
+        return true;
     }
     return false;
 }
@@ -46,11 +45,11 @@ bool TypeInfo::hasSubType()const{
     return subDesc && subDesc->size() > 0;
 }
 bool TypeInfo::isArrayType() const{
-    return arrayDesc && arrayDesc->size() > 0;
+    return shape && shape->size() > 0;
 }
 int TypeInfo::getTotalArraySize()const{
     int total = 1;
-    for(auto& e: *arrayDesc){
+    for(auto& e: *shape){
         total *= e;
     }
     return total;
@@ -148,9 +147,11 @@ int TypeInfo::computeAdvanceType(int type1, int type2){
     return computePrimitiveType(hasFT, hasSigned, maxSize);
 }
 
-TypeInfo::TypeInfo(UInt type, CString clsN):type(type){
-    clsName = std::make_unique<String>();
-    *clsName = clsN;
+TypeInfo::TypeInfo(UInt type, String* clsN):type(type){
+    if(clsN){
+        clsName = std::make_unique<String>();
+        *clsName = *clsN;
+    }
 }
 TypeInfo::TypeInfo(const TypeInfo& ti){
     operator=(ti);
@@ -164,9 +165,9 @@ TypeInfo& TypeInfo::operator=(const TypeInfo& ti){
         this->clsName = std::make_unique<String>();
         *clsName = *ti.clsName;
     }
-    if(ti.arrayDesc){
-        this->arrayDesc = std::make_unique<List<UInt>>();
-        *arrayDesc = *ti.arrayDesc;
+    if(ti.shape){
+        this->shape = std::make_unique<List<UInt>>();
+        *shape = *ti.shape;
     }
     if(ti.subDesc){
         this->subDesc = std::make_unique<List<TypeInfo>>();
@@ -180,9 +181,9 @@ TypeInfo& TypeInfo::operator=(TypeInfo& ti){
         this->clsName = std::make_unique<String>();
         *clsName = *ti.clsName;
     }
-    if(ti.arrayDesc){
-        this->arrayDesc = std::make_unique<List<UInt>>();
-        *arrayDesc = *ti.arrayDesc;
+    if(ti.shape){
+        this->shape = std::make_unique<List<UInt>>();
+        *shape = *ti.shape;
     }
     if(ti.subDesc){
         this->subDesc = std::make_unique<List<TypeInfo>>();
@@ -238,43 +239,57 @@ String TypeInfo::getTypeDesc()const{
         }
         str.append(">");
     }
-    if(arrayDesc){
-        for(auto& e: *arrayDesc){
+    if(shape){
+        for(auto& e: *shape){
             str.append("[");
         }
     }
     return str;
 }
 UInt TypeInfo::elementSize(int arrLevel){
-    int size = arrayDesc->size();
+    int size = shape->size();
     if(arrLevel < 0){
         H7_ASSERT_X(arrLevel + size >= 0, "wrong arrLevel");
         arrLevel = size + arrLevel;
     }
     UInt eleC = 1;
     for(int i = arrLevel + 1 ; i < size ; ++i){
-        eleC *= (*arrayDesc)[i];
+        eleC *= (*shape)[i];
     }
     return eleC * virtualSize();
 }
 UInt ArrayClassDesc::elementSize(int arrLevel){
-    int size = arrayDesc.size();
+    int size = shape.size();
     if(arrLevel < 0){
         H7_ASSERT_X(arrLevel + size >= 0, "wrong arrLevel");
         arrLevel = size + arrLevel;
     }
-    TypeInfo ti(type, *clsName);
+    TypeInfo ti(type, clsName.get());
     UInt eleC = 1;
     for(int i = arrLevel + 1 ; i < size ; ++i){
-        eleC *= arrayDesc[i];
+        eleC *= shape[i];
     }
     return eleC * ti.virtualSize();
+}
+bool ArrayClassDesc::baseIsPrimitive()const{
+    TypeInfo ti(type, clsName.get());
+    return ti.baseIsPrimitiveType();
+}
+void ArrayClassDesc::setByTypeInfo(const TypeInfo& ti){
+    type = ti.type;
+    shape = *ti.shape;
+    clsName = std::make_unique<String>();
+    if(ti.clsName){
+        *clsName = *ti.clsName;
+    }else{
+        *clsName = ti.getTypeDesc();
+    }
 }
 
 ClassInfo::ClassInfo(const TypeInfo* arr){
     if(arr){
         arrayDesc = std::make_unique<ArrayClassDesc>();
-        arrayDesc->arrayDesc = *arr->arrayDesc;
+        arrayDesc->shape = *arr->shape;
         arrayDesc->type = arr->type;
         if(arr->clsName){
             arrayDesc->clsName = std::make_unique<String>();
@@ -294,14 +309,14 @@ int ClassInfo::getFieldOffset(UInt key){
 }
 void ClassInfo::putField(CString key, const FieldInfo& _f){
     FieldInfo& f = (FieldInfo&)_f;
-    auto k = fasthash32(key.data(), (UInt)key.length(), HASH_SEED);
+    auto k = fasthash32(key.data(), (UInt)key.length(), DEF_HASH_SEED);
     f.index = objDesc->fieldMap.size();
     objDesc->offsets.push_back(f.offset);
     (objDesc->fieldMap)[k] = std::move(f);
 }
 FieldInfo* ClassInfo::getField(CString key){
     if(objDesc){
-        auto k = fasthash32(key.data(), (UInt)key.length(), HASH_SEED);
+        auto k = fasthash32(key.data(), (UInt)key.length(), DEF_HASH_SEED);
         auto it = objDesc->fieldMap.find(k);
         return it != objDesc->fieldMap.end() ? &it->second : nullptr;
     }
@@ -313,5 +328,6 @@ FieldInfo* ClassInfo::getField(UInt k){
         return it != objDesc->fieldMap.end() ? &it->second : nullptr;
     }
     return nullptr;
+}
 }
 

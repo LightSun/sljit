@@ -75,20 +75,20 @@ struct _ClassScope_ctx{
         return fi ? fi->offset : -1;
     }
     FieldInfo* getFieldInfo(CString clsName, CString fn){
-        ClassInfo* info = nullptr;
-        {
-            MutexLockHolder lck(clsLock);
-            auto it = clsMap.find(clsName);
-            if(it != clsMap.end()){
-                info = it->second;
-            }
-        }
+        ClassInfo* info = getClassInfo(clsName);
         if(info != nullptr){
             return info->getField(fn);
         }
         return nullptr;
     }
     FieldInfo* getFieldInfo(CString clsName, UInt k){
+        ClassInfo* info = getClassInfo(clsName);
+        if(info != nullptr){
+            return info->getField(k);
+        }
+        return nullptr;
+    }
+    ClassInfo* getClassInfo(CString clsName){
         ClassInfo* info = nullptr;
         {
             MutexLockHolder lck(clsLock);
@@ -97,10 +97,7 @@ struct _ClassScope_ctx{
                 info = it->second;
             }
         }
-        if(info != nullptr){
-            return info->getField(k);
-        }
-        return nullptr;
+        return info;
     }
 };
 }
@@ -164,9 +161,18 @@ ClassInfo* ClassScope::newArrayClassInfo(const TypeInfo& info){
         auto ptr_info = H7_NEW_OBJ(ClassInfo);
         ptr_info->name = info.getTypeDesc();
         ptr_info->scope = ClassScope::getCurrent();
-        ptr_info->structSize = size;
+        ptr_info->structSize = k8N(size);
         //set sub-arr, like: a[2][3]
+        ptr_info->arrayDesc = std::make_unique<ArrayClassDesc>();
+        ptr_info->arrayDesc->setByTypeInfo(info);
         return ptr_info;
+    }
+    return nullptr;
+}
+ClassInfo* ClassScope::getClassInfo(CString clsName){
+    auto info = m_ctx->getClassInfo(clsName);
+    if(info == nullptr && m_parent != nullptr){
+        return m_parent->getClassInfo(clsName);
     }
     return nullptr;
 }

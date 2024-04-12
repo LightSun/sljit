@@ -31,6 +31,11 @@ namespace h7 {
     using i64 = Long;
     using u64 = ULong;
 
+template<typename T>
+    using UPtr = std::unique_ptr<T>;
+template<typename T>
+    using SPtr = std::unique_ptr<T>;
+
     using String = std::string;
     using CString = const std::string&;
 template<typename k, typename v>
@@ -90,14 +95,15 @@ struct MemoryBlock{
 
 struct TypeInfo{
     UInt type {kType_NONE};
+    ///object: class name, array: base name of raw-element.
     std::unique_ptr<String> clsName;
 
-    std::unique_ptr<List<UInt>> arrayDesc;   // like p[2][3] -> arrayDesc =[2,3]
+    std::unique_ptr<List<UInt>> shape;        // like p[2][3] -> arrayDesc =[2,3]
     std::unique_ptr<List<TypeInfo>> subDesc; // like map<String,string>
 
     TypeInfo(){}
     TypeInfo(UInt type):type(type){}
-    inline TypeInfo(UInt type, CString clsN);
+    inline TypeInfo(UInt type, String* clsN);
     inline TypeInfo(const TypeInfo&);
     inline TypeInfo(TypeInfo&);
     inline TypeInfo& operator=(const TypeInfo&);
@@ -149,12 +155,16 @@ struct FieldInfo{
 };
 
 struct ArrayClassDesc{
-    List<UInt> arrayDesc;
     UInt type;                       //primitive-type.
+    List<UInt> shape;
     std::unique_ptr<String> clsName; //class name for non-primitive
 
+    //only
+    inline bool baseIsPrimitive()const;
     /// arrLevel: [0,arrayDesc.size-1]
     inline UInt elementSize(int arrLevel);
+
+    inline void setByTypeInfo(const TypeInfo& ti);
 };
 
 struct ClassScope;

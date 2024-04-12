@@ -22,6 +22,7 @@ add_executable(h7_test_all
     tests/test_align_struct.cpp
     tests/test_inst.cpp
     tests/test_load_object_f.cpp
+    tests/test_load_array_e.cpp
     )
 
 target_link_libraries(h7_test_all PUBLIC

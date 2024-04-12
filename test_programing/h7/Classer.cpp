@@ -43,14 +43,27 @@ RawStringHandle Classer::defineRawString(CString name, CString initVal){
 ObjectPtr Classer::create(ClassHandle handle, ObjectPtr parent){
     ClassInfo* ci = (ClassInfo*)handle;
     Object* obj = H7_NEW_TYPE(Object);
-    if(ci->isArray()){
-        obj->flags = kFlag_ARRAY;
-    }
     obj->block = MemoryBlock::makeUnchecked(ci->structSize);
     obj->clsInfo = ci;
     obj->parent = parent;
     if(ci->objDesc){
         obj->offsets = ci->objDesc->offsets.data();
+    }else if(ci->isArray()){
+        obj->flags = kFlag_ARRAY;
+        //allocate elements for non-primitive.
+        if(!ci->arrayDesc->baseIsPrimitive()){
+            H7_ASSERT(ci->arrayDesc->clsName);
+            //H7_ASSERT(ci->scope);
+            auto clsInfo = ci->scope->getClassInfo(*ci->arrayDesc->clsName);
+            H7_ASSERT(clsInfo);
+            //set all elements
+            ArrayDelegate arrDel(obj);
+            int totalLen = arrDel.getTotalLength();
+            for(int i = 0 ; i < totalLen ; ++i){
+                auto objEle = create((ClassHandle)clsInfo, obj);
+                arrDel.setElementAsObjectForTotal(i, objEle);
+            }
+        }
     }
     return obj;
 }

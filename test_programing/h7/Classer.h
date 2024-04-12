@@ -69,20 +69,29 @@ public:
     ArrayDelegate& operator=(ArrayDelegate& t){this->m_ptr = t.m_ptr; return *this;}
     ArrayDelegate& operator=(const ArrayDelegate& t){this->m_ptr = t.m_ptr; return *this;}
 
-    UInt getBaseType()const{return m_ptr->clsInfo->arrayDesc->type;}
-    UInt getLength()const {return m_ptr->clsInfo->arrayDesc->arrayDesc[0];}
+    TypeInfo asBaseType()const{
+        return TypeInfo(m_ptr->clsInfo->arrayDesc->type,
+                        m_ptr->clsInfo->arrayDesc->clsName.get());}
+    UInt getLength()const {return m_ptr->clsInfo->arrayDesc->shape[0];}
     UInt getTotalLength() const{
         UInt total = 1;
-        for(auto& e : m_ptr->clsInfo->arrayDesc->arrayDesc){
+        for(auto& e : m_ptr->clsInfo->arrayDesc->shape){
             total *= e;
         }
         return total;
     }
     bool elementIsArray()const{
-        return m_ptr->clsInfo->arrayDesc->arrayDesc.size() > 1;
+        return m_ptr->clsInfo->arrayDesc->shape.size() > 1;
     }
-    bool elementIsPrimitive()const {return !elementIsArray() && TypeInfo(m_ptr->clsInfo->arrayDesc->type).isPrimitiveType();}
+    bool elementIsPrimitive()const {
+        return !elementIsArray() && asBaseType().isPrimitiveType();}
+
     void* getElementAddr(int index);
+
+    void setElementAsObjectForTotal(int idx, ObjectPtr e){
+         void** dd = (void**)m_ptr->block.data;
+         dd[idx] = e;
+    }
 
     ObjectPtr getElementAsObject(int index);
     ArrayDelegate getElementAsArray(int index);

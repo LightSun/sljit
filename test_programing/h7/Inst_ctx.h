@@ -18,13 +18,14 @@ struct ParameterInfo{
     UShort type;        /// base param type
     UShort flags {0};   /// ls or ds
     UInt extIdx {0};    /// field idx from object / LS-index of object.
+    //SPtr<UInt> extId2s; /// extra ids for array. like arr[2][3][5]
     Long index;         /// index(DS/LS) of the param.
               /// may function addr for func
               /// may be object addr.
               /// if -1 and is return info, means no need return.
               /// compose index: object-data-addr + ((offset-addr) << 24)
     static ParameterInfo make(UShort type, UShort flags, Long index){
-        return {type, flags, 0, index};
+        return {type, flags, 0, /*nullptr,*/ index};
     }
     bool isLS() const{return (flags & kPD_FLAG_LS) != 0;}
     bool isDS() const{return (flags & kPD_FLAG_DS) != 0;}
@@ -44,6 +45,11 @@ struct ParameterInfo{
     UInt getLSObjectIndex()const{return extIdx;}
     UInt getFieldIndex()const{return extIdx;}
     void setExtIndex(int ls_idx){extIdx = ls_idx;}
+    //UInt getArrayIndex(){
+    //    if(!extId2s) return extIdx;
+        //arr[2][3][5] -> [1][2]    -> 1*(3*5) + 2 * 5
+        //                [1][2][3] -> 1*(3*5) + 2 * 5 + 3
+    //}
 };
 using ParamMap = std::map<int, ParameterInfo>;//k,v = ret+param_index,
 
