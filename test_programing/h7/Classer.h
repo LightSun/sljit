@@ -14,7 +14,7 @@ typedef struct Object{
     MemoryBlock block;       ///data block
     ClassInfo* clsInfo;
     Object* parent {nullptr};
-    void* offsets {nullptr}; ///just hold. not create in here
+    void* offsets {nullptr}; ///object-offsets, array-shape,just hold. not create in here
     volatile int refCount {1};
     int flags {0};
 

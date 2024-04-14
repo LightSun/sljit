@@ -60,7 +60,7 @@ void Sentence::makeSimple1LS2DS(CIntArray3 types, CULongArray3 indexArr){
     right.type = (UShort)types[2];
 }
 
-void Sentence::makeLoadObjectDS(Long index, CUIntArray3 objIdxes){
+void Sentence::makeLoadObjectDS(Long index, CListUInt objIdxes){
     flags = kSENT_FLAG_VALID_IP;
     ip.makeDS();
     ip.index = index;
@@ -70,7 +70,7 @@ void Sentence::makeLoadObjectDS(Long index, CUIntArray3 objIdxes){
     op = OpCode::LOAD_OBJ;
 }
 
-void Sentence::makeLoadObjectField(CUIntArray3 regs_obj, int type, int lsIdx, int fieldIdx){
+void Sentence::makeLoadObjectField(CListUInt regs_obj, int type, int lsIdx, int fieldIdx){
     flags = kSENT_FLAG_VALID_IP | kSENT_FLAG_VALID_LEFT;
     ip.makeLS();
     ip.type = type;
@@ -82,7 +82,7 @@ void Sentence::makeLoadObjectField(CUIntArray3 regs_obj, int type, int lsIdx, in
     op = OpCode::LOAD_OBJ_F;
 }
 
-void Sentence::makeStoreObjectField(CUIntArray3 regs_obj, int type, int lsIdx, int fieldIdx){
+void Sentence::makeStoreObjectField(CListUInt regs_obj, int type, int lsIdx, int fieldIdx){
     //ip is field.
     flags = kSENT_FLAG_VALID_IP | kSENT_FLAG_VALID_LEFT;
     left.makeLS();

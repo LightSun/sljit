@@ -10,12 +10,25 @@
 
 namespace h7 {
 
-inline MemoryBlock MemoryBlock::makeUnchecked(UInt size){
+MemoryBlock MemoryBlock::makeFromBuffer(void* data, UInt size){
+    MemoryBlock b;
+    b.data = data;
+    b.size = size;
+    b.allocSize = 0;
+    return b;
+}
+MemoryBlock MemoryBlock::makeUnchecked(UInt size){
     MemoryBlock b;
     b.data = H7_NEW(size);
     b.size = size;
     b.allocSize = size;
     return b;
+}
+MemoryBlock::~MemoryBlock(){
+    if(allocSize > 0 && data){
+        H7_DELETE(data);
+        data = nullptr;
+    }
 }
 
 bool TypeInfo::isPrimitiveType()const{

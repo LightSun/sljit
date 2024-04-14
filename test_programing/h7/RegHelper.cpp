@@ -289,6 +289,7 @@ void SLJITHelper::emitLoadObject(SPSentence st){
     H7_ASSERT_X(st->isFlags1(), "ip must be valid");
     auto& ip = st->ip;
     //all is local index
+    H7_ASSERT(ip.extra->objIdxes.size() >= 3);
     auto ls_obj = ip.extra->objIdxes[0];
     auto ls_data = ip.extra->objIdxes[1];
     auto ls_offsets = ip.extra->objIdxes[2];
@@ -410,9 +411,11 @@ void SLJITHelper::emitLoadArray(SPSentence st){
     //
     auto& ip = st->ip;
     //all is local index
+    H7_ASSERT(ip.extra->objIdxes.size() >= 4);
     auto ls_obj = ip.extra->objIdxes[0];
     auto ls_data = ip.extra->objIdxes[1];
-    auto ls_eleSize = ip.extra->objIdxes[2];
+    auto ls_subEleSize = ip.extra->objIdxes[2];
+    auto ls_shape = ip.extra->objIdxes[3];
     //load ptr, offset, real_data addr
     //SP for LS
     if(ip.isLS()){
@@ -432,6 +435,9 @@ void SLJITHelper::emitLoadArray(SPSentence st){
     //load datas
     sljit_emit_op1(C, SLJIT_MOV, LS_R, LS_OFFSET(ls_data),
                    SLJIT_MEM1(reg_p1), SLJIT_OFFSETOF(Object, block));
+    //load shape
+    sljit_emit_op1(C, SLJIT_MOV, LS_R, LS_OFFSET(ls_shape),
+                   SLJIT_MEM1(reg_p1), SLJIT_OFFSETOF(Object, offsets));
     //load eleSize
     sljit_emit_icall(C, SLJIT_CALL, SLJIT_ARGS2(W, P, 32),
                      SLJIT_IMM, SLJIT_FUNC_ADDR(gObject_get_element_size));

@@ -43,15 +43,6 @@ int Function::allocLocal(){
     }
     return m_localRI->allocLocalIdx();
 }
-UIntArray3 Function::allocLocal3(){
-    if(!m_localRI){
-        m_localRI = RegisterIndexer::New(localSize);
-    }
-    UIntArray3 ret = {(UInt)m_localRI->allocLocalIdx(true),
-                      (UInt)m_localRI->allocLocalIdx(true),
-                      (UInt)m_localRI->allocLocalIdx(true)};
-    return ret;
-}
 ListUI Function::allocLocalN(int n){
     if(!m_localRI){
         m_localRI = RegisterIndexer::New(localSize);

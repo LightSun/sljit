@@ -59,6 +59,7 @@ template<typename T>
     using CIntArray3 = const IntArray3&;
     using CListUInt = const List<UInt>&;
     using UIntArray3 = std::array<UInt,3>;
+    using UIntArray4 = std::array<UInt,4>;
     using CUIntArray3 = const UIntArray3&;
 //-------------------------------------
 
@@ -89,8 +90,11 @@ enum{
 struct MemoryBlock{
     void* data;
     UInt size;
-    UInt allocSize;
+    UInt allocSize; //0 means from exist-buffer.
     static inline MemoryBlock makeUnchecked(UInt size);
+    static inline MemoryBlock makeFromBuffer(void* data, UInt size);
+
+    ~MemoryBlock();
 };
 
 struct TypeInfo{

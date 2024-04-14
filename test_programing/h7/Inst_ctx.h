@@ -110,7 +110,8 @@ struct OpExtraInfo{
     ParamMap funcParams;
     ParameterInfo funcRet;
     String imm;
-    UIntArray3 objIdxes; //obj, data, offsets
+    //for object: obj, data, offsets, for array: obj, data, shape, element-size
+    List<UInt> objIdxes;
 };
 
 struct Operand: public ParameterInfo{
@@ -209,11 +210,11 @@ struct Sentence{
     //1 LS and 2 DS
     void makeSimple1LS2DS(CIntArray3 types, CULongArray3 indexArr);
     //load object
-    void makeLoadObjectDS(Long index, CUIntArray3 objIdxes);
+    void makeLoadObjectDS(Long index, CListUInt objIdxes);
     //load object field
-    void makeLoadObjectField(CUIntArray3 regs_obj, int type, int lsIdx, int fieldIdx);
+    void makeLoadObjectField(CListUInt regs_obj, int type, int lsIdx, int fieldIdx);
     ///store object field:: type: field and LS type. lsIdx: LS-idx. fieldIdx: field idx of object
-    void makeStoreObjectField(CUIntArray3 regs_obj, int type, int lsIdx, int fieldIdx);
+    void makeStoreObjectField(CListUInt regs_obj, int type, int lsIdx, int fieldIdx);
     //cast type
     void makeTypeCast2LS(int srcType, Long srcIdx, int dstType, Long dstIdx);
     //assign

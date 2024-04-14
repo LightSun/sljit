@@ -40,6 +40,15 @@ ClassHandle Classer::defineClass(CString name,CListTypeInfo fieldTypes,CListStri
 RawStringHandle Classer::defineRawString(CString name, CString initVal){
 
 }
+
+static inline UInt _getSubElementSizeInBytes(const List<UInt>& shape, int arrLevel, int minEleSize){
+    UInt eleC = 1;
+    for(size_t i = arrLevel + 1 ; i < shape.size() ; ++i){
+        eleC *= shape[i];
+    }
+    return eleC * minEleSize;
+}
+
 ObjectPtr Classer::create(ClassHandle handle, ObjectPtr parent){
     ClassInfo* ci = (ClassInfo*)handle;
     Object* obj = H7_NEW_TYPE(Object);
@@ -57,6 +66,11 @@ ObjectPtr Classer::create(ClassHandle handle, ObjectPtr parent){
             auto clsInfo = ci->scope->getClassInfo(*ci->arrayDesc->clsName);
             H7_ASSERT(clsInfo);
             //set all elements
+//            auto& shape = ci->arrayDesc->shape;
+//            for(size_t i = 0 ; i < shape.size() ; ++i){
+
+//            }
+            //
             ArrayDelegate arrDel(obj);
             int totalLen = arrDel.getTotalLength();
             for(int i = 0 ; i < totalLen ; ++i){
@@ -64,6 +78,7 @@ ObjectPtr Classer::create(ClassHandle handle, ObjectPtr parent){
                 arrDel.setElementAsObjectForTotal(i, objEle);
             }
         }
+        obj->offsets = ci->arrayDesc->shape.data();
     }
     return obj;
 }
