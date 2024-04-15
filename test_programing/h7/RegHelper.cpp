@@ -454,8 +454,8 @@ void SLJITHelper::emitLoadArrayElement(SPSentence st){
     auto& ele_op = st->ip;
     auto& arr_op = st->left;
     int id_data;
-    int id_eleSize;
-    arr_op.getComposeIndex(&id_data, &id_eleSize);
+    int id_childEleSize;
+    arr_op.getComposeIndex(&id_data, &id_childEleSize);
     //ext index as field index.
 
     int rs_key = RS->save();
@@ -466,10 +466,10 @@ void SLJITHelper::emitLoadArrayElement(SPSentence st){
     //compute real-offset
     int reg_f = RS->nextReg(false);
     if(ele_op.isArrayIndexDynamic()){
-        sljit_emit_op2(C, SLJIT_MUL, reg_f, 0, LS_R, LS_OFFSET(id_eleSize),
+        sljit_emit_op2(C, SLJIT_MUL, reg_f, 0, LS_R, LS_OFFSET(id_childEleSize),
                            LS_R, LS_OFFSET(arr_op.getFieldIndex()));
     }else{
-        sljit_emit_op2(C, SLJIT_MUL, reg_f, 0, LS_R, LS_OFFSET(id_eleSize),
+        sljit_emit_op2(C, SLJIT_MUL, reg_f, 0, LS_R, LS_OFFSET(id_childEleSize),
                            SLJIT_IMM, arr_op.getFieldIndex());
     }
     //load real_data. 'data + offset'

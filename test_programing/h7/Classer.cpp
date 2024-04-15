@@ -6,6 +6,18 @@
 
 using namespace h7;
 
+Object::~Object(){
+    if(clsInfo->isArray() && offsets){
+        H7_DELETE(offsets);
+        offsets = nullptr;
+    }
+}
+void Object::setArrayOffset(UInt curOffset, UInt childEleSize){
+    ArrayOffset* aof = H7_NEW_TYPE(ArrayOffset);
+    aof->curOffset = curOffset;
+    aof->childEleSize = childEleSize;
+    this->offsets = aof;
+}
 void Object::ref(){
     h_atomic_add(&refCount, 1);
 }
@@ -71,12 +83,12 @@ ObjectPtr Classer::create(ClassHandle handle, ObjectPtr parent){
 
 //            }
             //
-            ArrayDelegate arrDel(obj);
-            int totalLen = arrDel.getTotalLength();
-            for(int i = 0 ; i < totalLen ; ++i){
-                auto objEle = create((ClassHandle)clsInfo, obj);
-                arrDel.setElementAsObjectForTotal(i, objEle);
-            }
+//            ArrayDelegate arrDel(obj);
+//            int totalLen = arrDel.getTotalLength();
+//            for(int i = 0 ; i < totalLen ; ++i){
+//                auto objEle = create((ClassHandle)clsInfo, obj);
+//                arrDel.setElementAsObjectForTotal(i, objEle);
+//            }
         }
         obj->offsets = ci->arrayDesc->shape.data();
     }

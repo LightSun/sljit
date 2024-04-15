@@ -9,16 +9,25 @@ enum ObjectFlag{
     kFlag_ARRAY = 0x0001,
 };
 
-//TODO auto ref/unref for parent-child .
+struct ArrayOffset{
+    UInt curOffset;    //current offset from the begin of data (in-bytes).
+    UInt childEleSize; //child element size in-bytes.
+};
+
+//TODO auto ref/unref for parent-child.
 typedef struct Object{
     MemoryBlock block;       ///data block
     ClassInfo* clsInfo;
     Object* parent {nullptr};
-    void* offsets {nullptr}; ///object-offsets, array-shape,just hold. not create in here
+    void* offsets {nullptr}; ///object-offsets, array-ArrayOffset,just hold. not create in here
     volatile int refCount {1};
     int flags {0};
 
+    ~Object();
+
     void* getDataAddress()const{return block.data;}
+
+    void setArrayOffset(UInt curOffset, UInt childEleSize);
 
     void ref();
     void unref();
@@ -56,49 +65,6 @@ public:
 
     bool getField(CString fieldName, Value* out);
     bool setField(CString fieldName, CValue val);
-
-private:
-    ObjectPtr m_ptr;
-};
-
-class ArrayDelegate{
-public:
-    ArrayDelegate(ObjectPtr ptr):m_ptr(ptr){}
-    ~ArrayDelegate();
-
-    ArrayDelegate& operator=(ArrayDelegate& t){this->m_ptr = t.m_ptr; return *this;}
-    ArrayDelegate& operator=(const ArrayDelegate& t){this->m_ptr = t.m_ptr; return *this;}
-
-    TypeInfo asBaseType()const{
-        return TypeInfo(m_ptr->clsInfo->arrayDesc->type,
-                        m_ptr->clsInfo->arrayDesc->clsName.get());}
-    UInt getLength()const {return m_ptr->clsInfo->arrayDesc->shape[0];}
-    UInt getTotalLength() const{
-        UInt total = 1;
-        for(auto& e : m_ptr->clsInfo->arrayDesc->shape){
-            total *= e;
-        }
-        return total;
-    }
-    bool elementIsArray()const{
-        return m_ptr->clsInfo->arrayDesc->shape.size() > 1;
-    }
-    bool elementIsPrimitive()const {
-        return !elementIsArray() && asBaseType().isPrimitiveType();}
-
-    void* getElementAddr(int index);
-
-    void setElementAsObjectForTotal(int idx, ObjectPtr e){
-         void** dd = (void**)m_ptr->block.data;
-         dd[idx] = e;
-    }
-
-    ObjectPtr getElementAsObject(int index);
-    ArrayDelegate getElementAsArray(int index);
-    bool getElementAsBool(int index){
-        auto addr = getElementAddr(index);
-        return *((bool*)addr);
-    }
 
 private:
     ObjectPtr m_ptr;

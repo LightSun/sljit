@@ -271,6 +271,7 @@ UInt TypeInfo::elementSize(int arrLevel){
     }
     return eleC * virtualSize();
 }
+//[2][3][5] -> [1] -> 3 * 5 * eleSize.
 UInt ArrayClassDesc::elementSize(int arrLevel){
     int size = shape.size();
     if(arrLevel < 0){

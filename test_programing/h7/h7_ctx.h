@@ -165,7 +165,7 @@ struct ArrayClassDesc{
 
     //only
     inline bool baseIsPrimitive()const;
-    /// arrLevel: [0,arrayDesc.size-1]
+    /// sub element size, in bytes, arrLevel: [0,arrayDesc.size-1]
     inline UInt elementSize(int arrLevel);
 
     inline void setByTypeInfo(const TypeInfo& ti);
