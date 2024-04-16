@@ -285,6 +285,13 @@ UInt ArrayClassDesc::elementSize(int arrLevel){
     }
     return eleC * ti.virtualSize();
 }
+UInt ArrayClassDesc::shapeSize(){
+    UInt tsize = 1;
+    for(size_t i = 0 ; i < shape.size() ; ++i){
+        tsize *= shape[i];
+    }
+    return tsize;
+}
 bool ArrayClassDesc::baseIsPrimitive()const{
     TypeInfo ti(type, clsName.get());
     return ti.baseIsPrimitiveType();

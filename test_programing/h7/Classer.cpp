@@ -13,7 +13,7 @@ Object::~Object(){
     }
 }
 void Object::setArrayOffset(UInt curOffset, UInt childEleSize){
-    ArrayOffset* aof = H7_NEW_TYPE(ArrayOffset);
+    ArrayInfo* aof = H7_NEW_TYPE(ArrayInfo);
     aof->curOffset = curOffset;
     aof->childEleSize = childEleSize;
     this->offsets = aof;
@@ -53,14 +53,6 @@ RawStringHandle Classer::defineRawString(CString name, CString initVal){
 
 }
 
-static inline UInt _getSubElementSizeInBytes(const List<UInt>& shape, int arrLevel, int minEleSize){
-    UInt eleC = 1;
-    for(size_t i = arrLevel + 1 ; i < shape.size() ; ++i){
-        eleC *= shape[i];
-    }
-    return eleC * minEleSize;
-}
-
 ObjectPtr Classer::create(ClassHandle handle, ObjectPtr parent){
     ClassInfo* ci = (ClassInfo*)handle;
     Object* obj = H7_NEW_TYPE(Object);
@@ -70,27 +62,39 @@ ObjectPtr Classer::create(ClassHandle handle, ObjectPtr parent){
     if(ci->objDesc){
         obj->offsets = ci->objDesc->offsets.data();
     }else if(ci->isArray()){
-        obj->flags = kFlag_ARRAY;
-        //allocate elements for non-primitive.
-        if(!ci->arrayDesc->baseIsPrimitive()){
-            H7_ASSERT(ci->arrayDesc->clsName);
-            //H7_ASSERT(ci->scope);
-            auto clsInfo = ci->scope->getClassInfo(*ci->arrayDesc->clsName);
-            H7_ASSERT(clsInfo);
-            //set all elements
+        //
+    }
+    return obj;
+}
+ObjectPtr Classer::createArray(ClassHandle handle, ObjectPtr parent, ArrayOffset* aof){
+    ClassInfo* ci = (ClassInfo*)handle;
+    H7_ASSERT(ci->isArray());
+    Object* obj = H7_NEW_TYPE(Object);
+    obj->block = MemoryBlock::makeUnchecked(ci->structSize);
+    obj->clsInfo = ci;
+    obj->parent = parent;
+    obj->flags = kFlag_ARRAY;
+    //allocate elements for non-primitive.
+    if(!ci->arrayDesc->baseIsPrimitive()){
+        H7_ASSERT(ci->arrayDesc->clsName);
+        //H7_ASSERT(ci->scope);
+        auto clsInfo = ci->scope->getClassInfo(*ci->arrayDesc->clsName);
+        H7_ASSERT(clsInfo);
+        //set all elements
 //            auto& shape = ci->arrayDesc->shape;
 //            for(size_t i = 0 ; i < shape.size() ; ++i){
 
 //            }
-            //
+        //
 //            ArrayDelegate arrDel(obj);
 //            int totalLen = arrDel.getTotalLength();
 //            for(int i = 0 ; i < totalLen ; ++i){
 //                auto objEle = create((ClassHandle)clsInfo, obj);
 //                arrDel.setElementAsObjectForTotal(i, objEle);
 //            }
-        }
-        obj->offsets = ci->arrayDesc->shape.data();
+    }
+    if(aof){
+        obj->setArrayOffset(aof->curOffset, aof->childEleSize);
     }
     return obj;
 }

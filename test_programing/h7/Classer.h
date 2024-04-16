@@ -9,17 +9,19 @@ enum ObjectFlag{
     kFlag_ARRAY = 0x0001,
 };
 
-struct ArrayOffset{
+struct ArrayInfo{
     UInt curOffset;    //current offset from the begin of data (in-bytes).
     UInt childEleSize; //child element size in-bytes.
+    UInt shape[4] {0,0,0,0};
 };
 
 //TODO auto ref/unref for parent-child.
 typedef struct Object{
-    MemoryBlock block;       ///data block
+    MemoryBlock block;        ///data block
     ClassInfo* clsInfo;
+    List<Object*> children;   ///TODO, the children which will be delete in cur-object's destroy.
     Object* parent {nullptr};
-    void* offsets {nullptr}; ///object-offsets, array-ArrayOffset,just hold. not create in here
+    void* offsets {nullptr};  ///object-offsets, array-ArrayOffset,just hold. not create in here
     volatile int refCount {1};
     int flags {0};
 
@@ -80,6 +82,8 @@ public:
     ClassHandle defineClass(CString name, CListTypeInfo fieldTypes,CListString fns);
     RawStringHandle defineRawString(CString name, CString initVal);
     ObjectPtr create(ClassHandle handle, ObjectPtr parent);
+
+    ObjectPtr createArray(ClassHandle handle, ObjectPtr parent, ArrayOffset* aof);
 
 private:
     Classer& operator=(const Classer&) = delete ;
