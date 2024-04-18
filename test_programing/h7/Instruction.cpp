@@ -53,6 +53,15 @@ ListUI Function::allocLocalN(int n){
     }
     return ret;
 }
+int Function::allocLSForArray(){
+    //5 count of LS
+    int id = m_localRI->allocLocalIdx(true);
+    H7_ASSERT(m_localRI->allocLocal());
+    H7_ASSERT(m_localRI->allocLocal());
+    H7_ASSERT(m_localRI->allocLocal());
+    H7_ASSERT(m_localRI->allocLocal());
+    return id;
+}
 int Function::getCurrentLocalIndex(){
     return m_localRI ? m_localRI->getCurrentIdx() : -1;
 }

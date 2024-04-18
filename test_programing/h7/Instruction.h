@@ -49,6 +49,7 @@ public:
     /// int,long,char ...etc bases.
     int allocLocal();
     ListUI allocLocalN(int n);
+    int allocLSForArray();
     /// if not alloc return-1
     int getCurrentLocalIndex();
 

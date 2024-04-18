@@ -473,7 +473,7 @@ void SLJITHelper::emitLoadArrayElement(SPSentence st){
         sljit_emit_op2(C, SLJIT_MUL, reg_f, 0, LS_R, LS_OFFSET(arrIds.subEleSize),
                            SLJIT_IMM, arr_op.getFieldIndex());
     }
-    sljit_emit_op1(C, SLJIT_ADD, reg_f, 0, LS_R, LS_OFFSET(arrIds.curOffset));
+    sljit_emit_op2(C, SLJIT_ADD, reg_f, 0, reg_f, 0, LS_R, LS_OFFSET(arrIds.curOffset));
     //load real_data. 'data + offset'
     auto op_load = genSLJIT_op(kOP_LOAD, arr_op.type);
     // move a 'data+ offset', offset from runtime

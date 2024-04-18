@@ -14,6 +14,29 @@ enum ParamterDescFlag{
     kPD_FLAG_ARRAY_INDEX_DYNAMIC = 0x0020,  /// indcate the array index is not imm. it comes from runtime.
 };
 
+struct ArrayLSIds{
+    UInt obj;
+    UInt data;
+    UInt shape;
+    UInt curOffset; //runtime in bytes
+    UInt subEleSize;
+
+    ArrayLSIds(CList<UInt> ids){
+        this->obj        = ids[0];
+        this->data       = ids[1];
+        this->shape      = ids[2];
+        this->curOffset  = ids[3];
+        this->subEleSize = ids[4];
+    }
+    ArrayLSIds(UInt id0){
+        this->obj        = id0;
+        this->data       = id0 + 1;
+        this->shape      = id0 + 2;
+        this->curOffset  = id0 + 3;
+        this->subEleSize = id0 + 4;
+    }
+};
+
 struct ParameterInfo{
     UShort type;        /// base param type
     UShort flags {0};   /// ls or ds
@@ -45,6 +68,8 @@ struct ParameterInfo{
     UInt getLSObjectIndex()const{return extIdx;}
     UInt getFieldIndex()const{return extIdx;}
     void setExtIndex(int ls_idx){extIdx = ls_idx;}
+
+    ArrayLSIds indexAsArrayIds(){return ArrayLSIds((UInt)index);}
     //UInt getArrayIndex(){
     //    if(!extId2s) return extIdx;
         //arr[2][3][5] -> [1][2]    -> 1*(3*5) + 2 * 5
@@ -112,6 +137,8 @@ struct OpExtraInfo{
     String imm;
     //for object: obj, data, offsets, for array: obj, data, shape, element-size
     List<UInt> objIdxes;
+
+    ArrayLSIds asArrayLsIds(){return ArrayLSIds(objIdxes);}
 };
 
 struct Operand: public ParameterInfo{

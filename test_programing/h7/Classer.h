@@ -83,7 +83,7 @@ public:
     RawStringHandle defineRawString(CString name, CString initVal);
     ObjectPtr create(ClassHandle handle, ObjectPtr parent);
 
-    ObjectPtr createArray(ClassHandle handle, ObjectPtr parent, ArrayOffset* aof);
+    ObjectPtr createArray(ClassHandle handle, ObjectPtr parent, ArrayInfo* aof);
 
 private:
     Classer& operator=(const Classer&) = delete ;

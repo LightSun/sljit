@@ -285,6 +285,14 @@ UInt ArrayClassDesc::elementSize(int arrLevel){
     }
     return eleC * ti.virtualSize();
 }
+UInt ArrayClassDesc::computeOffset(CList<int> idxes){
+    int size = idxes.size();
+    UInt offset = 0;
+    for(int i = 0 ; i < size ; ++i){
+        offset += elementSize(i) * idxes[i];
+    }
+    return offset;
+}
 UInt ArrayClassDesc::shapeSize(){
     UInt tsize = 1;
     for(size_t i = 0 ; i < shape.size() ; ++i){
