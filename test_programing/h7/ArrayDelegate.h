@@ -10,7 +10,7 @@ struct ArrayDelegate{
     //UInt childSizeInBytes; //in bytes
 
     ArrayDelegate(ObjectPtr ptr):m_ptr(ptr){}
-    ~ArrayDelegate();
+    ~ArrayDelegate(){};
 
     ArrayDelegate& operator=(ArrayDelegate& t){this->m_ptr = t.m_ptr; return *this;}
     ArrayDelegate& operator=(const ArrayDelegate& t){this->m_ptr = t.m_ptr; return *this;}

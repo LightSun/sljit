@@ -25,20 +25,22 @@ struct _ClassScope_ctx{
         MutexLockHolder lck(clsLock);
         auto it = clsMap.begin();
         while(it != clsMap.end()){
-            H7_DELETE_OBJ(it->second);
+            H7_DELETE(it->second);
             ++it;
         }
         clsMap.clear();
     }
-    ClassInfo* defineClass(ClassScope* scope, CString name,CListTypeInfo fieldTypes, CListString fns){
+    ClassInfo* defineClass(ClassScope* scope, CString name,CListTypeInfo fieldTypes,
+                           CListString fns, bool ignoreRedefine){
         ClassInfo* ptr_info;
         {
         MutexLockHolder lck(clsLock);
         auto it = clsMap.find(name);
         if(it != clsMap.end()){
-            return 0;
+            return ignoreRedefine ? it->second: 0;
         }
-        ptr_info = H7_NEW_OBJ(ClassInfo);
+        ptr_info = H7_NEW_TYPE(ClassInfo);
+        ptr_info->setUp();
         clsMap[name] = ptr_info;
         }
         ptr_info->name = name;
@@ -46,17 +48,19 @@ struct _ClassScope_ctx{
         h7::alignStructSize(fieldTypes, fns, ptr_info);
         return ptr_info;
     }
-    ClassInfo* defineArray(ClassScope* scope, const TypeInfo& info){
+    ClassInfo* defineArray(ClassScope* scope, const TypeInfo& info, bool ignoreRedefine){
         auto tyepStr = info.getTypeDesc();
         ClassInfo* ptr_info;
-        {
-        MutexLockHolder lck(clsLock);
-        auto it = clsMap.find(tyepStr);
-        if(it != clsMap.end()){
-            return 0;
-        }
-        }
-        ptr_info = H7_NEW_OBJ1(ClassInfo, &info);
+        //array no need cache.
+//        {
+//        MutexLockHolder lck(clsLock);
+//        auto it = clsMap.find(tyepStr);
+//        if(it != clsMap.end()){
+//            return ignoreRedefine ? it->second: 0;
+//        }
+//        }
+        ptr_info = H7_NEW_TYPE(ClassInfo);
+        ptr_info->setUp(&info);
         clsMap[tyepStr] = ptr_info;
         //
         int size = info.virtualSize() * info.getTotalArraySize();
@@ -148,17 +152,18 @@ ClassScope::~ClassScope(){
     }
 }
 
-ClassInfo* ClassScope::defineClass(CString name,CListTypeInfo fieldTypes, CListString fns){
-    return m_ctx->defineClass(this, name, fieldTypes, fns);
+ClassInfo* ClassScope::defineClass(CString name,CListTypeInfo fieldTypes,
+                                   CListString fns, bool ignoreRedefine){
+    return m_ctx->defineClass(this, name, fieldTypes, fns, ignoreRedefine);
 }
-ClassInfo* ClassScope::defineArray(const TypeInfo& info){
-    return m_ctx->defineArray(this, info);
+ClassInfo* ClassScope::defineArray(const TypeInfo& info, bool ignoreRedefine){
+    return m_ctx->defineArray(this, info, ignoreRedefine);
 }
 ClassInfo* ClassScope::newArrayClassInfo(const TypeInfo& info){
     //privitive, privitive-arr, obj, obj-arr
     if(info.isArrayType()){
         int size = info.virtualSize() * info.getTotalArraySize();
-        auto ptr_info = H7_NEW_OBJ(ClassInfo);
+        auto ptr_info = H7_NEW_TYPE(ClassInfo);
         ptr_info->name = info.getTypeDesc();
         ptr_info->scope = ClassScope::getCurrent();
         ptr_info->structSize = k8N(size);

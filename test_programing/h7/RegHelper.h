@@ -57,6 +57,8 @@ namespace h7 {
         void emitLoadField(SPSentence st);
         void emitStoreField(SPSentence st);
 
+        void emitNewArray(SPSentence st);
+
         void emitLoadArray(SPSentence st);
         void emitLoadArrayElement(SPSentence st);
 

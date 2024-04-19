@@ -58,6 +58,7 @@ template<typename T>
     using IntArray3 = std::array<int,3>;
     using CIntArray3 = const IntArray3&;
     using CListUInt = const List<UInt>&;
+    using CListInt = const List<Int>&;
     using UIntArray3 = std::array<UInt,3>;
     using UIntArray4 = std::array<UInt,4>;
     using CUIntArray3 = const UIntArray3&;
@@ -94,7 +95,7 @@ struct MemoryBlock{
     static inline MemoryBlock makeUnchecked(UInt size);
     static inline MemoryBlock makeFromBuffer(void* data, UInt size);
 
-    ~MemoryBlock();
+    inline ~MemoryBlock();
 };
 
 struct TypeInfo{
@@ -117,9 +118,12 @@ struct TypeInfo{
 
     template<typename... _Args>
     static std::vector<TypeInfo> makeListSimple(_Args&&... __args);
+    static inline TypeInfo fromTypeName(CString name);
 
     inline static int computePrimitiveType(bool _float, bool _signed, int ret_size);
     inline static int computeAdvanceType(int type1, int type2);
+
+    inline void setShape(CList<UInt> shape);
 
     inline String getTypeDesc()const;
     inline int getTotalArraySize()const;
@@ -187,7 +191,7 @@ struct ClassInfo{
     std::unique_ptr<_ObjClassDesc> objDesc;
 
     //array or normal object
-    inline ClassInfo(const TypeInfo* arr = nullptr);
+    inline void setUp(const TypeInfo* arr = nullptr);
     inline bool isArray()const {return arrayDesc != nullptr;}
     ///-1 for no found.
     inline int getFieldOffset(CString name);

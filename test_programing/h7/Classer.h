@@ -9,12 +9,6 @@ enum ObjectFlag{
     kFlag_ARRAY = 0x0001,
 };
 
-struct ArrayInfo{
-    UInt curOffset;    //current offset from the begin of data (in-bytes).
-    UInt childEleSize; //child element size in-bytes.
-    UInt shape[4] {0,0,0,0};
-};
-
 //TODO auto ref/unref for parent-child.
 typedef struct Object{
     MemoryBlock block;        ///data block
@@ -28,8 +22,6 @@ typedef struct Object{
     ~Object();
 
     void* getDataAddress()const{return block.data;}
-
-    void setArrayOffset(UInt curOffset, UInt childEleSize);
 
     void ref();
     void unref();
@@ -79,11 +71,15 @@ public:
     ~Classer(){};
 
     ClassScope* getScope(){return m_scope;}
-    ClassHandle defineClass(CString name, CListTypeInfo fieldTypes,CListString fns);
+    //no need delete the return obj
+    ClassInfo* defineClass(CString name, CListTypeInfo fieldTypes,CListString fns);
+    //unless you call createArray, or else the return obj need free.
+    ClassInfo* defineArray(const TypeInfo& info);
     RawStringHandle defineRawString(CString name, CString initVal);
-    ObjectPtr create(ClassHandle handle, ObjectPtr parent);
 
-    ObjectPtr createArray(ClassHandle handle, ObjectPtr parent, ArrayInfo* aof);
+    ObjectPtr create(ClassInfo* handle, ObjectPtr parent);
+    ObjectPtr createArray(ClassInfo* handle, ObjectPtr parent);
+    ObjectPtr createArray(ObjectPtr parent, CString type, CListUInt shape);
 
 private:
     Classer& operator=(const Classer&) = delete ;
@@ -97,3 +93,7 @@ private:
 }
 //
 h7::Long gObject_get_element_size(h7::ObjectPtr ptr, int arrLevel);
+h7::ObjectPtr gClasser_newArray(h7::ObjectPtr parent, const char* type,
+                                int shape_count, ...);
+h7::ObjectPtr gClasser_newArray2(h7::ObjectPtr parent, const char* type,
+                                int shape_count, h7::UInt*);

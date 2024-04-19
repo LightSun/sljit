@@ -21,7 +21,7 @@ void test_array_e(){
     Function func(3);
     //p.ag1=v, ...p.ag5=v
     //print(ag1~ag5)
-    auto reg_obj_arr = func.allocLocal3();
+    auto reg_obj_arr = func.allocLocalN(3);
     {   //load obj
         auto sent_obj = Sentence::New();
         sent_obj->makeLoadObjectDS(0, reg_obj_arr);

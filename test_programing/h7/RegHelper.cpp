@@ -406,7 +406,20 @@ void SLJITHelper::emitStoreField(SPSentence st){
     }
     RS->restore(rs_key);
 }
-
+//h7::ObjectPtr parent, const char* type,int n, ...
+void SLJITHelper::emitNewArray(SPSentence st){
+    //
+    auto& cur = st->ip;
+    auto& left = st->left;
+    H7_ASSERT(left.extra);
+    String& type = left.extra->imm;
+    auto rkey = RS->save();
+    //
+    auto r_p = RS->nextReg(false);
+    auto r_type = RS->nextReg(false);//const pool.
+    auto r_n = RS->nextReg(false);
+    RS->restore(rkey);
+}
 void SLJITHelper::emitLoadArray(SPSentence st){
     //
     auto& ip = st->ip;
@@ -473,7 +486,7 @@ void SLJITHelper::emitLoadArrayElement(SPSentence st){
         sljit_emit_op2(C, SLJIT_MUL, reg_f, 0, LS_R, LS_OFFSET(arrIds.subEleSize),
                            SLJIT_IMM, arr_op.getFieldIndex());
     }
-    sljit_emit_op1(C, SLJIT_ADD, reg_f, 0, LS_R, LS_OFFSET(arrIds.curOffset));
+    sljit_emit_op2(C, SLJIT_ADD, reg_f, 0, reg_f, 0, LS_R, LS_OFFSET(arrIds.curOffset));
     //load real_data. 'data + offset'
     auto op_load = genSLJIT_op(kOP_LOAD, arr_op.type);
     // move a 'data+ offset', offset from runtime

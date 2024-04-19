@@ -101,6 +101,7 @@ private:
 enum OpCode{
     NONE,
     NEW,
+    NEW_ARRAY,
     ASSIGN, //=
     CALL,   // add(a,b,c)
     LOAD_OBJ,
@@ -134,8 +135,9 @@ enum SentFlags{
 struct OpExtraInfo{
     ParamMap funcParams;
     ParameterInfo funcRet;
-    String imm;
-    //for object: obj, data, offsets, for array: obj, data, shape, element-size
+    String imm; //may be a type for array.
+    //for object: obj, data, offsets,
+    //for array: shape(input) or obj, data, shape...
     List<UInt> objIdxes;
 
     ArrayLSIds asArrayLsIds(){return ArrayLSIds(objIdxes);}

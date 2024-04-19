@@ -213,26 +213,44 @@ std::vector<TypeInfo> TypeInfo::makeListSimple(_Args&&... __args){
     }
     return list;
 }
+TypeInfo TypeInfo::fromTypeName(CString name){
+    static std::unordered_map<String, int> type_map = {
+        {"b", kType_bool},
+        {"i8", kType_int8},
+        {"u8", kType_uint8},
+        {"i16", kType_int16},
+        {"u16", kType_uint16},
+        {"i32", kType_int32},
+        {"u32", kType_uint32},
+        {"i64", kType_int64},
+        {"u64", kType_uint64},
+        {"f", kType_float},
+        {"d", kType_double},
+    };
+    auto it = type_map.find(name);
+    if(it != type_map.end()) return TypeInfo(it->second, nullptr);
+    return TypeInfo(kType_NONE, (String*)&name);
+}
 String TypeInfo::getTypeDesc()const{
     String str;
     if(clsName){
         str = *clsName;
     }else{
         switch (type) {
-        case kType_bool: {str = "B";}break;
-        case kType_int8: {str = "I8";}break;
-        case kType_uint8: {str = "U8";}break;
-        case kType_int16: {str = "I16";}break;
-        case kType_uint16: {str = "U16";}break;
+        case kType_bool: {str = "b";}break;
+        case kType_int8: {str = "i8";}break;
+        case kType_uint8: {str = "u8";}break;
+        case kType_int16: {str = "i16";}break;
+        case kType_uint16: {str = "u16";}break;
 
-        case kType_int32: {str = "I32";}break;
-        case kType_uint32: {str = "U32";}break;
+        case kType_int32: {str = "i32";}break;
+        case kType_uint32: {str = "u32";}break;
 
-        case kType_int64:   {str = "I64";}break;
-        case kType_uint64:  {str = "U64";}break;
+        case kType_int64:   {str = "i64";}break;
+        case kType_uint64:  {str = "u64";}break;
 
-        case kType_float: {str = "F";}break;
-        case kType_double: {str = "D";}break;
+        case kType_float: {str = "f";}break;
+        case kType_double: {str = "d";}break;
 
         case kType_raw_str: {str = "c_str";}break;
         case kType_object: {str = "Object";}break;
@@ -259,6 +277,12 @@ String TypeInfo::getTypeDesc()const{
     }
     return str;
 }
+void TypeInfo::setShape(CList<UInt> s){
+    if(!shape){
+        shape = std::make_unique<List<UInt>>();
+    }
+    *shape = s;
+}
 UInt TypeInfo::elementSize(int arrLevel){
     int size = shape->size();
     if(arrLevel < 0){
@@ -278,7 +302,7 @@ UInt ArrayClassDesc::elementSize(int arrLevel){
         H7_ASSERT_X(arrLevel + size >= 0, "wrong arrLevel");
         arrLevel = size + arrLevel;
     }
-    TypeInfo ti(type, clsName.get());
+    TypeInfo ti(type, clsName ? clsName.get() : nullptr);
     UInt eleC = 1;
     for(int i = arrLevel + 1 ; i < size ; ++i){
         eleC *= shape[i];
@@ -301,7 +325,7 @@ UInt ArrayClassDesc::shapeSize(){
     return tsize;
 }
 bool ArrayClassDesc::baseIsPrimitive()const{
-    TypeInfo ti(type, clsName.get());
+    TypeInfo ti(type, clsName ? clsName.get() : nullptr);
     return ti.baseIsPrimitiveType();
 }
 void ArrayClassDesc::setByTypeInfo(const TypeInfo& ti){
@@ -315,7 +339,7 @@ void ArrayClassDesc::setByTypeInfo(const TypeInfo& ti){
     }
 }
 
-ClassInfo::ClassInfo(const TypeInfo* arr){
+void ClassInfo::setUp(const TypeInfo* arr){
     if(arr){
         arrayDesc = std::make_unique<ArrayClassDesc>();
         arrayDesc->shape = *arr->shape;

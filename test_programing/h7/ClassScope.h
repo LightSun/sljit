@@ -27,8 +27,10 @@ public:
     static void exit();
     static ClassInfo* newArrayClassInfo(const TypeInfo& info);
 
-    ClassInfo* defineClass(CString name,CListTypeInfo fieldTypes, CListString fns);
-    ClassInfo* defineArray(const TypeInfo& info);
+    //fns: field names
+    ClassInfo* defineClass(CString name,CListTypeInfo fieldTypes, CListString fns,
+                           bool ignoreRedefine = false);
+    ClassInfo* defineArray(const TypeInfo& info, bool ignoreRedefine = false);
     ///return string index.
     UInt defineConstString(CString str){return pool.defineConstString(str);}
     //get class info.
