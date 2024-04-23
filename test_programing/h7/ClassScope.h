@@ -31,8 +31,13 @@ public:
     ClassInfo* defineClass(CString name,CListTypeInfo fieldTypes, CListString fns,
                            bool ignoreRedefine = false);
     ClassInfo* defineArray(const TypeInfo& info, bool ignoreRedefine = false);
-    ///return string index.
-    UInt defineConstString(CString str){return pool.defineConstString(str);}
+    ///return string data address.
+    char* defineConstString(CString str,UInt* idx){
+        return pool.defineConstString(str, idx);
+    }
+    const char* defineString(CString str, uint64* hash){
+        return pool.defineString(str, hash);
+    }
     //get class info.
     ClassInfo* getClassInfo(CString clsName);
     //-1 means not found

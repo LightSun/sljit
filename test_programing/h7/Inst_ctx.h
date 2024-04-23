@@ -12,6 +12,7 @@ enum ParamterDescFlag{
     kPD_FLAG_IMM            = 0x0008,
     kPD_FLAG_OBJECT_FIELD        = 0x0010,  /// indicate it is runtime come from object. like Person p = ...; p.age=18...
     kPD_FLAG_ARRAY_INDEX_DYNAMIC = 0x0020,  /// indcate the array index is not imm. it comes from runtime.
+    kPD_FLAG_IMM_CONST_STR       = 0x0040,  /// const str.
 };
 
 struct ArrayLSIds{
@@ -61,6 +62,7 @@ struct ParameterInfo{
     bool isLessThanInt()const {TypeInfo ti(type); return ti.isLessInt();}
     bool isObjectField()const {return (flags & kPD_FLAG_OBJECT_FIELD) != 0;}
     bool isArrayIndexDynamic()const {return (flags & kPD_FLAG_ARRAY_INDEX_DYNAMIC) != 0;}
+    bool immIsConstStr()const{(flags & kPD_FLAG_IMM_CONST_STR) != 0;}
 
     void setComposeIndex(int id1, int id2){ index = id1 | (id2 << 24);}
     void getComposeIndex(int* id1, int* id2){

@@ -412,12 +412,30 @@ void SLJITHelper::emitNewArray(SPSentence st){
     auto& cur = st->ip;
     auto& left = st->left;
     H7_ASSERT(left.extra);
+    auto& idx_parent = left.index;
     String& type = left.extra->imm;
+    auto& shape = left.extra->objIdxes;
+    if(left.immIsConstStr()){
+        //id
+        auto idx_s = std::stoi(left.extra->imm);
+    }else{
+        //hash
+        auto hash = std::stoull(left.extra->imm);
+    }
+    //
     auto rkey = RS->save();
     //
     auto r_p = RS->nextReg(false);
     auto r_type = RS->nextReg(false);//const pool.
     auto r_n = RS->nextReg(false);
+    if(idx_parent >= 0){
+        H7_ASSERT(left.isLS());
+        sljit_emit_op1(C, SLJIT_MOV, r_p, 0, LS_R, RI->getLSOffset(idx_parent));
+    }else{
+        sljit_emit_op1(C, SLJIT_MOV, r_p, 0, SLJIT_IMM, 0);
+    }
+    //sljit_emit_op1(C, SLJIT_MOV, r_type)
+
     RS->restore(rkey);
 }
 void SLJITHelper::emitLoadArray(SPSentence st){
