@@ -97,4 +97,4 @@ h7::ObjectPtr gClasser_newArray(h7::ObjectPtr parent, const char* type,
                                 int shape_count, ...);
 h7::ObjectPtr gClasser_newArray2(h7::ObjectPtr parent, const char* type,
                                 int shape_count, h7::UInt*);
-void* gClasser_getStringAddr(h7::CString str,);
+void* gClasser_getStrAddr(h7::ULong hash, int id);

@@ -27,6 +27,13 @@ struct ConstPool{
         if(idx >= rstr_offsets.size()) return nullptr;
         return rstrs.data() + rstr_offsets[idx];
     }
+    const char* getStringAddress(uint64 hash){
+        auto it = nonConstStrs.find(hash);
+        if(it != nonConstStrs.end()){
+            return it->second.data();
+        }
+        return nullptr;
+    }
     const char* defineString(CString str, uint64* hash){
         auto _hash = fasthash64(str.data(), str.length(), 11);
         {

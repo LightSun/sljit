@@ -408,6 +408,7 @@ void SLJITHelper::emitStoreField(SPSentence st){
 }
 //h7::ObjectPtr parent, const char* type,int n, ...
 void SLJITHelper::emitNewArray(SPSentence st){
+    //void* gClasser_getStrAddr(h7::ULong hash, int id)
     //
     auto& cur = st->ip;
     auto& left = st->left;
@@ -415,12 +416,14 @@ void SLJITHelper::emitNewArray(SPSentence st){
     auto& idx_parent = left.index;
     String& type = left.extra->imm;
     auto& shape = left.extra->objIdxes;
+    ULong hash;
+    int idx_s = -1;
     if(left.immIsConstStr()){
         //id
-        auto idx_s = std::stoi(left.extra->imm);
+        idx_s = std::stoi(left.extra->imm);
     }else{
         //hash
-        auto hash = std::stoull(left.extra->imm);
+        hash = std::stoull(left.extra->imm);
     }
     //
     auto rkey = RS->save();

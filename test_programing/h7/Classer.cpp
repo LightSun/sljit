@@ -133,3 +133,10 @@ h7::ObjectPtr gClasser_newArray2(h7::ObjectPtr parent, const char* type,
     Classer cls(scope);
     return cls.createArray(parent, String(type), shape);
 }
+void* gClasser_getStrAddr(h7::ULong hash, int id){
+    ClassScope* scope = ClassScope::getGlobal();
+    if(id >= 0){
+        return scope->pool.getConstStringAddress(id);
+    }
+    return (void*)scope->pool.getStringAddress(hash);
+}
