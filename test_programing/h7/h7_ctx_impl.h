@@ -338,18 +338,43 @@ void ArrayClassDesc::setByTypeInfo(const TypeInfo& ti){
         *clsName = ti.getTypeDesc();
     }
 }
-
+//--------------
+void ObjectClassDesc::putField(CString key, const FieldInfo& _f){
+    FieldInfo& f = (FieldInfo&)_f;
+    auto k = fasthash32(key.data(), (UInt)key.length(), DEF_HASH_SEED);
+    f.index = fieldMap.size();
+    offsets.push_back(f.offset);
+    (fieldMap)[k] = std::move(f);
+}
+FieldInfo* ObjectClassDesc::getField(CString key){
+    auto k = fasthash32(key.data(), (UInt)key.length(), DEF_HASH_SEED);
+    auto it = fieldMap.find(k);
+    return it != fieldMap.end() ? &it->second : nullptr;
+}
+FieldInfo* ObjectClassDesc::getField(UInt k){
+    auto it = fieldMap.find(k);
+    return it != fieldMap.end() ? &it->second : nullptr;
+}
+//--------------
+ClassInfo::~ClassInfo(){
+    if(arrayDesc){
+        delete arrayDesc;
+        arrayDesc = nullptr;
+    }
+    if(objDesc){
+        delete objDesc;
+        objDesc = nullptr;
+    }
+}
 void ClassInfo::setUp(const TypeInfo* arr){
+    arrayDesc = nullptr;
+    objDesc = nullptr;
+    scope = nullptr;
     if(arr){
-        arrayDesc = std::make_unique<ArrayClassDesc>();
-        arrayDesc->shape = *arr->shape;
-        arrayDesc->type = arr->type;
-        if(arr->clsName){
-            arrayDesc->clsName = std::make_unique<String>();
-            *arrayDesc->clsName = *arr->clsName;
-        }
+        arrayDesc = new ArrayClassDesc();
+        arrayDesc->setByTypeInfo(*arr);
     }else{
-        objDesc = std::make_unique<_ObjClassDesc>();
+        objDesc = new ObjectClassDesc();
     }
 }
 int ClassInfo::getFieldOffset(CString name){
@@ -361,24 +386,20 @@ int ClassInfo::getFieldOffset(UInt key){
     return f ? f->offset :-1;
 }
 void ClassInfo::putField(CString key, const FieldInfo& _f){
-    FieldInfo& f = (FieldInfo&)_f;
-    auto k = fasthash32(key.data(), (UInt)key.length(), DEF_HASH_SEED);
-    f.index = objDesc->fieldMap.size();
-    objDesc->offsets.push_back(f.offset);
-    (objDesc->fieldMap)[k] = std::move(f);
+    if(!objDesc){
+         objDesc = new ObjectClassDesc();
+    }
+    objDesc->putField(key, _f);
 }
 FieldInfo* ClassInfo::getField(CString key){
     if(objDesc){
-        auto k = fasthash32(key.data(), (UInt)key.length(), DEF_HASH_SEED);
-        auto it = objDesc->fieldMap.find(k);
-        return it != objDesc->fieldMap.end() ? &it->second : nullptr;
+        return objDesc->getField(key);
     }
     return nullptr;
 }
 FieldInfo* ClassInfo::getField(UInt k){
     if(objDesc){
-        auto it = objDesc->fieldMap.find(k);
-        return it != objDesc->fieldMap.end() ? &it->second : nullptr;
+        return objDesc->getField(k);
     }
     return nullptr;
 }

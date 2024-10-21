@@ -62,7 +62,7 @@ struct ParameterInfo{
     bool isLessThanInt()const {TypeInfo ti(type); return ti.isLessInt();}
     bool isObjectField()const {return (flags & kPD_FLAG_OBJECT_FIELD) != 0;}
     bool isArrayIndexDynamic()const {return (flags & kPD_FLAG_ARRAY_INDEX_DYNAMIC) != 0;}
-    bool immIsConstStr()const{(flags & kPD_FLAG_IMM_CONST_STR) != 0;}
+    bool immIsConstStr()const{ return (flags & kPD_FLAG_IMM_CONST_STR) != 0;}
 
     void setComposeIndex(int id1, int id2){ index = id1 | (id2 << 24);}
     void getComposeIndex(int* id1, int* id2){
@@ -160,7 +160,7 @@ struct Operand: public ParameterInfo{
         makeIMM(kType_double, std::to_string(val));
     }
     void makeIMM(int _type, CString val){
-        type = _type;
+        type = (UShort)_type;
         flags = kPD_FLAG_IMM;
         makeExtra();
         extra->imm = val;

@@ -7,7 +7,8 @@
 #define H7_NEW(s) malloc(s)
 #define H7_NEW_COUNT_TYPE(t, c) malloc(sizeof(t) * c)
 #define H7_DELETE(ptr) free(ptr)
-#define H7_NEW_TYPE(T) (T*)malloc(sizeof(T))
+#define H7_NEW_TYPE(T) (T*)malloc(sizeof(T)) //malloc only can used for 'C'
+//#define H7_NEW_TYPE_PLACEMENT(T) (new (malloc(sizeof(T))) T())
 #define H7_REALLOC(ptr, oldS, newS) realloc(ptr, newS)
 
 //2^N

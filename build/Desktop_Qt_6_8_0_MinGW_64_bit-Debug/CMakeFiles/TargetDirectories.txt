@@ -1,0 +1,8 @@
+E:/study/github/mine/sljit/build/Desktop_Qt_6_8_0_MinGW_64_bit-Debug/CMakeFiles/sljit_core.dir
+E:/study/github/mine/sljit/build/Desktop_Qt_6_8_0_MinGW_64_bit-Debug/CMakeFiles/sljit_test.dir
+E:/study/github/mine/sljit/build/Desktop_Qt_6_8_0_MinGW_64_bit-Debug/CMakeFiles/edit_cache.dir
+E:/study/github/mine/sljit/build/Desktop_Qt_6_8_0_MinGW_64_bit-Debug/CMakeFiles/rebuild_cache.dir
+E:/study/github/mine/sljit/build/Desktop_Qt_6_8_0_MinGW_64_bit-Debug/test_programing/CMakeFiles/h7.dir
+E:/study/github/mine/sljit/build/Desktop_Qt_6_8_0_MinGW_64_bit-Debug/test_programing/CMakeFiles/h7_test_all.dir
+E:/study/github/mine/sljit/build/Desktop_Qt_6_8_0_MinGW_64_bit-Debug/test_programing/CMakeFiles/edit_cache.dir
+E:/study/github/mine/sljit/build/Desktop_Qt_6_8_0_MinGW_64_bit-Debug/test_programing/CMakeFiles/rebuild_cache.dir

@@ -18,53 +18,50 @@ static ClassScope* s_cur_clsScope {nullptr};
 
 namespace h7 {
 struct _ClassScope_ctx{
-    HashMap<String, ClassInfo*> clsMap;
+    HashMap<String, std::unique_ptr<ClassInfo>> clsMap;
     MutexLock clsLock;
 
     ~_ClassScope_ctx(){
-        MutexLockHolder lck(clsLock);
-        auto it = clsMap.begin();
-        while(it != clsMap.end()){
-            H7_DELETE(it->second);
-            ++it;
+//        MutexLockHolder lck(clsLock);
+//        auto it = clsMap.begin();
+//        while(it != clsMap.end()){
+//            H7_DELETE(it->second);
+//            ++it;
+//        }
+//        clsMap.clear();
+    }
+    ClassInfo* getOrCreare(CString name, const TypeInfo* info, bool ignoreRedefine){
+        ClassInfo* ptr_info;
+        {
+            MutexLockHolder lck(clsLock);
+            {
+                auto it = clsMap.find(name);
+                if(it != clsMap.end()){
+                    return ignoreRedefine ? it->second.get(): nullptr;
+                }
+            }
+            //ptr_info = H7_NEW_TYPE(ClassInfo);
+           // ptr_info->setUp();
+            auto it = clsMap.emplace(name, std::make_unique<ClassInfo>());
+            ptr_info = it.first->second.get();
+            ptr_info->setUp(info);
+            ptr_info->name = name;
         }
-        clsMap.clear();
+        return ptr_info;
     }
     ClassInfo* defineClass(ClassScope* scope, CString name,CListTypeInfo fieldTypes,
                            CListString fns, bool ignoreRedefine){
-        ClassInfo* ptr_info;
-        {
-        MutexLockHolder lck(clsLock);
-        auto it = clsMap.find(name);
-        if(it != clsMap.end()){
-            return ignoreRedefine ? it->second: 0;
-        }
-        ptr_info = H7_NEW_TYPE(ClassInfo);
-        ptr_info->setUp();
-        clsMap[name] = ptr_info;
-        }
-        ptr_info->name = name;
+        ClassInfo* ptr_info = getOrCreare(name, nullptr, ignoreRedefine);
+
         ptr_info->scope = scope;
         h7::alignStructSize(fieldTypes, fns, ptr_info);
         return ptr_info;
     }
     ClassInfo* defineArray(ClassScope* scope, const TypeInfo& info, bool ignoreRedefine){
         auto tyepStr = info.getTypeDesc();
-        ClassInfo* ptr_info;
-        //array no need cache.
-//        {
-//        MutexLockHolder lck(clsLock);
-//        auto it = clsMap.find(tyepStr);
-//        if(it != clsMap.end()){
-//            return ignoreRedefine ? it->second: 0;
-//        }
-//        }
-        ptr_info = H7_NEW_TYPE(ClassInfo);
-        ptr_info->setUp(&info);
-        clsMap[tyepStr] = ptr_info;
+        ClassInfo* ptr_info = getOrCreare(tyepStr, &info, ignoreRedefine);
         //
         int size = info.virtualSize() * info.getTotalArraySize();
-        ptr_info->name = tyepStr;
         ptr_info->scope = scope;
         ptr_info->structSize = k8N(size);
         //set sub-arr, like: a[2][3]
@@ -98,7 +95,7 @@ struct _ClassScope_ctx{
             MutexLockHolder lck(clsLock);
             auto it = clsMap.find(clsName);
             if(it != clsMap.end()){
-                info = it->second;
+                info = it->second.get();
             }
         }
         return info;
@@ -163,13 +160,12 @@ ClassInfo* ClassScope::newArrayClassInfo(const TypeInfo& info){
     //privitive, privitive-arr, obj, obj-arr
     if(info.isArrayType()){
         int size = info.virtualSize() * info.getTotalArraySize();
-        auto ptr_info = H7_NEW_TYPE(ClassInfo);
+        auto ptr_info = new ClassInfo();
+        //set sub-arr, like: a[2][3]
+        ptr_info->setUp(&info);
         ptr_info->name = info.getTypeDesc();
         ptr_info->scope = ClassScope::getCurrent();
         ptr_info->structSize = k8N(size);
-        //set sub-arr, like: a[2][3]
-        ptr_info->arrayDesc = std::make_unique<ArrayClassDesc>();
-        ptr_info->arrayDesc->setByTypeInfo(info);
         return ptr_info;
     }
     return nullptr;

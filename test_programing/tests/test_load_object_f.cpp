@@ -32,6 +32,7 @@ private:
 
 void test_load_object_f(){
     printf(" test_load_object_f >> start...\n");
+    //
     ObjectTester otest;
     auto pObj = otest.createPerson1();
 
@@ -52,7 +53,7 @@ void test_align(){
 #define LS_R SLJIT_MEM1(SLJIT_SP)
 #define LS_RW(i) (sizeof(void*) * i)
 void test_for_direct_sljit(ObjectPtr pObj){
-     printf(" test_for_direct_sljit >> start...\n");
+    printf(" test_for_direct_sljit >> start...\n");
     ObjectDelegate od(pObj);
     void* ag1 = od.getFieldAddress("ag1");
     *(char*)ag1 = 123;
@@ -61,6 +62,15 @@ void test_for_direct_sljit(ObjectPtr pObj){
     auto offset = od.getFieldOffset("ag1");
     H7_ASSERT(offset == 0);
     H7_ASSERT(od.getFieldOffset("ag2") == sizeof(char));
+    //
+    auto p1 = malloc(4096);
+    printf("p1 = %p\n", p1);
+    free(p1);
+
+    auto p2 = malloc(4096);
+    printf("p2 = %p\n", p2);
+    free(p2);
+
     //
     SljitFunc func;
     func.ds.setAt(0, pObj);

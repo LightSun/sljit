@@ -61,8 +61,8 @@ public:
 public:
     DataStack ds{3};
     struct sljit_compiler *C;
-    size_t codeSize;
-    void* code;
+    size_t codeSize {0};
+    void* code {nullptr};
 };
 
 

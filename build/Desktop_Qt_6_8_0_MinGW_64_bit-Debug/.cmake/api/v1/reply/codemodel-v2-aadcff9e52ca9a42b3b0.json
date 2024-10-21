@@ -1,0 +1,106 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1
+					],
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						2,
+						3
+					]
+				},
+				{
+					"build" : "test_programing",
+					"jsonFile" : "directory-test_programing-Debug-61435767832117d9d8e7.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "test_programing",
+					"targetIndexes" : 
+					[
+						0,
+						1
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0,
+						1
+					],
+					"name" : "sljit",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 1,
+					"id" : "h7::@0879a9fe00a124436c74",
+					"jsonFile" : "target-h7-Debug-f0a6044a58af7d9900ee.json",
+					"name" : "h7",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 1,
+					"id" : "h7_test_all::@0879a9fe00a124436c74",
+					"jsonFile" : "target-h7_test_all-Debug-1e81b4e4730ba84220d0.json",
+					"name" : "h7_test_all",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "sljit_core::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-sljit_core-Debug-1082d41fcfa607bc6a98.json",
+					"name" : "sljit_core",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "sljit_test::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-sljit_test-Debug-a512dd5b4b265194ccdd.json",
+					"name" : "sljit_test",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "E:/study/github/mine/sljit/build/Desktop_Qt_6_8_0_MinGW_64_bit-Debug",
+		"source" : "E:/study/github/mine/sljit"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}

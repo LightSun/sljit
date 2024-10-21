@@ -11,7 +11,7 @@ static inline ParameterInfo* _getParamInfo(ParamMap* pm, int index){
 //TODO fix, current is wrong
 static inline void _updateIndex(Operand& ip,IFunction* owner){
     auto pinfo = owner->getParamInfo();
-    auto pi = _getParamInfo(pinfo, ip.index);
+    auto pi = _getParamInfo(pinfo, (int)ip.index);
     if(pi != nullptr){
         if(pi->isLS()){
             if(ip.isDS()){
@@ -73,11 +73,11 @@ void Sentence::makeLoadObjectDS(Long index, CListUInt objIdxes){
 void Sentence::makeLoadObjectField(CListUInt regs_obj, int type, int lsIdx, int fieldIdx){
     flags = kSENT_FLAG_VALID_IP | kSENT_FLAG_VALID_LEFT;
     ip.makeLS();
-    ip.type = type;
+    ip.type = (u16)type;
     ip.index = lsIdx;
     left.setComposeIndex(regs_obj[1], regs_obj[2]);
     left.flags = kPD_FLAG_LS | kPD_FLAG_OBJECT_FIELD;
-    left.type = type;
+    left.type = (u16)type;
     left.setExtIndex(fieldIdx);
     op = OpCode::LOAD_OBJ_F;
 }
@@ -86,11 +86,11 @@ void Sentence::makeStoreObjectField(CListUInt regs_obj, int type, int lsIdx, int
     //ip is field.
     flags = kSENT_FLAG_VALID_IP | kSENT_FLAG_VALID_LEFT;
     left.makeLS();
-    left.type = type;
+    left.type = (u16)type;
     left.index = lsIdx;
     ip.setComposeIndex(regs_obj[1], regs_obj[2]);
     ip.flags = kPD_FLAG_LS | kPD_FLAG_OBJECT_FIELD;
-    ip.type = type;
+    ip.type = (u16)type;
     ip.setExtIndex(fieldIdx);
     op = OpCode::STORE_OBJ_F;
 }
@@ -98,10 +98,10 @@ void Sentence::makeStoreObjectField(CListUInt regs_obj, int type, int lsIdx, int
 void Sentence::makeTypeCast2LS(int srcType, Long srcIdx, int dstType, Long dstIdx){
     flags = kSENT_FLAG_VALID_IP | kSENT_FLAG_VALID_LEFT;
     ip.makeLS();
-    ip.type = dstType;
+    ip.type = (u16)dstType;
     ip.index = dstIdx;
     left.makeLS();
-    left.type = srcType;
+    left.type = (u16)srcType;
     left.index = srcIdx;
     op = OpCode::CAST;
 }
@@ -109,7 +109,7 @@ void Sentence::makeTypeCast2LS(int srcType, Long srcIdx, int dstType, Long dstId
 void Sentence::makeAssignByIMM(int dstType, Long dstIdx, int immType, CString imm){
     flags = kSENT_FLAG_VALID_IP | kSENT_FLAG_VALID_LEFT;
     ip.makeLS();
-    ip.type = dstType;
+    ip.type = (u16)dstType;
     ip.index = dstIdx;
     left.makeIMM(immType, imm);
     op = OpCode::ASSIGN;

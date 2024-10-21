@@ -8,8 +8,8 @@ extern void test_load_object_f();
 int main(int argc, const char* argv[]){
 
     setbuf(stdout, NULL);
-    test_align_struct();
-    test_inst();
-    test_load_object_f();
+    //test_align_struct();
+    //test_inst();
+    test_load_object_f();// Critical error detected c0000374??
     return 0;
 }

@@ -11,7 +11,8 @@ using namespace h7;
 
 Object::~Object(){
     if(clsInfo->isArray() && clsInfo){
-        H7_DELETE(clsInfo);
+       // H7_DELETE(clsInfo);
+        delete clsInfo;
         clsInfo = nullptr;
     }
 }
@@ -21,7 +22,8 @@ void Object::ref(){
 
 void Object::unref(){
     if(h_atomic_add(&refCount, -1) == 1){
-        H7_DELETE(this);
+       // H7_DELETE(this);
+        delete this;
     }
 }
 bool ObjectDelegate::getField(CString fn, Value* out){
@@ -55,10 +57,13 @@ RawStringHandle Classer::defineRawString(CString name, CString initVal){
 
 ObjectPtr Classer::create(ClassInfo* ci, ObjectPtr parent){
     //ClassInfo* ci = (ClassInfo*)handle;
-    Object* obj = H7_NEW_TYPE(Object);
+    Object* obj = new Object();
     obj->block = MemoryBlock::makeUnchecked(ci->structSize);
     obj->clsInfo = ci;
     obj->parent = parent;
+    obj->offsets = nullptr;
+    obj->flags = 0;
+    obj->refCount = 1;
     if(ci->objDesc){
         obj->offsets = ci->objDesc->offsets.data();
     }else if(ci->isArray()){
@@ -69,7 +74,7 @@ ObjectPtr Classer::create(ClassInfo* ci, ObjectPtr parent){
 ObjectPtr Classer::createArray(ClassInfo* ci, ObjectPtr parent){
     //ClassInfo* ci = (ClassInfo*)handle;
     H7_ASSERT(ci->isArray());
-    Object* obj = H7_NEW_TYPE(Object);
+    Object* obj = new Object();
     obj->block = MemoryBlock::makeUnchecked(ci->structSize);
     obj->clsInfo = ci;
     obj->parent = parent;
@@ -134,7 +139,7 @@ h7::ObjectPtr gClasser_newArray2(h7::ObjectPtr parent, const char* type,
     return cls.createArray(parent, String(type), shape);
 }
 void* gClasser_getStrAddr(h7::ULong hash, int id){
-    ClassScope* scope = ClassScope::getGlobal();
+    ClassScope* scope = ClassScope::getGlobal();//every thread in one scope?
     if(id >= 0){
         return scope->pool.getConstStringAddress(id);
     }

@@ -12,7 +12,7 @@ enum ObjectFlag{
 //TODO auto ref/unref for parent-child.
 typedef struct Object{
     MemoryBlock block;        ///data block
-    ClassInfo* clsInfo;
+    ClassInfo* clsInfo {nullptr};
     List<Object*> children;   ///TODO, the children which will be delete in cur-object's destroy.
     Object* parent {nullptr};
     void* offsets {nullptr};  ///object-offsets, array-ArrayOffset,just hold. not create in here

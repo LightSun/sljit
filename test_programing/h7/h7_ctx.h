@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <memory>
 #include <list>
+#include <array>
 
 //#define __ENABLE_SAFE_CHECK 1
 
@@ -89,7 +90,7 @@ enum{
 };
 
 struct MemoryBlock{
-    void* data;
+    void* data {nullptr};
     UInt size;
     UInt allocSize; //0 means from exist-buffer.
     static inline MemoryBlock makeUnchecked(UInt size);
@@ -176,19 +177,26 @@ struct ArrayClassDesc{
     inline void setByTypeInfo(const TypeInfo& ti);
 };
 
+struct ObjectClassDesc{
+    HashMap<UInt, FieldInfo> fieldMap;
+    List<UInt> offsets;
+
+    inline void putField(CString key, const FieldInfo&);
+    inline FieldInfo* getField(CString key);
+    inline FieldInfo* getField(UInt key);
+};
+
 struct ClassScope;
 
 struct ClassInfo{
-    struct _ObjClassDesc{
-         HashMap<UInt, FieldInfo> fieldMap;
-         List<UInt> offsets;
-    };
     ClassScope* scope {nullptr};
     String name;        //full name
     UInt structSize;
 
-    std::unique_ptr<ArrayClassDesc> arrayDesc;
-    std::unique_ptr<_ObjClassDesc> objDesc;
+    ArrayClassDesc* arrayDesc {nullptr};
+    ObjectClassDesc* objDesc {nullptr};
+
+    inline ~ClassInfo();
 
     //array or normal object
     inline void setUp(const TypeInfo* arr = nullptr);

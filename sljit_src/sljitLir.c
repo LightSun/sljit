@@ -422,6 +422,7 @@ SLJIT_API_FUNC_ATTRIBUTE struct sljit_compiler* sljit_create_compiler(void *allo
 
 	compiler->allocator_data = allocator_data;
 	compiler->exec_allocator_data = exec_allocator_data;
+    //printf("sizeof(sljit_memory_fragment) = %d\n", (int)sizeof(struct sljit_memory_fragment));
 	compiler->buf = (struct sljit_memory_fragment*)SLJIT_MALLOC(BUF_SIZE, allocator_data);
 	compiler->abuf = (struct sljit_memory_fragment*)SLJIT_MALLOC(ABUF_SIZE, allocator_data);
 

@@ -4,6 +4,8 @@
 #include "h7/h7_alloc.h"
 #include "h7/common/c_common.h"
 
+CPP_START
+
 typedef struct array_map array_map;
 typedef array_map* array_map_p;
 
@@ -46,5 +48,7 @@ void array_map_delete(array_map_p ptr);
         void* value = ((char*)ptr->values + ptr->val_ele_size * i);\
         code;\
     }
+
+CPP_END
 
 #endif
